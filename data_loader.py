@@ -2,7 +2,8 @@ import os
 import nibabel as nib
 from matplotlib import pyplot as plt
 
-data_dir = 'drlfom_bidsdata-1.0/'
+data_dir = '~/.scratch/drlfom/dw_preprocessing'
+data_dir = os.path.abspath(os.path.expanduser(data_dir))
 
 im_data = []
 
@@ -51,9 +52,6 @@ def vis2():
 
     for i in range(data[0][1, 1].shape[0]):
         plt.imshow(data[0][..., i], cmap='gray')
-        plt.show()
-
+        plt.savefig('myimg_{}.pdf'.format(i))
 
 vis2()
-
-
