@@ -1,2 +1,2 @@
 # Semester_project
-Semester project, 1. Semester of master
+Machine Learning Enabled Brain Extraction, 1. Semester project of master
