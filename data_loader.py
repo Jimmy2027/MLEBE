@@ -2,7 +2,7 @@ import os
 import nibabel as nib
 from matplotlib import pyplot as plt
 import numpy as np
-
+from skimage import transform as tf
 data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'
 
 
@@ -19,13 +19,15 @@ def load_img():
     for i in im_data:
         img = nib.load(i)
         img_data = img.get_data()
-        img_data = pad_img(img_data)
+        # img_data = pad_img(img_data)
+        img_data = resize(img_data)
+
         img_data = np.expand_dims(img_data,-1)
         data.append(img_data)
 
-    for i in range(data[0][1, 1].shape[0]):
-        plt.imshow(data[0][..., i,0], cmap='gray')
-        plt.savefig('visualisation/img_{}.pdf'.format(i))
+    # for i in range(data[0][1, 1].shape[0]):
+    #     plt.imshow(data[0][..., i,0], cmap='gray')
+    #     plt.savefig('visualisation/img_{}.pdf'.format(i))
 
     return data
 
@@ -44,13 +46,14 @@ def load_mask():
         img = nib.load(i)
         img_data = img.get_data()
         img_data = np.fliplr(img_data)          #todo masks are flipped?
-        img_data = pad_img(img_data)
-        img_data = np.expand_dims(img_data,-1)
+        # img_data = pad_img(img_data)
+        img_data = resize(img_data)
+        img_data = np.expand_dims(img_data, -1)
         data.append(img_data)
 
-    for i in range(data[0][1, 1].shape[0]):
-        plt.imshow(data[0][..., i,0], cmap='gray')
-        plt.savefig('visualisation/mask_{}.pdf'.format(i))
+    # for i in range(data[0][1, 1].shape[0]):
+    #     plt.imshow(data[0][..., i,0], cmap='gray')
+    #     plt.savefig('visualisation/mask_{}.pdf'.format(i))
 
     return data
 
@@ -65,4 +68,16 @@ def pad_img(img):
 
         # plt.imshow(padded[...,i], cmap='gray')
         # plt.savefig('visualisation/padded/padded_{}.pdf'.format(i))
+    return padded
+
+
+def resize(img):
+    shape = (256, 256)
+    padded = np.empty((shape[0],shape[1], img.shape[2]))
+    for i in range (img.shape[2]):
+        padded[...,i] = tf.resize(img[...,i]/np.max(img[...,i]), output_shape = shape, mode = 'constant')       #Todo am normalizing the data here
+
+        plt.imshow(padded[...,i], cmap='gray')
+        plt.savefig('visualisation/padded/padded_{}.pdf'.format(i))
+
     return padded
