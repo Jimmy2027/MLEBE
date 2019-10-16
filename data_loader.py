@@ -23,9 +23,9 @@ def load_img():
         img_data = np.expand_dims(img_data,-1)
         data.append(img_data)
 
-    # for i in range(data[0][1, 1].shape[0]):
-    #     plt.imshow(data[0][..., i], cmap='gray')
-    #     plt.savefig('visualisation/img_{}.pdf'.format(i))
+    for i in range(data[0][1, 1].shape[0]):
+        plt.imshow(data[0][..., i,0], cmap='gray')
+        plt.savefig('visualisation/img_{}.pdf'.format(i))
 
     return data
 
@@ -48,9 +48,9 @@ def load_mask():
         img_data = np.expand_dims(img_data,-1)
         data.append(img_data)
 
-    # for i in range(data[0][1, 1].shape[0]):
-    #     plt.imshow(data[0][..., i], cmap='gray')
-    #     plt.savefig('visualisation/mask_{}.pdf'.format(i))
+    for i in range(data[0][1, 1].shape[0]):
+        plt.imshow(data[0][..., i,0], cmap='gray')
+        plt.savefig('visualisation/mask_{}.pdf'.format(i))
 
     return data
 
@@ -62,6 +62,7 @@ def pad_img(img):
         padd_y = shape[0] - img.shape[0]
         padd_x = shape[1] - img.shape[1]
         padded[...,i] = np.pad(img[..., i], ((padd_y//2, shape[0]-padd_y//2-img.shape[0]), (padd_x//2, shape[1]-padd_x//2-img.shape[1])),'constant')
+
         # plt.imshow(padded[...,i], cmap='gray')
         # plt.savefig('visualisation/padded/padded_{}.pdf'.format(i))
     return padded
