@@ -3,7 +3,8 @@ import nibabel as nib
 from matplotlib import pyplot as plt
 import numpy as np
 from skimage import transform as tf
-data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'
+# data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'   #local
+data_dir = '/usr/share/mouse-brain-atlases/'    #remote
 
 
 def load_img():
@@ -19,7 +20,6 @@ def load_img():
     for i in im_data:
         img = nib.load(i)
         img_data = img.get_data()
-        # img_data = pad_img(img_data)
         img_data = resize(img_data)
 
         img_data = np.expand_dims(img_data,-1)
@@ -46,7 +46,6 @@ def load_mask():
         img = nib.load(i)
         img_data = img.get_data()
         img_data = np.fliplr(img_data)          #todo masks are flipped?
-        # img_data = pad_img(img_data)
         img_data = resize(img_data)
         img_data = np.expand_dims(img_data, -1)
         data.append(img_data)
@@ -77,7 +76,7 @@ def resize(img):
     for i in range (img.shape[2]):
         padded[...,i] = tf.resize(img[...,i]/np.max(img[...,i]), output_shape = shape, mode = 'constant')       #Todo am normalizing the data here
 
-        plt.imshow(padded[...,i], cmap='gray')
-        plt.savefig('visualisation/padded/padded_{}.pdf'.format(i))
+        # plt.imshow(padded[...,i], cmap='gray')
+        # plt.savefig('visualisation/padded/padded_{}.pdf'.format(i))
 
     return padded
