@@ -3,7 +3,6 @@ import model
 import os
 import numpy as np
 from matplotlib import pyplot as plt
-import keras
 
 img_data = dl.load_img()
 mask_data = dl.load_mask()
