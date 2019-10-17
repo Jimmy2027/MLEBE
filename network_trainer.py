@@ -4,8 +4,9 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-img_data = dl.load_img()
 mask_data = dl.load_mask()
+
+img_data = dl.load_img()
 
 x_train = np.concatenate((img_data[0], img_data[1]), 2)
 x_train = np.reshape(x_train, (x_train.shape[2], x_train.shape[0], x_train.shape[1], x_train.shape[3]))

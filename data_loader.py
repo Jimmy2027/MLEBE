@@ -3,8 +3,9 @@ import nibabel as nib
 from matplotlib import pyplot as plt
 import numpy as np
 from skimage import transform as tf
-data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'   #local
-# data_dir = '/usr/share/mouse-brain-atlases/'    #remote
+
+# data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'   #local
+data_dir = '/usr/share/mouse-brain-atlases/'    #remote
 
 visualisation = False
 
@@ -29,7 +30,7 @@ def load_img():
                 plt.imshow(img_data[..., j], cmap='gray')
                 plt.savefig('visualisation/'+os.path.basename(i)+'/untouched_data/img_{}.pdf'.format(j))
 
-        img_data = resize(img_data)     #resizes the data to (256*256) AND normalizes it
+        img_data = resize(img_data)     #resizes the data to (256*256) AND normalizes it        #todo need to reshape data?
 
         img_data = np.expand_dims(img_data,-1)
         data.append(img_data)
@@ -75,7 +76,7 @@ def load_mask():
             if not os.path.exists(os.path.join('visualisation', os.path.basename(i), 'resized')):
                 os.makedirs(os.path.join('visualisation', os.path.basename(i), 'resized'))
             for j in range(img_data.shape[2]):
-                    plt.imshow(img_data[..., i, 0], cmap='gray')
+                    plt.imshow(img_data[..., j, 0], cmap='gray')
                     plt.savefig('visualisation/' + os.path.basename(i) + '/resized/img_{}.pdf'.format(j))
 
     return data
@@ -87,7 +88,7 @@ def pad_img(img):
     for i in range(img.shape[2]):
         padd_y = shape[0] - img.shape[0]
         padd_x = shape[1] - img.shape[1]
-        padded[...,i] = np.pad(img[..., i], ((padd_y//2, shape[0]-padd_y//2-img.shape[0]), (padd_x//2, shape[1]-padd_x//2-img.shape[1])),'constant')
+        padded[..., i] = np.pad(img[..., i], ((padd_y//2, shape[0]-padd_y//2-img.shape[0]), (padd_x//2, shape[1]-padd_x//2-img.shape[1])), 'constant')
     return padded
 
 
