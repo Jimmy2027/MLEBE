@@ -8,10 +8,18 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import model_selection
 import torch
-test = True
 
-img_data = dl.load_img()
-temp = dl.load_mask()
+test = True
+remote = True
+
+if remote == True:
+    img_data = dl.load_img_remote()
+    data_dir = '/usr/share/mouse-brain-atlases/'
+else:
+    img_data = dl.load_img()
+    data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
+
+temp = dl.load_mask(data_dir)
 mask_data = []
 for i in range(len(img_data)):
     mask_data.append(temp[0])

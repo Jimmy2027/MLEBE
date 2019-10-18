@@ -6,24 +6,47 @@ from skimage import transform as tf
 
 from utils import *
 
-image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
-data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'   #local
-# data_dir = '/usr/share/mouse-brain-atlases/'    #remote
 
-visualisation = False
+image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
+image_dir_remote = '/mnt/scratch/'
+
+
+def load_img_remote():
+    visualisation = False
+
+    im_data = []
+    for o in os.listdir(image_dir):
+        if o != 'irsabi':
+            for x in os.listdir(os.path.join(image_dir, o)):
+                if x.endswith('preprocessing'):
+                    for root, dirs, files in os.walk(os.path.join(image_dir, o, x)):
+                        for file in files:
+                            if file.endswith("_T2w.nii.gz"):
+                                im_data.append(os.path.join(root, file))
+
+
+
+    im_data = np.sort(im_data)
+    data = []
+    for i in im_data:
+        img = nib.load(i)
+        img_data = img.get_data()
+        path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
+        if visualisation == True:
+            save_img(img_data, path)
+            visualisation = False
+
+        data.append(img_data)
+    return data
 
 def load_img():
     visualisation = False
 
     im_data = []
-    for root, dirs, files in os.walk("/Users/Hendrik/Documents/mlebe_data/preprocessed"):
+    for root, dirs, files in os.walk(image_dir):
         for file in files:
             if file.endswith("TurboRARE_T2w.nii.gz"):
                 im_data.append(os.path.join(root, file))
-
-    for o in os.listdir(image_dir):
-        if o.endswith('200micron.nii'):
-            im_data.append(os.path.join(data_dir, o))
 
     im_data = np.sort(im_data)
     data = []
@@ -39,7 +62,7 @@ def load_img():
     return data
 
 
-def load_mask():
+def load_mask(data_dir):
     visualisation = False
 
     mask = []
