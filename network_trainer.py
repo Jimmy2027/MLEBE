@@ -1,33 +1,80 @@
 import data_loader as dl
 import model
+import utils
+from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
+from model import *
 import os
 import numpy as np
 from matplotlib import pyplot as plt
-
-mask_data = dl.load_mask()
+from sklearn import model_selection
+import torch
+test = True
 
 img_data = dl.load_img()
+temp = dl.load_mask()
+mask_data = []
+for i in range(len(img_data)):
+    mask_data.append(temp[0])
 
-x_train = np.concatenate((img_data[0], img_data[1]), 2)
-x_train = np.reshape(x_train, (x_train.shape[2], x_train.shape[0], x_train.shape[1], x_train.shape[3]))
-y_train = np.concatenate((mask_data[0], mask_data[1]), 2)
-y_train = np.reshape(y_train, (y_train.shape[2], y_train.shape[0], y_train.shape[1], y_train.shape[3]))
-x_test = img_data[2]
-x_test = np.reshape(x_test, (x_test.shape[2], x_test.shape[0], x_test.shape[1], x_test.shape[3]))
-y_test = mask_data[2]
-y_test = np.reshape(y_test, (y_test.shape[2], y_test.shape[0], y_test.shape[1],y_test.shape[3]))
+x_train, x_test , y_train, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.3)
+torch.save(x_test, 'x_test')
+torch.save(y_test, 'y_test')
 
-model = model.unet()
+x_train = np.concatenate(x_train, axis = 0)
+y_train = np.concatenate(y_train, axis = 0)
 
-history = model.fit(x_train, y_train, epochs = 5)
+input_shape = (x_train.shape[1:4])
+model_checkpoint = ModelCheckpoint('unet_membrane.hdf5', monitor='loss',verbose=1, save_best_only=True)
+if test == True:
+    model = model.twolayernetwork(input_shape, 3, 0.5)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+else:
+    model = model.unet()
+
+history = model.fit(x_train, y_train, epochs = 1, validation_split = 0.25, callbacks=[model_checkpoint])
+
+save_dir = 'results/'
+if not os.path.exists(save_dir):
+    os.mkdir(save_dir)
 
 print(history.history.keys())
+plt.figure()
+# Plot training & validation accuracy values
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
+plt.close()
 
-model.save('test.h5')
+plt.figure()
+# Plot training & validation loss values
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Validation'], loc='upper left')
+plt.savefig(os.path.join(save_dir, 'epochs_loss_values.png'))
+plt.close()
+
+
+model.save(save_dir + 'test.h5')
 
 y_pred = []
 for i in x_test:
     y_pred.append(model.predict(i, verbose=1))
+output = []
+for i in range(len(y_test)):
+    output.append(np.squeeze(y_pred[i]))
 
-np.save(os.path.join('y_pred'), y_pred)
+
+
+utils.save_datavisualisation3(x_test, y_test, output, save_dir)
+
+np.save(save_dir + 'y_pred', y_pred)
 

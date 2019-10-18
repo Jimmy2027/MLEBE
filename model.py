@@ -8,11 +8,10 @@ import numpy as np
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import *
-from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from tensorflow.keras import backend as keras
 
 
-def unet(pretrained_weights=None, input_size=(256, 256, 1)):
+def unet(pretrained_weights=None, input_size=(63, 96, 1)):
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)
@@ -66,5 +65,15 @@ def unet(pretrained_weights=None, input_size=(256, 256, 1)):
 
     if (pretrained_weights):
         model.load_weights(pretrained_weights)
+
+    return model
+
+def twolayernetwork(img_shape, kernel_size, Dropout_rate):
+    model = Sequential()
+
+    model.add(Conv2D(32, kernel_size, activation='relu', padding='same', input_shape=img_shape))
+    model.add(BatchNormalization())
+    model.add(Conv2D(1, kernel_size, activation='sigmoid', padding='same'))
+    model.add(BatchNormalization())
 
     return model
