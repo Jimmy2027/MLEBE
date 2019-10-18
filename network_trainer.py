@@ -7,7 +7,8 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import model_selection
-import torch
+
+
 
 test = True
 remote = True
@@ -16,6 +17,7 @@ if remote == True:
     img_data = dl.load_img_remote()
     data_dir = '/usr/share/mouse-brain-atlases/'
 else:
+    import torch
     img_data = dl.load_img()
     data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
@@ -52,8 +54,8 @@ if not os.path.exists(save_dir):
 print(history.history.keys())
 plt.figure()
 # Plot training & validation accuracy values
-plt.plot(history.history['acc'])
-plt.plot(history.history['val_acc'])
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
 plt.title('Model accuracy')
 plt.ylabel('Accuracy')
 plt.xlabel('Epoch')

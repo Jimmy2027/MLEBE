@@ -15,11 +15,11 @@ def load_img_remote():
     visualisation = False
 
     im_data = []
-    for o in os.listdir(image_dir):
+    for o in os.listdir(image_dir_remote):
         if o != 'irsabi':
-            for x in os.listdir(os.path.join(image_dir, o)):
+            for x in os.listdir(os.path.join(image_dir_remote, o)):
                 if x.endswith('preprocessing'):
-                    for root, dirs, files in os.walk(os.path.join(image_dir, o, x)):
+                    for root, dirs, files in os.walk(os.path.join(image_dir_remote, o, x)):
                         for file in files:
                             if file.endswith("_T2w.nii.gz"):
                                 im_data.append(os.path.join(root, file))
