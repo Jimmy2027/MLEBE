@@ -1,6 +1,7 @@
 import os
 import imageio
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 
@@ -58,4 +59,6 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
         print(image.shape)
         imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
+
+
         counter = counter + 1

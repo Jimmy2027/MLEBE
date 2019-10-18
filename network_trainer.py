@@ -22,6 +22,8 @@ torch.save(y_test, 'y_test')
 
 x_train = np.concatenate(x_train, axis = 0)
 y_train = np.concatenate(y_train, axis = 0)
+x_train = np.expand_dims(x_train, -1)
+y_train = np.expand_dims(y_train, -1)
 
 input_shape = (x_train.shape[1:4])
 model_checkpoint = ModelCheckpoint('unet_membrane.hdf5', monitor='loss',verbose=1, save_best_only=True)
@@ -67,14 +69,12 @@ model.save(save_dir + 'test.h5')
 
 y_pred = []
 for i in x_test:
+    i = np.expand_dims(i, -1)
     y_pred.append(model.predict(i, verbose=1))
 output = []
 for i in range(len(y_test)):
     output.append(np.squeeze(y_pred[i]))
 
-
-
-utils.save_datavisualisation3(x_test, y_test, output, save_dir)
 
 np.save(save_dir + 'y_pred', y_pred)
 

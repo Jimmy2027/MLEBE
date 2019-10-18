@@ -35,7 +35,6 @@ def load_img():
             save_img(img_data, path)
             visualisation = False
 
-        img_data = np.expand_dims(img_data,-1)
         data.append(img_data)
     return data
 
@@ -59,9 +58,7 @@ def load_mask():
         if visualisation == True:
             save_img(img_data, path)
             visualisation = False
-        img_data = np.fliplr(img_data)          #todo masks are flipped?
 
-        img_data = np.expand_dims(img_data, -1)
         data.append(img_data)
 
 
