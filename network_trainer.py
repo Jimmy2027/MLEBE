@@ -10,8 +10,9 @@ from sklearn import model_selection
 
 
 
-test = True
-remote = True
+test = False
+remote = False
+epochs = 1
 
 if remote == True:
     img_data = dl.load_img_remote()
@@ -42,10 +43,11 @@ if test == True:
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
-else:
-    model = model.unet()
 
-history = model.fit(x_train, y_train, epochs = 1, validation_split = 0.25, callbacks=[model_checkpoint])
+else:
+    model = model.unet(input_shape)
+
+history = model.fit(x_train, y_train, epochs=epochs, validation_split=0.25, callbacks=[model_checkpoint])
 
 save_dir = 'results/'
 if not os.path.exists(save_dir):

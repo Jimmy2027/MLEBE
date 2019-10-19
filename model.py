@@ -11,7 +11,7 @@ from tensorflow.keras.optimizers import *
 from tensorflow.keras import backend as keras
 
 
-def unet(pretrained_weights=None, input_size=(63, 96, 1)):
+def unet(input_size,pretrained_weights=None):
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)
@@ -59,7 +59,7 @@ def unet(pretrained_weights=None, input_size=(63, 96, 1)):
 
     model = Model(input=inputs, output=conv10)
 
-    model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+    # model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
 
     # model.summary()
 
@@ -77,3 +77,11 @@ def twolayernetwork(img_shape, kernel_size, Dropout_rate):
     model.add(BatchNormalization())
 
     return model
+
+if __name__ == '__main__':      #only gets called if Unet.py is run
+
+    model = unet((64,128,1))
+
+    from keras.utils import plot_model
+
+    plot_model(model, to_file='unet.png', show_shapes=True)

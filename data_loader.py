@@ -89,7 +89,7 @@ def load_mask(data_dir):
 
 
 def pad_img(img):
-    shape = (256, 256)
+    shape = (64, 128)
     padded = np.empty((shape[0],shape[1], img.shape[2]))
     for i in range(img.shape[2]):
         padd_y = shape[0] - img.shape[0]
