@@ -31,6 +31,8 @@ def load_img_remote():
     for i in im_data:
         img = nib.load(i)
         img_data = img.get_data()
+        temp = np.reshape(img_data, (img_data.shape[2], img_data.shape[0], img_data.shape[1]))
+        img_data = pad_img(temp)
         path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
         if visualisation == True:
             save_img(img_data, path)
@@ -40,7 +42,7 @@ def load_img_remote():
     return data
 
 def load_img():
-    visualisation = False
+    visualisation = True
 
     im_data = []
     for root, dirs, files in os.walk(image_dir):
@@ -53,6 +55,8 @@ def load_img():
     for i in im_data:
         img = nib.load(i)
         img_data = img.get_data()
+        temp = np.reshape(img_data, (img_data.shape[2], img_data.shape[0], img_data.shape[1]))
+        img_data = pad_img(temp)
         path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
         if visualisation == True:
             save_img(img_data, path)
@@ -63,7 +67,7 @@ def load_img():
 
 
 def load_mask(data_dir):
-    visualisation = False
+    visualisation = True
 
     mask = []
     im_data = []
@@ -77,6 +81,8 @@ def load_mask(data_dir):
     for i in im_data:
         img = nib.load(i)
         img_data = img.get_data()
+        temp = np.reshape(img_data, (img_data.shape[2], img_data.shape[0], img_data.shape[1]))
+        img_data = pad_img(temp)
         path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
         if visualisation == True:
             save_img(img_data, path)
@@ -90,11 +96,11 @@ def load_mask(data_dir):
 
 def pad_img(img):
     shape = (64, 128)
-    padded = np.empty((shape[0],shape[1], img.shape[2]))
-    for i in range(img.shape[2]):
-        padd_y = shape[0] - img.shape[0]
-        padd_x = shape[1] - img.shape[1]
-        padded[..., i] = np.pad(img[..., i], ((padd_y//2, shape[0]-padd_y//2-img.shape[0]), (padd_x//2, shape[1]-padd_x//2-img.shape[1])), 'constant')
+    padded = np.empty((img.shape[2], shape[0],shape[1]))
+    for i in range(img.shape[0]):
+        padd_y = shape[0] - img.shape[1]
+        padd_x = shape[1] - img.shape[2]
+        padded[i,...] = np.pad(img[i,...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
     return padded
 
 

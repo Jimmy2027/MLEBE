@@ -10,9 +10,11 @@ from sklearn import model_selection
 
 
 
-test = False
+test = True
 remote = False
 epochs = 1
+
+"""shape = (z,x,y)"""
 
 if remote == True:
     img_data = dl.load_img_remote()
@@ -30,6 +32,7 @@ for i in range(len(img_data)):
 x_train, x_test , y_train, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.3)
 torch.save(x_test, 'x_test')
 torch.save(y_test, 'y_test')
+
 
 x_train = np.concatenate(x_train, axis = 0)
 y_train = np.concatenate(y_train, axis = 0)
@@ -86,6 +89,8 @@ for i in x_test:
 output = []
 for i in range(len(y_test)):
     output.append(np.squeeze(y_pred[i]))
+
+utils.save_datavisualisation3(x_test, y_test, output, 'results/', index_first=True, normalized= False)
 
 
 np.save(save_dir + 'y_pred', y_pred)

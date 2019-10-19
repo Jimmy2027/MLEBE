@@ -9,7 +9,8 @@ def save_img(img_data, path):
     if not os.path.exists(path):
         os.makedirs(path)
     for j in range(img_data.shape[2]):
-        imageio.imwrite(os.path.join(path, 'img_{}.png'.format(j)), img_data[..., j])
+        plt.imshow(img_data[..., j], cmap='gray')
+        plt.savefig(os.path.join(path, 'img_{}.png'.format(j)))
 
 
 
