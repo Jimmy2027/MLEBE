@@ -55,11 +55,6 @@ def load_img(visualisation):
         img = nib.load(i)
         img_data = img.get_data()
         temp = np.moveaxis(img_data,2,0)
-        path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
-        if visualisation == True:
-            save_img(img_data, path)
-            visualisation = False
-        visualisation = True
         img_data = pad_img(temp)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:
@@ -85,13 +80,8 @@ def load_mask(data_dir, visualisation):
         img = nib.load(i)
         img_data = img.get_data()
         temp = np.moveaxis(img_data,2,0)
-        path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
-        if visualisation == True:
-            save_img(img_data, path)
-            visualisation = False
         img_data = pad_img(temp)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
-        visualisation = True
         if visualisation == True:
             save_img(img_data, path)
             visualisation = False
