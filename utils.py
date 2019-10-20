@@ -5,6 +5,27 @@ from matplotlib import pyplot as plt
 
 
 
+
+def data_normalization(data):
+    """
+
+    :param
+    :return:
+    """
+
+    for i in data:
+        for j in range(0, i.shape[0]):
+            print(i.shape)
+            print(j)
+            i[j] = i[j]*1.
+            i[j] = np.clip(i[j], 0, np.percentile(i[j], 99))
+
+            i[j] = i[j] - np.amin(i[j])
+            if np.amax(i[j]) != 0:
+                i[j] = i[j] / np.amax(i[j])
+    return data
+
+
 def save_img(img_data, path):
     if not os.path.exists(path):
         os.makedirs(path)

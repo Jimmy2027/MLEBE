@@ -33,6 +33,7 @@ def load_img_remote():
         img_data = img.get_data()
         temp = np.moveaxis(img_data,2,0)
         img_data = pad_img(temp)
+        img_data = data_normalization(img_data)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:
             save_img(img_data, path)
@@ -56,6 +57,7 @@ def load_img(visualisation):
         img_data = img.get_data()
         temp = np.moveaxis(img_data,2,0)
         img_data = pad_img(temp)
+        img_data = data_normalization(img_data)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:
             save_img(img_data, path)
@@ -81,6 +83,7 @@ def load_mask(data_dir, visualisation):
         img_data = img.get_data()
         temp = np.moveaxis(img_data,2,0)
         img_data = pad_img(temp)
+        img_data = data_normalization(img_data)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:
             save_img(img_data, path)
