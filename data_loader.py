@@ -31,9 +31,9 @@ def load_img_remote():
     for i in im_data:
         img = nib.load(i)
         img_data = img.get_data()
-        temp = np.reshape(img_data, (img_data.shape[2], img_data.shape[0], img_data.shape[1]))
+        temp = np.moveaxis(img_data,2,0)
         img_data = pad_img(temp)
-        path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
+        path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:
             save_img(img_data, path)
             visualisation = False
@@ -41,8 +41,7 @@ def load_img_remote():
         data.append(img_data)
     return data
 
-def load_img():
-    visualisation = True
+def load_img(visualisation):
 
     im_data = []
     for root, dirs, files in os.walk(image_dir):
@@ -55,9 +54,14 @@ def load_img():
     for i in im_data:
         img = nib.load(i)
         img_data = img.get_data()
-        temp = np.reshape(img_data, (img_data.shape[2], img_data.shape[0], img_data.shape[1]))
-        img_data = pad_img(temp)
+        temp = np.moveaxis(img_data,2,0)
         path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
+        if visualisation == True:
+            save_img(img_data, path)
+            visualisation = False
+        visualisation = True
+        img_data = pad_img(temp)
+        path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:
             save_img(img_data, path)
             visualisation = False
@@ -66,8 +70,7 @@ def load_img():
     return data
 
 
-def load_mask(data_dir):
-    visualisation = True
+def load_mask(data_dir, visualisation):
 
     mask = []
     im_data = []
@@ -81,9 +84,14 @@ def load_mask(data_dir):
     for i in im_data:
         img = nib.load(i)
         img_data = img.get_data()
-        temp = np.reshape(img_data, (img_data.shape[2], img_data.shape[0], img_data.shape[1]))
-        img_data = pad_img(temp)
+        temp = np.moveaxis(img_data,2,0)
         path = os.path.join('visualisation', os.path.basename(i), 'untouched_data')
+        if visualisation == True:
+            save_img(img_data, path)
+            visualisation = False
+        img_data = pad_img(temp)
+        path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
+        visualisation = True
         if visualisation == True:
             save_img(img_data, path)
             visualisation = False
@@ -96,17 +104,17 @@ def load_mask(data_dir):
 
 def pad_img(img):
     shape = (64, 128)
-    padded = np.empty((img.shape[2], shape[0],shape[1]))
+    padded = np.empty((img.shape[0], shape[0], shape[1]))
     for i in range(img.shape[0]):
         padd_y = shape[0] - img.shape[1]
         padd_x = shape[1] - img.shape[2]
-        padded[i,...] = np.pad(img[i,...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
+        padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
     return padded
 
 
 def resize(img):
     shape = (256, 256)
-    padded = np.empty((shape[0],shape[1], img.shape[2]))
+    padded = np.empty((shape[0], shape[1], img.shape[2]))
     for i in range (img.shape[2]):
         padded[...,i] = tf.resize(img[..., i]/np.max(img[..., i]), output_shape = shape, mode = 'constant')       #Todo am normalizing the data here
     return padded

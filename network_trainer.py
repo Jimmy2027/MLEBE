@@ -12,6 +12,7 @@ from sklearn import model_selection
 
 test = True
 remote = False
+visualisation = False
 epochs = 1
 
 """shape = (z,x,y)"""
@@ -21,17 +22,18 @@ if remote == True:
     data_dir = '/usr/share/mouse-brain-atlases/'
 else:
     import torch
-    img_data = dl.load_img()
+    img_data = dl.load_img(visualisation)
     data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
-temp = dl.load_mask(data_dir)
+temp = dl.load_mask(data_dir, visualisation)
 mask_data = []
 for i in range(len(img_data)):
     mask_data.append(temp[0])
 
 x_train, x_test , y_train, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.3)
-torch.save(x_test, 'x_test')
-torch.save(y_test, 'y_test')
+
+# torch.save(x_test, 'x_test')
+# torch.save(y_test, 'y_test')
 
 
 x_train = np.concatenate(x_train, axis = 0)
@@ -40,7 +42,7 @@ x_train = np.expand_dims(x_train, -1)
 y_train = np.expand_dims(y_train, -1)
 
 input_shape = (x_train.shape[1:4])
-model_checkpoint = ModelCheckpoint('unet_membrane.hdf5', monitor='loss',verbose=1, save_best_only=True)
+model_checkpoint = ModelCheckpoint('unet_membrane.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
     model = model.twolayernetwork(input_shape, 3, 0.5)
     model.compile(loss='binary_crossentropy',
@@ -58,9 +60,13 @@ if not os.path.exists(save_dir):
 
 print(history.history.keys())
 plt.figure()
-# Plot training & validation accuracy values
-plt.plot(history.history['accuracy'])
-plt.plot(history.history['val_accuracy'])
+# Plot training & validation accuracy values:
+if remote == True:
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+else:
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
 plt.title('Model accuracy')
 plt.ylabel('Accuracy')
 plt.xlabel('Epoch')
