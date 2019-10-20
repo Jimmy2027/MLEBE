@@ -9,14 +9,12 @@ from matplotlib import pyplot as plt
 def data_normalization(data):
     """
 
-    :param
-    :return:
+    :param data: shape: (x,y)
+    :return: normalised input
     """
 
     for i in data:
         for j in range(0, i.shape[0]):
-            print(i.shape)
-            print(j)
             i[j] = i[j]*1.
             i[j] = np.clip(i[j], 0, np.percentile(i[j], 99))
 
@@ -47,8 +45,7 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
             predicted_labels_temp.append(np.moveaxis(predicted_labels[i], 0, -1))
     counter = 0
     for i, j, k in zip(img_data_temp[:], myocar_labels_temp[:], predicted_labels_temp[:]):
-        print(counter)
-        print(i.shape)
+
         i_patch = i[:, :, 0]
         if normalized == True:
             i_patch = i_patch*255
@@ -80,7 +77,6 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
         image = np.vstack((i_patch, j_patch, k_patch))
 
-        print(image.shape)
         imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
 
 
