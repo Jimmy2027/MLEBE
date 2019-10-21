@@ -2,6 +2,7 @@ import data_loader as dl
 import model
 import utils
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
+import keras.preprocessing as kp
 from model import *
 import os
 import numpy as np
@@ -14,6 +15,14 @@ test = True
 remote = False
 visualisation = False
 epochs = 1
+
+data_gen_args = dict(rotation_range=0.2,
+                    width_shift_range=0.05,
+                    height_shift_range=0.05,
+                    shear_range=0.05,
+                    zoom_range=0.05,
+                    horizontal_flip=True,
+                    fill_mode='nearest')
 
 """shape = (z,x,y)"""
 
@@ -30,16 +39,20 @@ mask_data = []
 for i in range(len(img_data)):
     mask_data.append(temp[0])
 
-x_train, x_test , y_train, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.3)
+x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.1)
 
-# torch.save(x_test, 'x_test')
-# torch.save(y_test, 'y_test')
+np.save('x_test', np.array(x_test))
+np.save('y_test', np.array(y_test))
 
 
-x_train = np.concatenate(x_train, axis = 0)
-y_train = np.concatenate(y_train, axis = 0)
-x_train = np.expand_dims(x_train, -1)
-y_train = np.expand_dims(y_train, -1)
+
+x_train1 = np.concatenate(x_train1, axis = 0)
+y_train1 = np.concatenate(y_train1, axis = 0)
+x_train1= np.expand_dims(x_train1, -1)
+y_train1 = np.expand_dims(y_train1, -1)
+x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25)
+
+
 
 input_shape = (x_train.shape[1:4])
 model_checkpoint = ModelCheckpoint('unet_membrane.hdf5', monitor='loss', verbose=1, save_best_only=True)
@@ -52,7 +65,11 @@ if test == True:
 else:
     model = model.unet(input_shape)
 
-history = model.fit(x_train, y_train, epochs=epochs, validation_split=0.25, callbacks=[model_checkpoint])
+
+aug = kp.image.ImageDataGenerator(**data_gen_args)
+
+
+history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint])
 
 save_dir = 'results/'
 if not os.path.exists(save_dir):

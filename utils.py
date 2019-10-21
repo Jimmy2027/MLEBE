@@ -35,6 +35,8 @@ def save_img(img_data, path):
 
 
 def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_folder, index_first = False, normalized = False):
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
     img_data_temp = []
     myocar_labels_temp = []
     predicted_labels_temp = []
