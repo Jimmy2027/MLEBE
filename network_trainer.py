@@ -2,7 +2,7 @@ import data_loader as dl
 import model
 import utils
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
-import keras.preprocessing as kp
+import tensorflow.keras.preprocessing as kp
 from model import *
 import os
 import numpy as np
@@ -55,7 +55,7 @@ x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_tr
 
 
 input_shape = (x_train.shape[1:4])
-model_checkpoint = ModelCheckpoint('unet_membrane.hdf5', monitor='loss', verbose=1, save_best_only=True)
+model_checkpoint = ModelCheckpoint('unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
     model = model.twolayernetwork(input_shape, 3, 0.5)
     model.compile(loss='binary_crossentropy',

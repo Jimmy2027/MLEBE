@@ -11,7 +11,7 @@ from tensorflow.keras.optimizers import *
 from tensorflow.keras import backend as keras
 
 
-def unet(input_size,pretrained_weights=None):
+def unet(input_size, pretrained_weights=None):
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)
