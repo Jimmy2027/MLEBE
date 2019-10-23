@@ -16,6 +16,10 @@ remote = False
 visualisation = False
 epochs = 1
 
+save_dir = 'results/'
+if not os.path.exists(save_dir):
+    os.mkdir(save_dir)
+
 data_gen_args = dict(rotation_range=0.2,
                     width_shift_range=0.05,
                     height_shift_range=0.05,
@@ -39,10 +43,10 @@ mask_data = []
 for i in range(len(img_data)):
     mask_data.append(temp[0])
 
-x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.1)
+x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.9)
 
-np.save('x_test', np.array(x_test))
-np.save('y_test', np.array(y_test))
+np.save(os.path.join(save_dir, 'x_test'), np.array(x_test))
+np.save(os.path.join(save_dir, 'x_test'), np.array(y_test))
 
 
 
@@ -55,7 +59,7 @@ x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_tr
 
 
 input_shape = (x_train.shape[1:4])
-model_checkpoint = ModelCheckpoint('unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
+model_checkpoint = ModelCheckpoint('results/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
     model = model.twolayernetwork(input_shape, 3, 0.5)
     model.compile(loss='binary_crossentropy',
@@ -71,9 +75,7 @@ aug = kp.image.ImageDataGenerator(**data_gen_args)
 
 history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint])
 
-save_dir = 'results/'
-if not os.path.exists(save_dir):
-    os.mkdir(save_dir)
+
 
 print(history.history.keys())
 plt.figure()
