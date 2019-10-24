@@ -14,10 +14,12 @@ image_dir_remote = '/mnt/scratch/'
 def load_bidsdata():
     for o in os.listdir(not_preprocessed_dir):
         if not o.startswith('irsabi'):
-                for root, dirs, files in os.walk(os.path.join(image_dir_remote, o)):
-                    for file in files:
-                        if file.endswith("_T2w.nii.gz"):
-                            print(root)
+            for x in os.listdir(os.path.join(image_dir_remote, o)):
+                if x.endswith('bidsdata'):
+                    for root, dirs, files in os.walk(os.path.join(image_dir_remote, o, x)):
+                        for file in files:
+                            if file.endswith("_T2w.nii.gz"):
+                                print(root)
 
 
 
