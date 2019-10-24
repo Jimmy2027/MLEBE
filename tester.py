@@ -4,9 +4,10 @@ import utils
 import os
 
 path = '/Users/Hendrik/Desktop/mlebe/'
-# path = ''
+path = 'results/'
 
-model = keras.models.load_model(path )
+model = keras.models.load_model(path + 'unet_ep01_val_loss0.59.hdf5')
+
 x_test = np.load('/Users/Hendrik/Documents/OneDrive\ -\ ETHZ/Master\ 1/Desktop/mlebe/unet_membrane.hdf5/x_test.npy')
 y_test = np.load('/Users/Hendrik/Documents/OneDrive\ -\ ETHZ/Master\ 1/Desktop/mlebe/unet_membrane.hdf5/y_test.npy')
 

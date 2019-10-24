@@ -9,7 +9,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import model_selection
 
-
+#todo ANTs resample non registered images and test model on them
 
 test = True
 remote = False
