@@ -6,9 +6,19 @@ from skimage import transform as tf
 
 from utils import *
 
-
+not_preprocessed_dir = '/usr/share/'
 image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
 image_dir_remote = '/mnt/scratch/'
+
+
+def load_bidsdata():
+    for o in os.listdir(not_preprocessed_dir):
+        if not o.startswith('irsabi'):
+                for root, dirs, files in os.walk(os.path.join(image_dir_remote, o)):
+                    for file in files:
+                        if file.endswith("_T2w.nii.gz"):
+                            print(root)
+
 
 
 def load_img_remote():
@@ -111,3 +121,7 @@ def resize(img):
     for i in range (img.shape[2]):
         padded[...,i] = tf.resize(img[..., i]/np.max(img[..., i]), output_shape = shape, mode = 'constant')       #Todo am normalizing the data here
     return padded
+
+
+if __name__ == '__main__':      #only gets called if Unet.py is run
+    load_bidsdata()
