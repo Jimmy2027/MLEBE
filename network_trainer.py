@@ -14,7 +14,10 @@ from sklearn import model_selection
 test = True
 remote = False
 visualisation = False
-epochs = 1
+epochs = 50
+
+if test == True:
+    epochs = 1
 
 save_dir = 'results/'
 if not os.path.exists(save_dir):
@@ -43,7 +46,10 @@ mask_data = []
 for i in range(len(img_data)):
     mask_data.append(temp[0])
 
-x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.9)
+if test == True:
+    x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.9) #todo do I need a test set? what do the scores tell me?
+else:
+    x_train1, x_test, y_train1, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.1)
 
 np.save(os.path.join(save_dir, 'x_test'), np.array(x_test))
 np.save(os.path.join(save_dir, 'x_test'), np.array(y_test))
