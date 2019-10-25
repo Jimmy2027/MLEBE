@@ -12,12 +12,22 @@ image_dir_remote = '/mnt/scratch/'
 
 
 def load_bidsdata():
+    """
+
+    :return: list of paths of all the bids files
+    """
+    paths = []
+    files = []
     for o in os.listdir(not_preprocessed_dir):
         if not o.startswith('irsabi') and o.endswith('bidsdata'):
             for root, dirs, files in os.walk(os.path.join(not_preprocessed_dir, o)):
                 for file in files:
                     if file.endswith("_T2w.nii.gz"):
-                        print(root)
+                        paths.append(os.path.join(not_preprocessed_dir, o, root, file))
+                        files.append(file)
+    return paths, files
+
+
 
 
 

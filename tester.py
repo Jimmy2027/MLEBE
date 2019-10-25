@@ -2,14 +2,15 @@ import numpy as np
 from tensorflow import keras
 import utils
 import os
+import data_loader as dl
 
 path = '/Users/Hendrik/Desktop/mlebe/'
 path = 'results/'
 
 model = keras.models.load_model(path + 'unet_ep01_val_loss0.59.hdf5')
 
-x_test = np.load('/Users/Hendrik/Documents/OneDrive\ -\ ETHZ/Master\ 1/Desktop/mlebe/unet_membrane.hdf5/x_test.npy')
-y_test = np.load('/Users/Hendrik/Documents/OneDrive\ -\ ETHZ/Master\ 1/Desktop/mlebe/unet_membrane.hdf5/y_test.npy')
+x_test = np.load(path + '/x_test.npy')
+y_test = np.load(path + '/y_test.npy')
 
 y_pred = []
 for i in x_test:
