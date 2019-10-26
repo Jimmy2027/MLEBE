@@ -17,7 +17,7 @@ def load_bidsdata():
     :return: list of paths of all the bids files
     """
     paths = []
-    files = []
+    filess = []
     for o in os.listdir(not_preprocessed_dir):
         if not o.startswith('irsabi') and o.endswith('bidsdata'):
             for root, dirs, files in os.walk(os.path.join(not_preprocessed_dir, o)):
@@ -25,8 +25,8 @@ def load_bidsdata():
                     if file.endswith("_T2w.nii.gz"):
                         print(os.path.join(not_preprocessed_dir, o, root, file))
                         paths.append(os.path.join(not_preprocessed_dir, o, root, file))
-                        files.append(file)
-    return paths, files
+                        filess.append(file)
+    return paths, filess
 
 
 
