@@ -23,6 +23,7 @@ def load_bidsdata():
             for root, dirs, files in os.walk(os.path.join(not_preprocessed_dir, o)):
                 for file in files:
                     if file.endswith("_T2w.nii.gz"):
+                        print(os.path.join(not_preprocessed_dir, o, root, file))
                         paths.append(os.path.join(not_preprocessed_dir, o, root, file))
                         files.append(file)
     return paths, files
