@@ -4,6 +4,25 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 
+import data_loader as dl
+
+
+def resample_bidsdata():
+    """
+    Resamples all the bidsdata and stores it to /var/tmp/resampled/
+
+    """
+
+    bids_datas, file_names = dl.load_bidsdata()
+    path = '/var/tmp/resampled/'
+
+    for i in range(len(bids_datas)):
+        input_image = bids_datas[i]
+        file_name = file_names[i]
+        cmd = 'ResampleImage 3 {input} '.format(input=input_image) + path + '{output} 0.2x0.2x0.2'.format(
+            output=file_name)
+        os.system(cmd)
+        print(cmd)
 
 
 def data_normalization(data):
@@ -32,6 +51,43 @@ def save_img(img_data, path):
         plt.imshow(img_data[j, ...], cmap='gray')
         plt.savefig(os.path.join(path, 'img_{}.png'.format(j)))
 
+
+def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False):
+    if index_first == True:
+        for i in range(0, len(img_data)):
+            img_data[i] = np.moveaxis(img_data[i], 0, -1)
+            myocar_labels[i] = np.moveaxis(myocar_labels[i], 0, -1)
+
+    counter = 0
+    for i, j in zip(img_data[:], myocar_labels[:]):
+        print(counter)
+        print(i.shape)
+        i_patch = i[:, :, 0]
+        if normalized == True:
+            i_patch = i_patch*255
+        # np.squeeze(i_patch)
+
+        j_patch = j[:, :, 0]
+        # np.squeeze(j_patch)
+        j_patch = j_patch * 255
+        for slice in range(1, i.shape[2]):
+            temp = i[:, :, slice]
+            # np.squeeze(temp)
+            if normalized == True:
+                temp = temp * 255
+            i_patch = np.hstack((i_patch, temp))
+
+
+            temp = j[:, :, slice]
+            # np.squeeze(temp)
+            temp = temp * 255
+            j_patch = np.hstack((j_patch, temp))
+
+        image = np.vstack((i_patch, j_patch))
+
+        print(image.shape)
+        imageio.imwrite('visualisation/' + save_folder + '%d.png' % (counter,), image)
+        counter = counter + 1
 
 
 def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_folder, index_first = False, normalized = False):
@@ -83,3 +139,27 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
 
         counter = counter + 1
+
+
+
+def pad_img(img):
+    shape = (64, 128)
+    padded = np.empty((img.shape[0], shape[0], shape[1]))
+    for i in range(img.shape[0]):
+        padd_y = shape[0] - img.shape[1]
+        padd_x = shape[1] - img.shape[2]
+        if padd_y < 0:
+            something = np.empty((img.shape[0], shape[0], img.shape[2]))
+            something[i] = img[i,-padd_y//2:img.shape[1]+padd_y//2,...]
+            padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
+        else:
+            padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
+    return padded
+
+
+def resize(img):
+    shape = (256, 256)
+    padded = np.empty((shape[0], shape[1], img.shape[2]))
+    for i in range (img.shape[2]):
+        padded[...,i] = tf.resize(img[..., i]/np.max(img[..., i]), output_shape = shape, mode = 'constant')       #Todo am normalizing the data here
+    return padded

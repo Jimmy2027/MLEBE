@@ -16,6 +16,7 @@ test = True
 remote = False
 visualisation = False
 epochs = 50
+seed = 1
 
 if test == True:
     epochs = 1
@@ -48,12 +49,12 @@ for i in range(len(img_data)):
     mask_data.append(temp[0])
 
 if test == True:
-    x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.9) #todo do I need a test set? what do the scores tell me?
+    x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.9) #todo do I need a test set? what do the scores tell me?
 else:
-    x_train1, x_test, y_train1, y_test = model_selection.train_test_split(img_data, mask_data, test_size=0.1)
+    x_train1, x_test, y_train1, y_test = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.1)
 
 np.save(os.path.join(save_dir, 'x_test'), np.array(x_test))
-np.save(os.path.join(save_dir, 'x_test'), np.array(y_test))
+np.save(os.path.join(save_dir, 'y_test'), np.array(y_test))
 
 
 

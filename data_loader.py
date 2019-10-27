@@ -75,8 +75,8 @@ def load_img(visualisation):
     data = []
     for i in im_data:
         img = nib.load(i)
-        img_data = img.get_data()
-        temp = np.moveaxis(img_data,2,0)
+        img_data = img.get_data()   #shape = (63, 96, 48)
+        temp = np.moveaxis(img_data,2,0)    #shape = (48, 63, 96)
         img_data = pad_img(temp)
         img_data = data_normalization(img_data)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
@@ -116,22 +116,7 @@ def load_mask(data_dir, visualisation):
     return data
 
 
-def pad_img(img):
-    shape = (64, 128)
-    padded = np.empty((img.shape[0], shape[0], shape[1]))
-    for i in range(img.shape[0]):
-        padd_y = shape[0] - img.shape[1]
-        padd_x = shape[1] - img.shape[2]
-        padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
-    return padded
 
-
-def resize(img):
-    shape = (256, 256)
-    padded = np.empty((shape[0], shape[1], img.shape[2]))
-    for i in range (img.shape[2]):
-        padded[...,i] = tf.resize(img[..., i]/np.max(img[..., i]), output_shape = shape, mode = 'constant')       #Todo am normalizing the data here
-    return padded
 
 
 if __name__ == '__main__':      #only gets called if Unet.py is run
