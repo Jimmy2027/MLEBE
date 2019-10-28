@@ -21,7 +21,7 @@ seed = 1
 if test == True:
     epochs = 1
 
-save_dir = 'results/'
+save_dir = 'results/test'
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 

@@ -11,25 +11,35 @@ import data_loader as dl
 local = True
 
 if local == True:
-    path = '/Users/Hendrik/Desktop/resampled/'
-    model_path = '/Users/Hendrik/Desktop/results/unet_ep35_val_loss0.07.hdf5'
+    path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
+    model_path = '/Users/Hendrik/Documents/Semester_project/results/unet_ep01_val_loss5.48.hdf5'
+    save_path = '/Users/Hendrik/Documents/mlebe_data/predictions/'
 else:
     path = '/var/tmp/resampled/'
-    model_path = '/src/mlebe/results/unet_ep35_val_loss0.07.hdf5'
+    model_path = '/home/hendrik/src/mlebe/results/unet_ep35_val_loss0.07.hdf5'
+    save_path = '/home/hendrik/src/mlebe/results/predictions/'
 
 
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 data = []
 file_names = []
+affines = []
 for o in os.listdir(path):
     if not o.startswith('.'):
+        print(o)
         file_names.append(o)
         img = nib.load(os.path.join(path, o))
+        affines.append(img.affine)
         img_data = img.get_data()
         temp = np.moveaxis(img_data, 0, 1)
         img_data = utils.pad_img(temp)
         img_data = utils.data_normalization(img_data)
         data.append(img_data)
 
+# np.save('/Users/Hendrik/Documents/Semester_project/temp/data',data)
+# np.save('/Users/Hendrik/Documents/Semester_project/temp/file_names', file_names)
+# np.save('/Users/Hendrik/Documents/Semester_project/temp/affines', affines)
 model = keras.models.load_model(model_path)
 
 y_pred = []
@@ -39,13 +49,14 @@ for i in data:
 
 for i in range(len(y_pred)):
     file_name = file_names[i]
-    nib.save(y_pred, os.path.join('results', 'mask_'+file_name))
+    img = nib.Nifti1Image(y_pred[i], affines[i])
+    nib.save(img, os.path.join(save_path, 'mask_' + file_name))
 output = []
 for i in range(len(data)):
     output.append(np.squeeze(y_pred[i]))
 
-utils.save_datavisualisation2(data, y_pred, '/Users/Hendrik/Desktop/results/', index_first=True, normalized= True)
+utils.save_datavisualisation2(data, output, save_path, index_first=True, normalized= True)
 
-something = 0
+
 
 
