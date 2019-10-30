@@ -12,6 +12,8 @@ def resample_bidsdata():
     Resamples all the bidsdata and stores it to /var/tmp/resampled/
 
     """
+    #todo if RIA change to RAS: fslswapdim input LR PA IS
+    #fslhd header aufrufen
 
     bids_datas, file_names = dl.load_bidsdata()
     path = '/var/tmp/resampled/'
@@ -19,10 +21,13 @@ def resample_bidsdata():
     for i in range(len(bids_datas)):
         input_image = bids_datas[i]
         file_name = file_names[i]
-        cmd = 'ResampleImage 3 {input} '.format(input=input_image) + path + '{output} 0.2x0.2x0.2'.format(
+        resample_cmd = 'ResampleImage 3 {input} '.format(input=input_image) + path + '{output} 0.2x0.2x0.2'.format(
             output=file_name)
-        os.system(cmd)
-        print(cmd)
+        os.system(resample_cmd)
+        print(resample_cmd)
+        # dimension_change_command = 'fslswapdim {input} LR PA IS {output}'.format(input = file_name, output = file_name)
+        # os.system(dimension_change_command)
+        # print(dimension_change_command)
 
 
 def data_normalization(data):
@@ -52,7 +57,7 @@ def save_img(img_data, path):
         plt.savefig(os.path.join(path, 'img_{}.png'.format(j)))
 
 
-def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False):
+def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False, file_names = False):
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
@@ -87,12 +92,14 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
 
         image = np.vstack((i_patch, j_patch))
 
-        print(image.shape)
-        imageio.imwrite(save_folder + '%d.png' % (counter,), image)
+        if file_names == False:
+            imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
+        else:
+            imageio.imwrite(save_folder + file_names[counter] + '.png', image)
         counter = counter + 1
 
 
-def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_folder, index_first = False, normalized = False):
+def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_folder, index_first = False, normalized = False, file_names = False):
     """
 
     :param img_data: list of arrays with shape (z, 64, 128) (if index first == true)
@@ -101,6 +108,8 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
     :param save_folder:
     :param index_first:
     :param normalized:
+    :param file_names: list of file_names
+
     :return:
     """
     if not os.path.exists(save_folder):
@@ -143,8 +152,10 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
         image = np.vstack((i_patch, j_patch, k_patch))
 
-        imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
-
+        if file_names == False:
+            imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
+        else:
+            imageio.imwrite(save_folder + file_names[counter] + '.png', image)
 
         counter = counter + 1
 

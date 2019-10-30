@@ -13,11 +13,11 @@ local = True
 if local == True:
     path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
     model_path = '/Users/Hendrik/Documents/Semester_project/results/unet_ep01_val_loss5.48.hdf5'
-    save_path = '/Users/Hendrik/Documents/mlebe_data/predictions/'
+    save_path = '/Users/Hendrik/Documents/mlebe_data/temp_bids/'
 else:
     path = '/var/tmp/resampled/'
     model_path = '/home/hendrik/src/mlebe/results/unet_ep35_val_loss0.07.hdf5'
-    save_path = '/home/hendrik/src/mlebe/results/predictions/'
+    save_path = '/home/hendrik/src/mlebe/results/bids_predictions/'
 
 
 if not os.path.exists(save_path):
@@ -49,7 +49,8 @@ for i in data:
 
 for i in range(len(y_pred)):
     file_name = file_names[i]
-    img = nib.Nifti1Image(y_pred[i], affines[i])
+    temp = np.moveaxis(img_data, 0, 1)
+    img = nib.Nifti1Image(temp, affines[i])
     nib.save(img, os.path.join(save_path, 'mask_' + file_name))
 output = []
 for i in range(len(data)):

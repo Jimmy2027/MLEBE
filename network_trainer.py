@@ -9,7 +9,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import model_selection
 
-#todo ANTs resample non registered images and test model on them under var/temp
+#todo save images with file names
 
 
 test = True
@@ -38,11 +38,11 @@ data_gen_args = dict(rotation_range=0.2,
 """shape = (z,x,y)"""
 
 if remote == True:
-    img_data = dl.load_img_remote()
+    img_data, file_names = dl.load_img_remote()
     data_dir = '/usr/share/mouse-brain-atlases/'
 else:
     import torch
-    img_data = dl.load_img(visualisation)
+    img_data, file_names = dl.load_img(visualisation)
     data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
 temp = dl.load_mask(data_dir, visualisation)
@@ -125,7 +125,7 @@ output = []
 for i in range(len(y_test)):
     output.append(np.squeeze(y_pred[i]))
 
-utils.save_datavisualisation3(x_test, y_test, output, 'results/', index_first=True, normalized= True)
+utils.save_datavisualisation3(x_test, y_test, output, 'results/', index_first = True, normalized = True, file_names= file_names)
 
 
 np.save(save_dir + 'y_pred', y_pred)
