@@ -7,8 +7,8 @@ from tensorflow import keras
 
 import data_loader as dl
 
-# utils.resample_bidsdata()
-local = True
+utils.resample_bidsdata()
+local = False
 
 if local == True:
     path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
@@ -32,7 +32,7 @@ for o in os.listdir(path):
         img = nib.load(os.path.join(path, o))
         affines.append(img.affine)
         img_data = img.get_data()
-        temp = np.moveaxis(img_data, 0, 1)
+        temp = np.moveaxis(img_data, 2, 0)
         img_data = utils.pad_img(temp)
         img_data = utils.data_normalization(img_data)
         data.append(img_data)
@@ -49,7 +49,7 @@ for i in data:
 
 for i in range(len(y_pred)):
     file_name = file_names[i]
-    temp = np.moveaxis(img_data, 0, 1)
+    temp = np.moveaxis(img_data, 0, 2)
     img = nib.Nifti1Image(temp, affines[i])
     nib.save(img, os.path.join(save_path, 'mask_' + file_name))
 output = []

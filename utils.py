@@ -10,7 +10,7 @@ import data_loader as dl
 def resample_bidsdata():
     """
     Resamples all the bidsdata and stores it to /var/tmp/resampled/
-
+    AND changes dimensions to RAS
     """
     #todo if RIA change to RAS: fslswapdim input LR PA IS
     #fslhd header aufrufen
@@ -25,9 +25,9 @@ def resample_bidsdata():
             output=file_name)
         os.system(resample_cmd)
         print(resample_cmd)
-        # dimension_change_command = 'fslswapdim {input} LR PA IS {output}'.format(input = file_name, output = file_name)
-        # os.system(dimension_change_command)
-        # print(dimension_change_command)
+        dimension_change_command = 'fslswapdim {input} LR PA IS {output}'.format(input = file_name, output = file_name)
+        os.system(dimension_change_command)
+        print(dimension_change_command)
 
 
 def data_normalization(data):
