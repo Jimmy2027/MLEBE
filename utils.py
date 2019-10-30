@@ -25,7 +25,7 @@ def resample_bidsdata():
             output=file_name)
         os.system(resample_cmd)
         print(resample_cmd)
-        dimension_change_command = 'fslswapdim {input} LR PA IS {output}'.format(input = file_name, output = file_name)
+        dimension_change_command = 'fslswapdim'+ path+ '{input} LR PA IS '+ path+'{output}'.format(input = file_name, output = file_name)
         os.system(dimension_change_command)
         print(dimension_change_command)
 
