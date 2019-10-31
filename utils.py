@@ -7,7 +7,21 @@ import os
 import data_loader as dl
 
 
-def resample_bidsdata():
+def preprocess(img):
+    """
+    - moves axis such that (x,y,z) becomes (z,x,y)
+    - transforms the image such that shape is (z,128,128). If one dimension is bigger than 128 -> downscale, if one dimension is smaller -> zero-pad
+    - normalizes the data
+    :param img: img with shape (x,y,z)
+    :return: img with shape (z,128,128)
+    """
+    temp = np.moveaxis(img, 2, 0)
+    img_data = pad_img(temp)
+    img_data = data_normalization(img_data)
+
+    return img_data
+
+def resample_bidsdata(path):
     """
     Resamples all the bidsdata and stores it to /var/tmp/resampled/
     AND changes dimensions to RAS
@@ -16,7 +30,6 @@ def resample_bidsdata():
     #fslhd header aufrufen
 
     bids_datas, file_names = dl.load_bidsdata()
-    path = '/var/tmp/resampled/'
 
     for i in range(len(bids_datas)):
         input_image = bids_datas[i]
@@ -161,7 +174,7 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
 
 
-def pad_img(img):
+def pad_img(img): #todo train with 128*128, is that the smartest?
     shape = (64, 128)
     padded = np.empty((img.shape[0], shape[0], shape[1]))
     for i in range(img.shape[0]):
@@ -180,5 +193,5 @@ def resize(img):
     shape = (256, 256)
     padded = np.empty((shape[0], shape[1], img.shape[2]))
     for i in range (img.shape[2]):
-        padded[...,i] = tf.resize(img[..., i]/np.max(img[..., i]), output_shape = shape, mode = 'constant')       #Todo am normalizing the data here
+        padded[...,i] = tf.resize(img[..., i]/np.max(img[..., i]), output_shape = shape, mode = 'constant')
     return padded

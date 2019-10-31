@@ -11,6 +11,7 @@ from sklearn import model_selection
 
 #todo save images with file names (how to make sure the names are right?)
 #todo write README
+#todo write scratches with useful functions
 
 
 test = True
