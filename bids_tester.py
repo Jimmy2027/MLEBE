@@ -13,6 +13,7 @@ import data_loader as dl
 local = True
 
 
+
 if local == True:
     path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
     model_path = '/Users/Hendrik/Documents/Semester_project/results/unet_ep01_val_loss5.48.hdf5'
@@ -25,27 +26,25 @@ else:
 
 if not os.path.exists(save_path):
     os.makedirs(save_path)
-data = []
+data = []   #list of Nifti1Images
 for o in os.listdir(path):
     if not o.startswith('.'):
         print(o)
         img = nib.load(os.path.join(path, o))
-        # affines.append(img.affine)
-        # # img_data = img.get_data()
-        # # temp = np.moveaxis(img_data, 2, 0)
-        # # img_data = utils.pad_img(temp)
-        # # img_data = utils.data_normalization(img_data)
         data.append(img)
 
 np.save('/Users/Hendrik/Documents/Semester_project/temp/data', data)
 model = keras.models.load_model(model_path)
 
 y_pred = []
+img_datas = []
 for i in data:
     img_data = i.get_data()
     img_data = utils.preprocess(img_data)
     i = np.expand_dims(img_data, -1)
     y_pred.append(model.predict(i, verbose=1))
+    img_datas.append(img_data)
+
 
 for i in range(len(y_pred)):
     x_test_affine = data[i].affine

@@ -53,7 +53,7 @@ for i in range(len(img_data)):
     mask_data.append(temp[0])
 
 if test == True:
-    x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.9) #todo do I need a test set? what do the scores tell me?
+    x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.9)
 else:
     x_train1, x_test, y_train1, y_test = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.1)
 
