@@ -139,7 +139,6 @@ for i in range(len(y_pred)):
     file_names.append(file_name)
     temp = np.moveaxis(y_pred[i], 0, 2)
     img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
-    # img = nib.Nifti1Image(temp, x_test_affine)
     nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
 
 output = []
