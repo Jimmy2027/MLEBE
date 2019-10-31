@@ -8,6 +8,8 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import model_selection
+import nibabel as nib
+
 
 #todo save images with file names (how to make sure the names are right?)
 #todo save predicted masks in network_trainer as .nii
@@ -21,7 +23,7 @@ remote = False
 visualisation = False
 epochs = 50
 seed = 1
-shape = (128, 128)
+shape = (64, 128)
 
 if test == True:
     epochs = 1
@@ -40,34 +42,37 @@ data_gen_args = dict(rotation_range=0.2,
                     horizontal_flip=True,
                     fill_mode='nearest')
 
-"""shape = (z,x,y)"""
+"""shape = (z,y,x)"""
 
 if remote == True:
-    img_data, file_names = dl.load_img_remote(shape)
+    data = dl.load_img_remote()
     data_dir = '/usr/share/mouse-brain-atlases/'
 else:
-    import torch
-    img_data, file_names = dl.load_img(shape, visualisation)
+    img_data = dl.load_img(shape, visualisation)
     data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
-temp = dl.load_mask(data_dir, shape, visualisation)
+
+temp = dl.load_mask(data_dir)
 mask_data = []
 for i in range(len(img_data)):
     mask_data.append(temp[0])
 
 if test == True:
-    x_train1, x_test , y_train1, y_test = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.9)
+    x_train1_data, x_test_data , y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.9)
 else:
-    x_train1, x_test, y_train1, y_test = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.1)
+    x_train1_data, x_test_data, y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.1)
 
-np.save(os.path.join(save_dir, 'x_test'), np.array(x_test))
-np.save(os.path.join(save_dir, 'y_test'), np.array(y_test))
+np.save(os.path.join(save_dir, 'x_test'), np.array(x_test_data))
+np.save(os.path.join(save_dir, 'y_test'), np.array(y_test_data))
 
-
+x_train1 = utils.get_data(x_train1_data,shape)
+y_train1 = utils.get_data(y_train1_data,shape)
+x_test = utils.get_data(x_test_data,shape)
+y_test = utils.get_data(y_test_data,shape)
 
 x_train1 = np.concatenate(x_train1, axis = 0)
 y_train1 = np.concatenate(y_train1, axis = 0)
-x_train1= np.expand_dims(x_train1, -1)
+x_train1 = np.expand_dims(x_train1, -1)
 y_train1 = np.expand_dims(y_train1, -1)
 x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25)
 
@@ -120,17 +125,28 @@ plt.savefig(os.path.join(save_dir, 'epochs_loss_values.png'))
 plt.close()
 
 
-model.save(save_dir + 'test.h5')
 
 y_pred = []
 for i in x_test:
     i = np.expand_dims(i, -1)
     y_pred.append(model.predict(i, verbose=1))
+
+file_names = []
+for i in range(len(y_pred)):
+    x_test_affine = x_test_data[i].affine
+    x_test_header = x_test_data[i].header
+    file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
+    file_names.append(file_name)
+    temp = np.moveaxis(y_pred[i], 0, 2)
+    img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
+    # img = nib.Nifti1Image(temp, x_test_affine)
+    nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
+
 output = []
 for i in range(len(y_test)):
     output.append(np.squeeze(y_pred[i]))
 
-utils.save_datavisualisation3(x_test, y_test, output, 'results/', index_first = True, normalized = True, file_names= file_names)
+utils.save_datavisualisation3(x_test, y_test, output, save_dir , index_first = True, normalized = True, file_names= file_names)
 
 
 np.save(save_dir + 'y_pred', y_pred)

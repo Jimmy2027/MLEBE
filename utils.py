@@ -6,6 +6,13 @@ import os
 
 import data_loader as dl
 
+def get_data(data, shape):
+    img_data = []
+    for i in data:
+        temp = i.get_data()
+        temp = preprocess(temp, shape)
+        img_data.append(temp)
+    return img_data
 
 def preprocess(img, shape):
     """
