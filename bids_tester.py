@@ -12,7 +12,7 @@ import data_loader as dl
 
 local = True
 
-shape = (64,128)
+shape = (64, 128)
 
 if local == True:
     path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
@@ -38,6 +38,7 @@ model = keras.models.load_model(model_path)
 
 y_pred = []
 img_datas = []
+
 for i in data:
     img_data = i.get_data()
     img_data = utils.preprocess(img_data, shape)
@@ -45,20 +46,22 @@ for i in data:
     y_pred.append(model.predict(i, verbose=1))
     img_datas.append(img_data)
 
-
+file_names = []
 for i in range(len(y_pred)):
     x_test_affine = data[i].affine
     x_test_header = data[i].header
     file_name = os.path.basename(data[i].file_map['image'].filename)
+    file_names.append(file_name)
     temp = np.moveaxis(y_pred[i], 0, 2)
     img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
+    # img = nib.Nifti1Image(temp, x_test_affine)
     nib.save(img, os.path.join(save_path, 'mask_' + file_name))
 
 output = []
 for i in range(len(data)):
     output.append(np.squeeze(y_pred[i]))
 
-utils.save_datavisualisation2(img_datas, output, save_path, index_first=True, normalized= True)
+# utils.save_datavisualisation2(img_datas, output, save_path, index_first=True, normalized= True, file_names=file_names)
 
 
 
