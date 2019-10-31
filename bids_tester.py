@@ -12,7 +12,7 @@ import data_loader as dl
 
 local = True
 
-
+shape = (64,128)
 
 if local == True:
     path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
@@ -40,7 +40,7 @@ y_pred = []
 img_datas = []
 for i in data:
     img_data = i.get_data()
-    img_data = utils.preprocess(img_data)
+    img_data = utils.preprocess(img_data, shape)
     i = np.expand_dims(img_data, -1)
     y_pred.append(model.predict(i, verbose=1))
     img_datas.append(img_data)
@@ -58,7 +58,7 @@ output = []
 for i in range(len(data)):
     output.append(np.squeeze(y_pred[i]))
 
-utils.save_datavisualisation2(data, output, save_path, index_first=True, normalized= True)
+utils.save_datavisualisation2(img_datas, output, save_path, index_first=True, normalized= True)
 
 
 

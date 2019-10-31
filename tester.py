@@ -7,7 +7,7 @@ import data_loader as dl
 path = '/Users/Hendrik/Desktop/mlebe/'
 path = 'results/'
 
-model = keras.models.load_model(path + 'unet_ep01_val_loss0.59.hdf5')
+model = keras.models.load_model(path + 'unet_ep01_val_loss5.46.hdf5')
 
 x_test = np.load(path + '/x_test.npy')
 y_test = np.load(path + '/y_test.npy')

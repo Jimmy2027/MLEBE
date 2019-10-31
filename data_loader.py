@@ -32,7 +32,7 @@ def load_bidsdata():
 
 
 
-def load_img_remote():
+def load_img_remote(shape):
     visualisation = False
 
     im_data = []
@@ -55,7 +55,7 @@ def load_img_remote():
         img = nib.load(i)
         img_data = img.get_data()
         temp = np.moveaxis(img_data,2,0)
-        img_data = pad_img(temp)
+        img_data = pad_img(temp, shape)
         img_data = data_normalization(img_data)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:
@@ -65,7 +65,7 @@ def load_img_remote():
         data.append(img_data)
     return data, file_names
 
-def load_img(visualisation):
+def load_img(shape, visualisation ):
 
     im_data = []
     for root, dirs, files in os.walk(image_dir):
@@ -81,7 +81,7 @@ def load_img(visualisation):
         img = nib.load(i)
         img_data = img.get_data()   #shape = (63, 96, 48)
         temp = np.moveaxis(img_data,2,0)    #shape = (48, 63, 96)
-        img_data = pad_img(temp)
+        img_data = pad_img(temp, shape)
         img_data = data_normalization(img_data)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:
@@ -92,7 +92,7 @@ def load_img(visualisation):
     return data, file_names
 
 
-def load_mask(data_dir, visualisation):
+def load_mask(data_dir, shape, visualisation):
 
     mask = []
     im_data = []
@@ -107,7 +107,7 @@ def load_mask(data_dir, visualisation):
         img = nib.load(i)
         img_data = img.get_data()
         temp = np.moveaxis(img_data,2,0)
-        img_data = pad_img(temp)
+        img_data = pad_img(temp, shape)
         img_data = data_normalization(img_data)
         path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
         if visualisation == True:

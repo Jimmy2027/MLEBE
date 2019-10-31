@@ -7,7 +7,7 @@ import os
 import data_loader as dl
 
 
-def preprocess(img):
+def preprocess(img, shape):
     """
     - moves axis such that (x,y,z) becomes (z,x,y)
     - transforms the image such that shape is (z,128,128). If one dimension is bigger than 128 -> downscale, if one dimension is smaller -> zero-pad
@@ -16,7 +16,7 @@ def preprocess(img):
     :return: img with shape (z,128,128)
     """
     temp = np.moveaxis(img, 2, 0)
-    img_data = pad_img(temp)
+    img_data = pad_img(temp, shape)
     img_data = data_normalization(img_data)
 
     return img_data
@@ -71,6 +71,7 @@ def save_img(img_data, path):
 
 
 def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False, file_names = False):
+
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
@@ -174,8 +175,7 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
 
 
-def pad_img(img): #todo train with 128*128, is that the smartest?
-    shape = (64, 128)
+def pad_img(img, shape): #todo train with 128*128, is that the smartest?
     padded = np.empty((img.shape[0], shape[0], shape[1]))
     for i in range(img.shape[0]):
         padd_y = shape[0] - img.shape[1]

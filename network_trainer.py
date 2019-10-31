@@ -10,8 +10,10 @@ from matplotlib import pyplot as plt
 from sklearn import model_selection
 
 #todo save images with file names (how to make sure the names are right?)
+#todo save predicted masks in network_trainer as .nii
 #todo write README
 #todo write scratches with useful functions
+
 
 
 test = True
@@ -19,6 +21,7 @@ remote = False
 visualisation = False
 epochs = 50
 seed = 1
+shape = (128, 128)
 
 if test == True:
     epochs = 1
@@ -40,14 +43,14 @@ data_gen_args = dict(rotation_range=0.2,
 """shape = (z,x,y)"""
 
 if remote == True:
-    img_data, file_names = dl.load_img_remote()
+    img_data, file_names = dl.load_img_remote(shape)
     data_dir = '/usr/share/mouse-brain-atlases/'
 else:
     import torch
-    img_data, file_names = dl.load_img(visualisation)
+    img_data, file_names = dl.load_img(shape, visualisation)
     data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
-temp = dl.load_mask(data_dir, visualisation)
+temp = dl.load_mask(data_dir, shape, visualisation)
 mask_data = []
 for i in range(len(img_data)):
     mask_data.append(temp[0])

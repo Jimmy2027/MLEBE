@@ -7,7 +7,7 @@ import utils
 from tensorflow import keras
 
 data = np.load('/Users/Hendrik/Documents/Semester_project/temp/data.npy')
-
+shape = (64, 128)
 local = True
 
 
@@ -24,10 +24,10 @@ model = keras.models.load_model(model_path)
 
 y_pred = []
 img_datas = []
-
+data = data[:5]
 for i in data:
     img_data = i.get_data()
-    img_data = utils.preprocess(img_data)
+    img_data = utils.preprocess(img_data, shape)
     i = np.expand_dims(img_data, -1)
     y_pred.append(model.predict(i, verbose=1))
     img_datas.append(img_data)
@@ -44,4 +44,4 @@ output = []
 for i in range(len(data)):
     output.append(np.squeeze(y_pred[i]))
 
-utils.save_datavisualisation2(img_datas, output, save_path, index_first=True, normalized= True)
+utils.save_datavisualisation2(img_datas, img_datas, save_path, index_first=True, normalized= True)
