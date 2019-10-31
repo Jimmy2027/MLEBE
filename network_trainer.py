@@ -9,7 +9,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import model_selection
 
-#todo save images with file names
+#todo save images with file names (how to make sure the names are right?)
+#todo write README
 
 
 test = True

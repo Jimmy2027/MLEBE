@@ -16,7 +16,7 @@ if local == True:
     save_path = '/Users/Hendrik/Documents/mlebe_data/temp_bids/'
 else:
     path = '/var/tmp/resampled/'
-    model_path = '/home/hendrik/src/mlebe/results/unet_ep35_val_loss0.07.hdf5'
+    model_path = '/home/hendrik/src/mlebe/results1/unet_ep35_val_loss0.07.hdf5'
     save_path = '/home/hendrik/src/mlebe/results/bids_predictions/'
 
 
@@ -49,7 +49,7 @@ for i in data:
 
 for i in range(len(y_pred)):
     file_name = file_names[i]
-    temp = np.moveaxis(img_data, 0, 2)
+    temp = np.moveaxis(y_pred[i], 0, 2)
     img = nib.Nifti1Image(temp, affines[i])
     nib.save(img, os.path.join(save_path, 'mask_' + file_name))
 output = []
