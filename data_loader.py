@@ -18,6 +18,7 @@ def load_bidsdata():
     """
     paths = []
     filess = []
+    print('*** loading bidsdata ***')
     for o in os.listdir(not_preprocessed_dir):
         if not o.startswith('irsabi') and o.endswith('bidsdata'):
             for root, dirs, files in os.walk(os.path.join(not_preprocessed_dir, o)):
@@ -33,7 +34,7 @@ def load_bidsdata():
 
 
 def load_img_remote():
-
+    print('*** loading images ***')
     im_data = []
     for o in os.listdir(image_dir_remote):
         if o != 'irsabi':
@@ -60,6 +61,7 @@ def load_img_remote():
     return data
 
 def load_img(shape, visualisation ):
+    print('*** loading images ***')
 
     im_data = []
     for root, dirs, files in os.walk(image_dir):
@@ -86,7 +88,7 @@ def load_img(shape, visualisation ):
 
 
 def load_mask(data_dir):
-
+    print('*** loading mask ***')
     mask = []
     im_data = []
     for o in os.listdir(data_dir):
@@ -95,7 +97,7 @@ def load_mask(data_dir):
 
     data = []
     im_data = np.sort(im_data)
-    print(im_data)
+
     for i in im_data:
         img = nib.load(i)
         # img_data = img.get_data()
@@ -116,5 +118,5 @@ def load_mask(data_dir):
 
 
 
-if __name__ == '__main__':      #only gets called if Unet.py is run
+if __name__ == '__main__':
     load_bidsdata()

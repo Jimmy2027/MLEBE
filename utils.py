@@ -3,7 +3,7 @@ import imageio
 import numpy as np
 from matplotlib import pyplot as plt
 import os
-
+import cv2
 import data_loader as dl
 
 def get_data(data, shape):
@@ -33,7 +33,6 @@ def resample_bidsdata(path):
     Resamples all the bidsdata and stores it to /var/tmp/resampled/
     AND changes dimensions to RAS
     """
-    #todo if RIA change to RAS: fslswapdim input LR PA IS
     #fslhd header aufrufen
 
     bids_datas, file_names = dl.load_bidsdata()
@@ -183,14 +182,27 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
 
 def pad_img(img, shape): #todo train with 128*128, is that the smartest?
+    """
+    Reshapes input image to shape. If input shape is bigger -> resize, if it is smaller -> zero-padd
+    :param img:
+    :param shape: shape in (y,x)
+    :return:
+    """
     padded = np.empty((img.shape[0], shape[0], shape[1]))
+    padd_y = shape[0] - img.shape[1]
+    padd_x = shape[1] - img.shape[2]
     for i in range(img.shape[0]):
-        padd_y = shape[0] - img.shape[1]
-        padd_x = shape[1] - img.shape[2]
-        if padd_y < 0:
+        if padd_x < 0 and padd_y < 0:
+            temp = cv2.resize(img[i], (shape[1], shape[0]))
+            padded[i] = temp
+        elif padd_y < 0:
+            temp = cv2.resize(img[i], (img[i].shape[1],shape[0])) #cv2.resize takes shape in form (x,y)!!!
             something = np.empty((img.shape[0], shape[0], img.shape[2]))
-            something[i] = img[i,-padd_y//2:img.shape[1]+padd_y//2,...]
+            something[i] = temp
             padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
+        elif padd_x < 0:
+            temp = cv2.resize(img[i], (shape[1], img[i].shape[0]))
+            padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
         else:
             padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
     return padded

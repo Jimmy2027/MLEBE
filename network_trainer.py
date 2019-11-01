@@ -11,8 +11,6 @@ from sklearn import model_selection
 import nibabel as nib
 
 
-#todo save images with file names (how to make sure the names are right?)
-#todo save predicted masks in network_trainer as .nii
 #todo write README
 #todo write scratches with useful functions
 
@@ -23,11 +21,11 @@ remote = False
 visualisation = False
 epochs = 50
 seed = 1
-shape = (64, 128)
+shape = (128, 128)
 
 if test == True:
     epochs = 1
-    save_dir = 'results/test'
+    save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/'
 else:
     save_dir = 'results/'
 
@@ -45,7 +43,7 @@ data_gen_args = dict(rotation_range=0.2,
 """shape = (z,y,x)"""
 
 if remote == True:
-    data = dl.load_img_remote()
+    img_data = dl.load_img_remote()
     data_dir = '/usr/share/mouse-brain-atlases/'
 else:
     img_data = dl.load_img(shape, visualisation)
@@ -57,6 +55,7 @@ mask_data = []
 for i in range(len(img_data)):
     mask_data.append(temp[0])
 
+print('*** splitting data into Train, Validation and Test set ***')
 if test == True:
     x_train1_data, x_test_data , y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.9)
 else:
@@ -77,7 +76,7 @@ y_train1 = np.expand_dims(y_train1, -1)
 x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25)
 
 
-
+print('TRAINING SHAPE: '+ str(x_train.shape[1:4]))
 input_shape = (x_train.shape[1:4])
 model_checkpoint = ModelCheckpoint('results/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:

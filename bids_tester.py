@@ -11,8 +11,8 @@ import data_loader as dl
 # utils.resample_bidsdata(resample_save_path)
 
 local = True
-
-shape = (64, 128)
+test = True
+shape = (128, 128)
 
 if local == True:
     path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
@@ -39,6 +39,9 @@ model = keras.models.load_model(model_path)
 y_pred = []
 img_datas = []
 
+if test:
+    data = data[:5]
+
 for i in data:
     img_data = i.get_data()
     img_data = utils.preprocess(img_data, shape)
@@ -53,15 +56,15 @@ for i in range(len(y_pred)):
     file_name = os.path.basename(data[i].file_map['image'].filename)
     file_names.append(file_name)
     temp = np.moveaxis(y_pred[i], 0, 2)
-    img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
-    # img = nib.Nifti1Image(temp, x_test_affine)
+    # img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
+    img = nib.Nifti1Image(temp, x_test_affine)
     nib.save(img, os.path.join(save_path, 'mask_' + file_name))
 
 output = []
 for i in range(len(data)):
     output.append(np.squeeze(y_pred[i]))
 
-# utils.save_datavisualisation2(img_datas, output, save_path, index_first=True, normalized= True, file_names=file_names)
+utils.save_datavisualisation2(img_datas, output, save_path, index_first=True, normalized= True, file_names=file_names)
 
 
 
