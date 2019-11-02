@@ -1,2 +1,2 @@
-# Semester_project
+# MLEBE
 Machine Learning Enabled Brain Extraction
