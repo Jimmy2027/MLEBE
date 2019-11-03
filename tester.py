@@ -5,14 +5,19 @@ import os
 import nibabel as nib
 import data_loader as dl
 
-path = '/Users/Hendrik/Documents/mlebe_data/results/'
-save_dir = '/Users/Hendrik/Documents/mlebe_data/temp'
+remote = True
+
+if remote == False:
+    path = '/Users/Hendrik/Documents/mlebe_data/results/'
+    save_dir = '/Users/Hendrik/Documents/mlebe_data/temp'
+else:
+    path = '/home/hendrik/src/mlebe/results'
+    save_dir = '/home/hendrik/src/mlebe/tmp'
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-model = keras.models.load_model(path + 'unet_ep10_val_loss0.06.hdf5', custom_objects={
-    'Adam': lambda **kwargs: hvd.DistributedOptimizer(keras.optimizers.Adam(**kwargs))
-})
+# model = keras.models.load_model(path + 'unet_ep10_val_loss0.06.hdf5')
+
 
 shape = (128, 128)
 
@@ -21,10 +26,12 @@ y_test_data = np.load(path + '/y_test.npy')
 x_test = utils.get_data(x_test_data, shape)
 y_test = utils.get_data(y_test_data, shape)
 
-y_pred = []
-for i in x_test:
-    i = np.expand_dims(i, -1)
-    y_pred.append(model.predict(i, verbose=1))
+y_pred = np.load(path +'/y_pred.npy')
+
+# y_pred = []
+# for i in x_test:
+#     i = np.expand_dims(i, -1)
+#     y_pred.append(model.predict(i, verbose=1))
 
 
 file_names = []
@@ -38,18 +45,10 @@ for i in range(len(y_pred)):
     nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
 
 
-
-output = []
-for i in range(len(y_test)):
-    output.append(np.squeeze(y_pred[i]))
-
-
-# y_pred = np.load('results/y_pred.npy')
-
 output = []
 
 for i in range(len(y_test)):
     output.append(np.squeeze(y_pred[i]))
 
-utils.save_datavisualisation3(x_test, y_test, output, 'results/', index_first=True, normalized= False)
+utils.save_datavisualisation3(x_test, y_test, output, 'results/', index_first=True, normalized= False, file_names = file_names)
 

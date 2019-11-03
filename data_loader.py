@@ -2,7 +2,6 @@ import os
 import nibabel as nib
 from matplotlib import pyplot as plt
 import numpy as np
-from skimage import transform as tf
 
 from utils import *
 
