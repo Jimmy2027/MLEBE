@@ -136,7 +136,7 @@ for i in range(len(y_pred)):
     x_test_header = x_test_data[i].header
     file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
     file_names.append(file_name)
-    temp = np.moveaxis(y_pred[i], 0, 2)
+    temp = np.moveaxis(y_pred[i], 0, 2)         #todo try ground truth affine
     img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
     nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
 

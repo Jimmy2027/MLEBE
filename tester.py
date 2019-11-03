@@ -5,7 +5,7 @@ import os
 import nibabel as nib
 import data_loader as dl
 
-remote = True
+remote = False
 
 if remote == False:
     path = '/Users/Hendrik/Documents/mlebe_data/results/'
@@ -21,12 +21,12 @@ if not os.path.exists(save_dir):
 
 shape = (128, 128)
 
-x_test_data = np.load(path + '/x_test.npy')
-y_test_data = np.load(path + '/y_test.npy')
+x_test_data = np.load(path + '/x_test.npy', allow_pickle = True)
+y_test_data = np.load(path + '/y_test.npy', allow_pickle = True)
 x_test = utils.get_data(x_test_data, shape)
 y_test = utils.get_data(y_test_data, shape)
 
-y_pred = np.load(path +'/y_pred.npy')
+y_pred = np.load(path +'/y_pred.npy', allow_pickle= True)
 
 # y_pred = []
 # for i in x_test:
@@ -45,10 +45,10 @@ for i in range(len(y_pred)):
     nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
 
 
-output = []
-
-for i in range(len(y_test)):
-    output.append(np.squeeze(y_pred[i]))
-
-utils.save_datavisualisation3(x_test, y_test, output, 'results/', index_first=True, normalized= False, file_names = file_names)
-
+# output = []
+#
+# for i in range(len(y_test)):
+#     output.append(np.squeeze(y_pred[i]))
+#
+# utils.save_datavisualisation3(x_test, y_test, output, 'results/', index_first=True, normalized= False, file_names = file_names)
+#
