@@ -8,11 +8,15 @@ import data_loader as dl
 
 def get_data(data, shape):
     img_data = []
+    affines = []
+    headers = []
     for i in data:
+        affines.append(i.affine)
+        headers.append(i.header)
         temp = i.get_data()
         temp = preprocess(temp, shape)
         img_data.append(temp)
-    return img_data
+    return img_data, affines, headers
 
 def preprocess(img, shape):
     """

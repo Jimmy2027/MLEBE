@@ -61,13 +61,20 @@ if test == True:
 else:
     x_train1_data, x_test_data, y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.1)
 
-np.save(os.path.join(save_dir, 'x_test_data'), np.array(x_test_data))
-np.save(os.path.join(save_dir, 'y_test_data'), np.array(y_test_data))
 
-x_train1 = utils.get_data(x_train1_data,shape)
-y_train1 = utils.get_data(y_train1_data,shape)
-x_test = utils.get_data(x_test_data, shape)
-y_test = utils.get_data(y_test_data, shape)
+print('*** Preprocessing ***')
+x_train1 = utils.get_data(x_train1_data,shape)[0]
+y_train1 = utils.get_data(y_train1_data,shape)[0]
+x_test, x_test_affines, x_test_headers = utils.get_data(x_test_data, shape)
+y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape)
+
+print('*** saving test data ***')
+np.save(os.path.join(save_dir, 'x_test'), np.array(x_test))
+np.save(os.path.join(save_dir, 'y_test'), np.array(y_test))
+np.save(os.path.join(save_dir, 'x_test_affines'), np.array(x_test_affines))
+np.save(os.path.join(save_dir, 'y_test_affines'), np.array(y_test_affines))
+np.save(os.path.join(save_dir, 'x_test_headers'), np.array(x_test_headers))
+np.save(os.path.join(save_dir, 'y_test_headers'), np.array(y_test_headers))
 
 x_train1 = np.concatenate(x_train1, axis = 0)
 y_train1 = np.concatenate(y_train1, axis = 0)
@@ -76,7 +83,7 @@ y_train1 = np.expand_dims(y_train1, -1)
 x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25)
 
 
-print('TRAINING SHAPE: '+ str(x_train.shape[1:4]))
+print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
 input_shape = (x_train.shape[1:4])
 model_checkpoint = ModelCheckpoint('results/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
