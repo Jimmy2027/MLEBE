@@ -181,7 +181,7 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
 
 
-def pad_img(img, shape): #todo train with 128*128, is that the smartest?
+def pad_img(img, shape):
     """
     Reshapes input image to shape. If input shape is bigger -> resize, if it is smaller -> zero-padd
     :param img:

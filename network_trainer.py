@@ -27,7 +27,7 @@ if test == True:
     epochs = 1
     save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/'
 else:
-    save_dir = 'results/'
+    save_dir = 'results/training_results'
 
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
@@ -61,13 +61,13 @@ if test == True:
 else:
     x_train1_data, x_test_data, y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.1)
 
-np.save(os.path.join(save_dir, 'x_test'), np.array(x_test_data))
-np.save(os.path.join(save_dir, 'y_test'), np.array(y_test_data))
+np.save(os.path.join(save_dir, 'x_test_data'), np.array(x_test_data))
+np.save(os.path.join(save_dir, 'y_test_data'), np.array(y_test_data))
 
 x_train1 = utils.get_data(x_train1_data,shape)
 y_train1 = utils.get_data(y_train1_data,shape)
-x_test = utils.get_data(x_test_data,shape)
-y_test = utils.get_data(y_test_data,shape)
+x_test = utils.get_data(x_test_data, shape)
+y_test = utils.get_data(y_test_data, shape)
 
 x_train1 = np.concatenate(x_train1, axis = 0)
 y_train1 = np.concatenate(y_train1, axis = 0)
@@ -144,7 +144,7 @@ output = []
 for i in range(len(y_test)):
     output.append(np.squeeze(y_pred[i]))
 
-utils.save_datavisualisation3(x_test, y_test, output, save_dir , index_first = True, normalized = True, file_names= file_names)
+utils.save_datavisualisation3(x_test, y_test, output, save_dir , index_first = True, normalized = True, file_names = file_names)
 
 
 np.save(save_dir + 'y_pred', y_pred)
