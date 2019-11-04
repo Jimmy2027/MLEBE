@@ -54,12 +54,13 @@ for i in range(len(y_pred)):
     x_test_header = data[i].header
     file_name = os.path.basename(data[i].file_map['image'].filename)
     file_names.append(file_name)
-    temp = np.moveaxis(y_pred[i], 0, 2)
+    mask_temp = np.moveaxis(y_pred[i], 0, 2)
+    img_temp = np.moveaxis(img_datas[i], 0, 2)
     # img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
-    mask = nib.Nifti1Image(temp, x_test_affine)
-    mask.save(mask, os.path.join(save_path, 'mask_' + file_name))
-    img = nib.Nifti1Image(img_datas[i], x_test_affine)
-    img.save(img, os.path.join(save_path, 'resized_' + file_name))
+    mask = nib.Nifti1Image(mask_temp, x_test_affine)
+    nib.save(mask, os.path.join(save_path, 'mask_' + file_name))
+    img = nib.Nifti1Image(img_temp, x_test_affine)
+    nib.save(img, os.path.join(save_path, 'resized_' + file_name))
 
 output = []
 for i in range(len(data)):

@@ -53,6 +53,7 @@ else:
 
 temp = dl.load_mask(data_dir)
 mask_data = []
+
 for i in range(len(img_data)):
     mask_data.append(temp[0])
 
