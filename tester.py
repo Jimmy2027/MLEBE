@@ -6,7 +6,7 @@ import nibabel as nib
 import data_loader as dl
 import pickle
 
-remote = False
+remote = True
 
 if remote == False:
     path = '/Users/Hendrik/Documents/mlebe_data/results/test'
@@ -38,16 +38,15 @@ y_pred = np.load(path +'/y_pred.npy', allow_pickle= True)
 # y_pred = []
 # for i in x_test:
 #     i = np.expand_dims(i, -1)
-#     y_pred.append(model.predict(i, verbose=1))
-
+#     y_pred.append(model.predict(i, verbose=1))y
 
 for i in range(len(y_pred)):
-    x_test_affine = x_test_affines[i]
-    x_test_header = x_test_headers[i]
+    y_test_affine = y_test_affines[i]
+    y_test_header = y_test_headers[i]
     file_name = os.path.basename(os.path.basename(file_names[i]))
     file_names.append(file_name)
-    # temp = np.moveaxis(y_pred[i], 0, 2)
-    img = nib.Nifti1Image(y_pred[i], x_test_affine, x_test_header)
+    temp = np.moveaxis(y_pred[i], 0, 2)
+    img = nib.Nifti1Image(y_pred[i], y_test_affine, y_test_header)
     nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
 
 
