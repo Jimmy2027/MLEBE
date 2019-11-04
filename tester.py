@@ -6,6 +6,7 @@ import nibabel as nib
 import data_loader as dl
 import pickle
 
+#todo need to preprocess labels to which I am comparing
 remote = True
 
 if remote == False:

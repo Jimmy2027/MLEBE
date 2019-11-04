@@ -7,6 +7,12 @@ import cv2
 import data_loader as dl
 
 def get_data(data, shape):
+    """
+
+    :param data: list of Nifit1Images
+    :param shape: (y,x)
+    :return:
+    """
     img_data = []
     affines = []
     headers = []

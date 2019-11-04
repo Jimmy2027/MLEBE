@@ -10,8 +10,8 @@ import data_loader as dl
 # resample_save_path = '/var/tmp/resampled/'
 # utils.resample_bidsdata(resample_save_path)
 
-local = True
-test = True
+local = False
+test = False
 shape = (128, 128)
 
 if local == True:
@@ -57,8 +57,10 @@ for i in range(len(y_pred)):
     file_names.append(file_name)
     temp = np.moveaxis(y_pred[i], 0, 2)
     # img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
-    img = nib.Nifti1Image(temp, x_test_affine)
-    nib.save(img, os.path.join(save_path, 'mask_' + file_name))
+    mask = nib.Nifti1Image(temp, x_test_affine)
+    mask.save(mask, os.path.join(save_path, 'mask_' + file_name))
+    img = nib.Nifti1Image(img_datas[i], x_test_affine)
+    img.save(img, os.path.join(save_path, 'resized_' + file_name))
 
 output = []
 for i in range(len(data)):
