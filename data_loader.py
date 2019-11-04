@@ -59,7 +59,7 @@ def load_img_remote():
         data.append(img)
     return data
 
-def load_img(shape, visualisation ):
+def load_img():
     print('*** loading images ***')
 
     im_data = []

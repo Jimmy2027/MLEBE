@@ -1,4 +1,5 @@
 import data_loader as dl
+import pickle
 import model
 import utils
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
@@ -46,7 +47,7 @@ if remote == True:
     img_data = dl.load_img_remote()
     data_dir = '/usr/share/mouse-brain-atlases/'
 else:
-    img_data = dl.load_img(shape, visualisation)
+    img_data = dl.load_img()
     data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
 
@@ -65,16 +66,29 @@ else:
 print('*** Preprocessing ***')
 x_train1 = utils.get_data(x_train1_data,shape)[0]
 y_train1 = utils.get_data(y_train1_data,shape)[0]
-x_test, x_test_affines, x_test_headers = utils.get_data(x_test_data, shape)
-y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape)
+x_test, x_test_affines, x_test_headers, file_names = utils.get_data(x_test_data, shape)
+y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape)[:3]  #todo ca fait aucun sens de preprocess 10 fois les memes masks
 
 print('*** saving test data ***')
-np.save(os.path.join(save_dir, 'x_test'), np.array(x_test))
-np.save(os.path.join(save_dir, 'y_test'), np.array(y_test))
-np.save(os.path.join(save_dir, 'x_test_affines'), np.array(x_test_affines))
-np.save(os.path.join(save_dir, 'y_test_affines'), np.array(y_test_affines))
-np.save(os.path.join(save_dir, 'x_test_headers'), np.array(x_test_headers))
-np.save(os.path.join(save_dir, 'y_test_headers'), np.array(y_test_headers))
+x_test_struct = {
+    'x_test' : x_test,
+    'x_test_affines' : x_test_affines,
+    'x_test_headers' : x_test_headers,
+    'file_names' : file_names
+}
+
+y_test_struct = {
+    'y_test' : y_test,
+    'y_test_affines' : y_test_affines,
+    'y_test_headers' : y_test_headers,
+}
+
+xfile = open(save_dir + '/x_test_struct.pkl', 'wb')
+pickle.dump(x_test_struct, xfile)
+xfile.close()
+yfile = open(save_dir + '/y_test_struct.pkl', 'wb')
+pickle.dump(y_test_struct, yfile)
+yfile.close()
 
 x_train1 = np.concatenate(x_train1, axis = 0)
 y_train1 = np.concatenate(y_train1, axis = 0)
@@ -85,7 +99,7 @@ x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_tr
 
 print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
 input_shape = (x_train.shape[1:4])
-model_checkpoint = ModelCheckpoint('results/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
+model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
     model = model.twolayernetwork(input_shape, 3, 0.5)
     model.compile(loss='binary_crossentropy',

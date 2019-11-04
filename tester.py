@@ -4,27 +4,34 @@ import utils
 import os
 import nibabel as nib
 import data_loader as dl
+import pickle
 
 remote = False
 
 if remote == False:
-    path = '/Users/Hendrik/Documents/mlebe_data/results/'
+    path = '/Users/Hendrik/Documents/mlebe_data/results/test'
     save_dir = '/Users/Hendrik/Documents/mlebe_data/temp'
 else:
-    path = '/home/hendrik/src/mlebe/results'
+    path = '/home/hendrik/src/mlebe/results/50epochs_training_results '
     save_dir = '/home/hendrik/src/mlebe/tmp'
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-# model = keras.models.load_model(path + 'unet_ep10_val_loss0.06.hdf5')
-
+# model = keras.models.load_model('/home/hendrik/src/mlebe/results/unet_ep12_val_loss0.06.hdf5')
+# model = keras.models.load_model(path + '/unet_ep01_val_loss16.07.hdf5')
 
 shape = (128, 128)
 
-x_test_data = np.load(path + '/x_test.npy', allow_pickle = True)
-y_test_data = np.load(path + '/y_test.npy', allow_pickle = True)
-x_test = utils.get_data(x_test_data, shape)
-y_test = utils.get_data(y_test_data, shape)
+xfile = open(path + '/x_test_struct.pkl', 'rb')
+x_test_struct = pickle.load(xfile)
+xfile.close()
+
+yfile = open(path + '/y_test_struct.pkl', 'rb')
+y_test_struct = pickle.load(yfile)
+yfile.close()
+
+x_test, x_test_affines, x_test_headers, file_names = x_test_struct['x_test'], x_test_struct['x_test_affines'], x_test_struct['x_test_headers'], x_test_struct['file_names']
+y_test, y_test_affines, y_test_headers = y_test_struct['y_test'], y_test_struct['y_test_affines'], y_test_struct['y_test_headers']
 
 y_pred = np.load(path +'/y_pred.npy', allow_pickle= True)
 
@@ -34,11 +41,10 @@ y_pred = np.load(path +'/y_pred.npy', allow_pickle= True)
 #     y_pred.append(model.predict(i, verbose=1))
 
 
-file_names = []
 for i in range(len(y_pred)):
-    x_test_affine = x_test_data[i].affine
-    x_test_header = x_test_data[i].header
-    file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
+    x_test_affine = x_test_affines[i]
+    x_test_header = x_test_headers[i]
+    file_name = os.path.basename(os.path.basename(file_names[i]))
     file_names.append(file_name)
     # temp = np.moveaxis(y_pred[i], 0, 2)
     img = nib.Nifti1Image(y_pred[i], x_test_affine, x_test_header)
