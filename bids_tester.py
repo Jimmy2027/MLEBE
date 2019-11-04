@@ -20,7 +20,7 @@ if local == True:
     save_path = '/Users/Hendrik/Documents/mlebe_data/temp_bids/'
 else:
     path = '/var/tmp/resampled/'
-    model_path = '/home/hendrik/src/mlebe/results1/unet_ep35_val_loss0.07.hdf5'
+    model_path = '/home/hendrik/src/mlebe/results/unet_ep19_val_loss0.05.hdf5'
     save_path = '/home/hendrik/src/mlebe/results/bids_predictions/'
 
 
@@ -33,7 +33,6 @@ for o in os.listdir(path):
         img = nib.load(os.path.join(path, o))
         data.append(img)
 
-np.save('/Users/Hendrik/Documents/Semester_project/temp/data', data)
 model = keras.models.load_model(model_path)
 
 y_pred = []
