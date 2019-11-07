@@ -14,6 +14,7 @@ import data_loader as dl
 local = True
 test = True
 shape = (128, 128)
+threshold = 0.5
 
 if local == True:
     path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
@@ -22,7 +23,7 @@ if local == True:
 else:
     path = '/var/tmp/resampled/'
     model_path = '/home/hendrik/src/mlebe/results/unet_ep19_val_loss0.05.hdf5'
-    save_path = '/home/hendrik/src/mlebe/results/bids_predictions/'
+    save_path = '/home/hendrik/src/mlebe/results/bids_predictions_thr{}/'.format(threshold)
 
 
 if not os.path.exists(save_path):
@@ -46,7 +47,9 @@ for i in data:
     img_data = i.get_data()
     img_data = utils.preprocess(img_data, shape)
     i = np.expand_dims(img_data, -1)
-    y_pred.append(model.predict(i, verbose=1))
+    temp = model.predict(i, verbose=1)
+    temp = np.where(temp > threshold, 1, 0)
+    y_pred.append(temp)
     img_datas.append(img_data)
 
 temp = np.concatenate(y_pred, 0)
