@@ -4,14 +4,15 @@ import nibabel as nib
 import numpy as np
 import utils
 from tensorflow import keras
+from matplotlib import pyplot as plt
 
 import data_loader as dl
 
 # resample_save_path = '/var/tmp/resampled/'
 # utils.resample_bidsdata(resample_save_path)
 
-local = False
-test = False
+local = True
+test = True
 shape = (128, 128)
 
 if local == True:
@@ -47,6 +48,12 @@ for i in data:
     i = np.expand_dims(img_data, -1)
     y_pred.append(model.predict(i, verbose=1))
     img_datas.append(img_data)
+
+temp = np.concatenate(y_pred, 0)
+plt.figure()
+plt.hist(np.unique(temp))
+plt.title('Histogram of the pixel values from the predicted masks')
+plt.savefig(os.path.join(save_path, 'hist.png'))
 
 file_names = []
 for i in range(len(y_pred)):
