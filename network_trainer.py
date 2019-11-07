@@ -142,7 +142,7 @@ plt.title('Model loss')
 plt.ylabel('Loss')
 plt.xlabel('Epoch')
 plt.legend(['Train', 'Validation'], loc='upper left')
-plt.savefig(os.path.join(save_dir, 'epochs_loss_values.png'))
+plt.savefig(os.path.join(save_dir, 'loss_values.png'))
 plt.close()
 
 
@@ -158,7 +158,7 @@ for i in range(len(y_pred)):
     x_test_header = x_test_data[i].header
     file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
     file_names.append(file_name)
-    temp = np.moveaxis(y_pred[i], 0, 2)         #todo try ground truth affine
+    temp = np.moveaxis(y_pred[i], 0, 2)
     img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
     nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
 
