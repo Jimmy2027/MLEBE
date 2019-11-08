@@ -56,7 +56,7 @@ def resample_bidsdata(path):
             output=file_name)
         os.system(resample_cmd)
         print(resample_cmd)
-        dimension_change_command = 'fslswapdim '+ path+ '{input} LR PA IS '.format(input = file_name)+ path+'{output}'.format(output = file_name)
+        dimension_change_command = 'fslswapdim ' + path + '{input} LR PA IS '.format(input = file_name) + path+'{output}'.format(output = file_name)
         os.system(dimension_change_command)
         print(dimension_change_command)
 
@@ -64,18 +64,17 @@ def resample_bidsdata(path):
 def data_normalization(data):
     """
 
-    :param data: shape: (x,y)
+    :param data: shape: (y, x)
     :return: normalised input
     """
 
-    for i in data:
-        for j in range(0, i.shape[0]):
-            i[j] = i[j]*1.
-            i[j] = np.clip(i[j], 0, np.percentile(i[j], 99))
+    for i in range(data.shape[0]):
+        data[i] = data[i]*1.
+        data[i] = np.clip(data[i], 0, np.percentile(data[i], 99))
 
-            i[j] = i[j] - np.amin(i[j])
-            if np.amax(i[j]) != 0:
-                i[j] = i[j] / np.amax(i[j])
+        data[i] = data[i] - np.amin(data[i])
+        if np.amax(data[i]) != 0:
+            data[i] = data[i] / np.amax(data[i])
     return data
 
 
@@ -200,6 +199,7 @@ def pad_img(img, shape):
     :param shape: shape in (y,x)
     :return:
     """
+
     padded = np.empty((img.shape[0], shape[0], shape[1]))
     padd_y = shape[0] - img.shape[1]
     padd_x = shape[1] - img.shape[2]
@@ -208,7 +208,7 @@ def pad_img(img, shape):
             temp = cv2.resize(img[i], (shape[1], shape[0]))
             padded[i] = temp
         elif padd_y < 0:
-            temp = cv2.resize(img[i], (img[i].shape[1],shape[0])) #cv2.resize takes shape in form (x,y)!!!
+            temp = cv2.resize(img[i], (img[i].shape[1], shape[0])) #cv2.resize takes shape in form (x,y)!!!
             something = np.empty((img.shape[0], shape[0], img.shape[2]))
             something[i] = temp
             padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
@@ -220,9 +220,3 @@ def pad_img(img, shape):
     return padded
 
 
-def resize(img):
-    shape = (256, 256)
-    padded = np.empty((shape[0], shape[1], img.shape[2]))
-    for i in range (img.shape[2]):
-        padded[...,i] = tf.resize(img[..., i]/np.max(img[..., i]), output_shape = shape, mode = 'constant')
-    return padded

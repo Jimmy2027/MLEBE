@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 from sklearn import model_selection
 import nibabel as nib
 
-
+#todo look at data, where does the noise come from??
 #todo write README
 #todo write scratches with useful functions
 
