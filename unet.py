@@ -1,10 +1,11 @@
 """taken from https://github.com/zhixuhao/unet"""
 
-
+import tensorflow as tf
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import *
 from tensorflow.keras import backend as keras
+import keras.backend as K
 
 
 def unet(input_size, pretrained_weights=None):
@@ -55,8 +56,6 @@ def unet(input_size, pretrained_weights=None):
 
     model = Model(inputs=inputs, outputs=conv10)
 
-    model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
-
     # model.summary()
 
     if (pretrained_weights):
@@ -74,9 +73,21 @@ def twolayernetwork(img_shape, kernel_size, Dropout_rate):
 
     return model
 
+def dice_coef(y_true, y_pred, smooth=1):
+    """
+    Dice = (2*|X & Y|)/ (|X|+ |Y|)
+         =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
+    ref: https://arxiv.org/pdf/1606.04797v1.pdf
+    """
+    intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
+    return (2. * intersection + smooth) / (K.sum(K.square(y_true),-1) + K.sum(K.square(y_pred),-1) + smooth)
+
+def dice_coef_loss(y_true, y_pred):
+    return 1-dice_coef(y_true, y_pred)
+
 if __name__ == '__main__':      #only gets called if Unet.py is run
 
-    model = unet((64,128,1))
+    model = unet((64, 128, 1))
 
     from keras.utils import plot_model
 

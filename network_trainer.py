@@ -1,10 +1,10 @@
 import data_loader as dl
 import pickle
-import model
+import unet
 import utils
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
+from tensorflow.keras.optimizers import *
 import tensorflow.keras.preprocessing as kp
-from model import *
 import os
 import numpy as np
 from matplotlib import pyplot as plt
@@ -16,10 +16,10 @@ import nibabel as nib
 #todo write scratches with useful functions
 
 
-
 test = True
 remote = False
 visualisation = False
+loss = 'Dice'
 epochs = 50
 seed = 1
 shape = (128, 128)
@@ -28,7 +28,7 @@ if test == True:
     epochs = 1
     save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/'
 else:
-    save_dir = 'results/training_results'
+    save_dir = 'results/training_results/{loss}_{epochs}/'.format(loss = loss, epochs = epochs)
 
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
@@ -102,13 +102,23 @@ print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
 input_shape = (x_train.shape[1:4])
 model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
-    model = model.twolayernetwork(input_shape, 3, 0.5)
-    model.compile(loss='binary_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
+    model = unet.twolayernetwork(input_shape, 3, 0.5)
+    if loss == 'bin_cross':
+        model.compile(loss='binary_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+    if loss == 'Dice':
+        model.compile(loss = unet.dice_coef_loss,
+                      optimizer='adam',
+                      metrics=['accuracy'])
 
 else:
-    model = model.unet(input_shape)
+    model = unet.unet(input_shape)
+    if loss == 'bin_cross':
+        model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+    if loss == 'Dice':
+        model.compile(optimizer=Adam(lr=1e-4), loss=unet.dice_coef_loss, metrics=['accuracy'])
+
 
 
 aug = kp.image.ImageDataGenerator(**data_gen_args)
