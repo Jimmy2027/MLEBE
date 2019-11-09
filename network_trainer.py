@@ -2,6 +2,7 @@ import data_loader as dl
 import pickle
 import unet
 import utils
+import scoring_utils as su
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from tensorflow.keras.optimizers import *
 import tensorflow.keras.preprocessing as kp
@@ -11,7 +12,7 @@ from matplotlib import pyplot as plt
 from sklearn import model_selection
 import nibabel as nib
 
-#todo look at data, where does the noise come from??
+#todo calculate dice score
 #todo write README
 #todo write scratches with useful functions
 
@@ -31,7 +32,7 @@ else:
     save_dir = 'results/training_results/{loss}_{epochs}/'.format(loss = loss, epochs = epochs)
 
 if not os.path.exists(save_dir):
-    os.mkdir(save_dir)
+    os.makedirs(save_dir)
 
 data_gen_args = dict(rotation_range=0.2,
                     width_shift_range=0.05,
@@ -70,7 +71,7 @@ y_train1 = utils.get_data(y_train1_data,shape)[0]
 x_test, x_test_affines, x_test_headers, file_names = utils.get_data(x_test_data, shape)
 y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape)[:3]  #todo ca fait aucun sens de preprocess 10 fois les memes masks
 
-print('*** saving test data ***')
+print('*** saving Test data ***')
 x_test_struct = {
     'x_test' : x_test,
     'x_test_affines' : x_test_affines,
@@ -84,10 +85,10 @@ y_test_struct = {
     'y_test_headers' : y_test_headers,
 }
 
-xfile = open(save_dir + '/x_test_struct.pkl', 'wb')
+xfile = open(save_dir + 'x_test_struct.pkl', 'wb')
 pickle.dump(x_test_struct, xfile)
 xfile.close()
-yfile = open(save_dir + '/y_test_struct.pkl', 'wb')
+yfile = open(save_dir + 'y_test_struct.pkl', 'wb')
 pickle.dump(y_test_struct, yfile)
 yfile.close()
 
@@ -100,7 +101,7 @@ x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_tr
 
 print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
 input_shape = (x_train.shape[1:4])
-model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
+model_checkpoint = ModelCheckpoint(save_dir + 'unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
     model = unet.twolayernetwork(input_shape, 3, 0.5)
     if loss == 'bin_cross':
@@ -158,10 +159,15 @@ plt.close()
 
 
 y_pred = []
+dice_scores = []
 for i in x_test:
     i = np.expand_dims(i, -1)
-    y_pred.append(model.predict(i, verbose=1))
+    temp = model.predict(i, verbose=1)
+    y_pred.append(temp)
+    dice_scores.append(su.dice(i, temp))
 
+dice_score = np.median(dice_scores)
+print('median Dice score: ', dice_score)
 file_names = []
 for i in range(len(y_pred)):
     x_test_affine = x_test_data[i].affine
@@ -179,5 +185,5 @@ for i in range(len(y_test)):
 utils.save_datavisualisation3(x_test, y_test, output, save_dir , index_first = True, normalized = True, file_names = file_names)
 
 
-np.save(save_dir + 'y_pred', y_pred)
+np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
 
