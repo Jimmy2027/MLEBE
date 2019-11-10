@@ -3,6 +3,7 @@ import utils
 import nibabel as nib
 import numpy as np
 import utils
+import unet
 from tensorflow import keras
 from matplotlib import pyplot as plt
 
@@ -13,8 +14,9 @@ import data_loader as dl
 
 local = False
 test = True
+loss = 'bincross'
 shape = (128, 128)
-threshold = 0.5
+threshold = 0
 
 if local == True:
     path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
@@ -35,7 +37,11 @@ for o in os.listdir(path):
         img = nib.load(os.path.join(path, o))
         data.append(img)
 
-model = keras.models.load_model(model_path)
+if loss == 'dice':
+    model = keras.models.load_model(model_path, custom_objects = {'dice_coef_loss': unet.dice_coef_loss})
+elif loss == 'bincross':
+    model = keras.models.load_model(model_path)
+else: print('wrong loss function defined')
 
 y_pred = []
 img_datas = []
