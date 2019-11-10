@@ -19,7 +19,7 @@ import nibabel as nib
 
 test = False
 remote = False
-visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
+visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 loss = 'bincross'
 epochs = 50
 seed = 1
@@ -118,12 +118,13 @@ if test == True:
 
 else:
     model = unet.unet(input_shape)
-    if loss == 'bin_cross':
+    if loss == 'bincross':
+        print('Training with loss: binary_crossentropy')
         model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
-    if loss == 'Dice':
+    if loss == 'dice':
+        print('Training with loss: dice-loss')
         model.compile(optimizer=Adam(lr=1e-4), loss=unet.dice_coef_loss, metrics=['accuracy'])
-
-
+    else: print('wrong loss function, choose between bincross or dice')
 
 aug = kp.image.ImageDataGenerator(**data_gen_args)
 
