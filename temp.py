@@ -47,8 +47,8 @@ else:
 
 
 print('*** Preprocessing ***')
-x_test, x_test_affines, x_test_headers, file_names = utils.get_data(x_test_data, shape)
-y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape)[:3]
+x_test, x_test_affines, x_test_headers, file_names = utils.get_data(x_test_data, shape, save_dir)
+y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape, save_dir)[:3]
 
 x_test_struct = {
     'x_test' : x_test,

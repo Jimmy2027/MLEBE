@@ -6,7 +6,7 @@ import os
 import cv2
 import data_loader as dl
 
-def get_data(data, shape,save_dir,  visualisation = False):
+def get_data(data, shape, save_dir,  visualisation = False):
     """
 
     :param data: list of Nifit1Images
