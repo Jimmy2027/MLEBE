@@ -6,13 +6,15 @@ import os
 import cv2
 import data_loader as dl
 
-def get_data(data, shape):
+def get_data(data, shape,save_dir,  visualisation = False):
     """
 
     :param data: list of Nifit1Images
     :param shape: (y,x)
     :return:
     """
+    if visualisation == True:
+        unpreprocessed = []
     img_data = []
     affines = []
     headers = []
@@ -20,10 +22,17 @@ def get_data(data, shape):
     for i in data:
         affines.append(i.affine)
         headers.append(i.header)
-        file_names.append(i.file_map['image'].filename)
+        file_names.append(os.path.basename(i.file_map['image'].filename))
         temp = i.get_data()
-        temp = preprocess(temp, shape)
-        img_data.append(temp)
+        if visualisation == True:
+            unpreprocessed.append(np.moveaxis(temp, 2, 0))
+        preprocessed = preprocess(temp, shape)
+        img_data.append(preprocessed)
+
+    if visualisation == True:
+        save_datavisualisation1(unpreprocessed, save_dir + '/visualisaion/', index_first= True, file_names=file_names, file_name_header= 'unpro_')
+        save_datavisualisation1(img_data, save_dir + '/visualisaion/', index_first= True,normalized= True  ,file_names=file_names, file_name_header= 'prepr_')
+
     return img_data, affines, headers, file_names
 
 def preprocess(img, shape):
@@ -86,6 +95,42 @@ def save_img(img_data, path):
         plt.imshow(img_data[j, ...], cmap='gray')
         plt.savefig(os.path.join(path, 'img_{}.png'.format(j)))
 
+def save_datavisualisation1(img_data, save_folder, index_first = False, normalized = False, file_names = False, file_name_header = False):
+
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+
+    img_data_temp = []
+
+    if index_first == True:
+        for i in range(0, len(img_data)):
+            img_data_temp.append(np.moveaxis(img_data[i], 0, -1))
+
+    counter = 0
+    for i in img_data_temp[:]:
+        print(counter)
+        print(i.shape)
+        i_patch = i[:, :, 0]
+        if normalized == True:
+            i_patch = i_patch*255
+
+        for slice in range(1, i.shape[2]):
+            temp = i[:, :, slice]
+            if normalized == True:
+                temp = temp * 255
+            i_patch = np.hstack((i_patch, temp))
+
+        image = i_patch
+
+        if file_names == False:
+            imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
+        else:
+            if file_name_header == False:
+                imageio.imwrite(save_folder + file_names[counter] + '.png', image)
+            else:
+                imageio.imwrite(save_folder + file_name_header +file_names[counter] + '.png', image)
+        counter = counter + 1
+
 
 def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False, file_names = False):
 
@@ -133,9 +178,9 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
 def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_folder, index_first = False, normalized = False, file_names = False):
     """
 
-    :param img_data: list of arrays with shape (z, 64, 128) (if index first == true)
-    :param myocar_labels: list of arrays with shape (z, 64, 128)
-    :param predicted_labels: list of arrays with shape (z, 64, 128)
+    :param img_data: list of arrays with shape (z, y, x) (if index first == true)
+    :param myocar_labels: list of arrays with shape (z, y, x)
+    :param predicted_labels: list of arrays with shape (z, y, x)
     :param save_folder:
     :param index_first:
     :param normalized:

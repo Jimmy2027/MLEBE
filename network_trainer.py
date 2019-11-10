@@ -17,10 +17,10 @@ import nibabel as nib
 #todo write scratches with useful functions
 
 
-test = True
+test = False
 remote = False
-visualisation = False
-loss = 'Dice'
+visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
+loss = 'bincross'
 epochs = 50
 seed = 1
 shape = (128, 128)
@@ -66,8 +66,8 @@ else:
 
 
 print('*** Preprocessing ***')
-x_train1 = utils.get_data(x_train1_data,shape)[0]
-y_train1 = utils.get_data(y_train1_data,shape)[0]
+x_train1 = utils.get_data(x_train1_data,shape, save_dir, visualisation = visualisation)[0]
+y_train1 = utils.get_data(y_train1_data,shape, save_dir, visualisation = visualisation)[0]
 x_test, x_test_affines, x_test_headers, file_names = utils.get_data(x_test_data, shape)
 y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape)[:3]  #todo ca fait aucun sens de preprocess 10 fois les memes masks
 
@@ -104,14 +104,17 @@ input_shape = (x_train.shape[1:4])
 model_checkpoint = ModelCheckpoint(save_dir + 'unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
     model = unet.twolayernetwork(input_shape, 3, 0.5)
-    if loss == 'bin_cross':
+    if loss == 'bincross':
+        print('Training with loss: binary_crossentropy')
         model.compile(loss='binary_crossentropy',
                       optimizer='adam',
                       metrics=['accuracy'])
-    if loss == 'Dice':
+    elif loss == 'dice':
+        print('Training with loss: dice-loss')
         model.compile(loss = unet.dice_coef_loss,
                       optimizer='adam',
                       metrics=['accuracy'])
+    else: print('wrong loss function, choose between bincross or dice')
 
 else:
     model = unet.unet(input_shape)
@@ -131,13 +134,10 @@ history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch=len(x_
 
 print(history.history.keys())
 plt.figure()
+
 # Plot training & validation accuracy values:
-if remote == True:
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-else:
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
 plt.title('Model accuracy')
 plt.ylabel('Accuracy')
 plt.xlabel('Epoch')

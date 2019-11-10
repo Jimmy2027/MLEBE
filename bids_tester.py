@@ -22,7 +22,7 @@ if local == True:
     save_path = '/Users/Hendrik/Documents/mlebe_data/temp_bids/'
 else:
     path = '/var/tmp/resampled/'
-    model_path = '/home/hendrik/src/mlebe/results/unet_ep50_val_loss0.03.hdf5'
+    model_path = '/home/hendrik/src/mlebe/results/training_results/Dice_50/unet_ep05_val_loss0.04.hdf5'
     save_path = '/home/hendrik/src/mlebe/results/bids_predictions_thr{}/'.format(threshold)
 
 

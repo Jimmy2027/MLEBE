@@ -9,20 +9,25 @@ import data_loader as dl
 import pickle
 
 remote = False
+loss = 'bincross'
 
 if remote == False:
-    path = '/Users/Hendrik/Documents/mlebe_data/results/test'
+    path = '/Users/Hendrik/Documents/mlebe_data/results/bin_cross_50/'
     save_dir = '/Users/Hendrik/Documents/mlebe_data/temp/'
-    model_dir = path + '/unet_ep01_val_loss5.35.hdf5'
+    model_dir = path + 'unet_ep02_val_loss0.16.hdf5'
 else:
-    path = 'home/hendrik/src/mlebe/results/training_results/Dice_50'
+    path = '/home/hendrik/src/mlebe/results/training_results/Dice_50'
     save_dir = '/home/hendrik/src/mlebe/tmp/'
     model_dir = path + '/unet_ep05_val_loss0.04.hdf5'
 
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
-model = keras.models.load_model(model_dir, custom_objects = {'dice_coef_loss': unet.dice_coef_loss})
+if loss == 'dice':
+    model = keras.models.load_model(model_dir, custom_objects = {'dice_coef_loss': unet.dice_coef_loss})
+elif loss == 'bincross':
+    model = keras.models.load_model(model_dir)
+else: print('wrong loss function defined')
 
 shape = (128, 128)
 
