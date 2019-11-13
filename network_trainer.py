@@ -17,8 +17,8 @@ import nibabel as nib
 #todo write scratches with useful functions
 
 
-test = False
-remote = True
+test = True
+remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 loss = 'bincross'
 epochs = 10
@@ -118,13 +118,13 @@ if test == True:
 
 else:
     model = unet.unet(input_shape)
-    # if loss == 'bincross':
-    #     print('Training with loss: binary_crossentropy')
-    #     model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+    if loss == 'bincross':
+        print('Training with loss: binary_crossentropy')
+        model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
     if loss == 'dice':
         print('Training with loss: dice-loss')
         model.compile(optimizer=Adam(lr=1e-4), loss=unet.dice_coef_loss, metrics=['accuracy'])
-    # else: print('wrong loss function, choose between bincross or dice')
+    else: print('wrong loss function, choose between bincross or dice')
 
 aug = kp.image.ImageDataGenerator(**data_gen_args)
 

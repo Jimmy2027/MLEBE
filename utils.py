@@ -96,6 +96,16 @@ def save_img(img_data, path):
         plt.savefig(os.path.join(path, 'img_{}.png'.format(j)))
 
 def save_datavisualisation1(img_data, save_folder, index_first = False, normalized = False, file_names = False, file_name_header = False):
+    """
+
+    :param img_data:
+    :param save_folder:
+    :param index_first:
+    :param normalized:
+    :param file_names:
+    :param file_name_header: i.e. 'preprocessed_' at the beginning of each file_name
+    :return:
+    """
 
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
