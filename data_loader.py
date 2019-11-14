@@ -6,8 +6,6 @@ import numpy as np
 from utils import *
 
 not_preprocessed_dir = '/usr/share/'
-image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
-image_dir_remote = '/mnt/scratch/'
 
 
 def load_bidsdata():
@@ -29,10 +27,7 @@ def load_bidsdata():
     return paths, filess
 
 
-
-
-
-def load_img_remote():
+def load_img_remote(image_dir_remote):
     print('*** loading images ***')
     im_data = []
     for o in os.listdir(image_dir_remote):
@@ -59,7 +54,7 @@ def load_img_remote():
         data.append(img)
     return data
 
-def load_img():
+def load_img(image_dir):
     print('*** loading images ***')
 
     im_data = []

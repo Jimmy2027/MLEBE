@@ -19,11 +19,26 @@ import nibabel as nib
 
 test = True
 remote = False
+epfl = True
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 loss = 'bincross'
 epochs = 10
 seed = 1
 shape = (128, 128)
+
+if remote == True:
+    if epfl == False:
+        image_dir_remote = '/mnt/scratch/'
+        data_dir = '/usr/share/mouse-brain-atlases/'
+    if epfl == True:
+        image_dir_remote = '/home/klug/Hendrik/MLEBE/preprocessed/'
+        data_dir = '/home/klug/Hendrik/MLEBE/mouse-brain-atlases'
+    img_data = dl.load_img_remote(image_dir_remote)
+
+else:
+    image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
+    img_data = dl.load_img(image_dir)
+    data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
 if test == True:
     epochs = 1
@@ -43,13 +58,6 @@ data_gen_args = dict(rotation_range=0.2,
                     fill_mode='nearest')
 
 """shape = (z,y,x)"""
-
-if remote == True:
-    img_data = dl.load_img_remote()
-    data_dir = '/usr/share/mouse-brain-atlases/'
-else:
-    img_data = dl.load_img()
-    data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
 
 temp = dl.load_mask(data_dir)
