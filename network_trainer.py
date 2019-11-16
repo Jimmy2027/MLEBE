@@ -31,36 +31,39 @@ epochs = 300
 seed = 1
 shape = (128, 128)
 
-if remote == True:
-        image_dir_remote = '/mnt/scratch/'
-        data_dir = '/usr/share/mouse-brain-atlases/'
-        img_data = dl.load_img_remote(image_dir_remote)
-
-else:
-    image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
-    img_data = dl.load_img(image_dir)
-    data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
-
-if test == True:
-    epochs = 5
-    save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/'
-else:
-    save_dir = 'results/training_results/{loss}_{epochs}/'.format(loss = loss, epochs = epochs)
-
-if not os.path.exists(save_dir):
-    os.makedirs(save_dir)
-
-data_gen_args = dict(rotation_range=0.2,
-                    width_shift_range=0.05,
-                    height_shift_range=0.05,
-                    shear_range=0.05,
-                    zoom_range=0.05,
-                    horizontal_flip=True,
-                    fill_mode='nearest')
-
-"""shape = (z,y,x)"""
 
 for loss in losses:
+
+
+    if remote == True:
+            image_dir_remote = '/mnt/scratch/'
+            data_dir = '/usr/share/mouse-brain-atlases/'
+            img_data = dl.load_img_remote(image_dir_remote)
+
+    else:
+        image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
+        img_data = dl.load_img(image_dir)
+        data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
+
+    if test == True:
+        epochs = 5
+        save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/'
+    else:
+        save_dir = 'results/training_results/{loss}_{epochs}/'.format(loss = loss, epochs = epochs)
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    data_gen_args = dict(rotation_range=0.2,
+                        width_shift_range=0.05,
+                        height_shift_range=0.05,
+                        shear_range=0.05,
+                        zoom_range=0.05,
+                        horizontal_flip=True,
+                        fill_mode='nearest')
+
+    """shape = (z,y,x)"""
+
 
     temp = dl.load_mask(data_dir)
     mask_data = []
