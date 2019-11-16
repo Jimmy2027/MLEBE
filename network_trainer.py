@@ -19,21 +19,16 @@ import nibabel as nib
 
 test = True
 remote = False
-epfl = True
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 loss = 'bincross'
-epochs = 10
+epochs = 50
 seed = 1
 shape = (128, 128)
 
 if remote == True:
-    if epfl == False:
         image_dir_remote = '/mnt/scratch/'
         data_dir = '/usr/share/mouse-brain-atlases/'
-    if epfl == True:
-        image_dir_remote = '/home/klug/Hendrik/MLEBE/preprocessed/'
-        data_dir = '/home/klug/Hendrik/MLEBE/mouse-brain-atlases'
-    img_data = dl.load_img_remote(image_dir_remote)
+        img_data = dl.load_img_remote(image_dir_remote)
 
 else:
     image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
@@ -109,7 +104,7 @@ x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_tr
 
 print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
 input_shape = (x_train.shape[1:4])
-model_checkpoint = ModelCheckpoint(save_dir + 'unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
+model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True)
 if test == True:
     model = unet.twolayernetwork(input_shape, 3, 0.5)
     if loss == 'bincross':
