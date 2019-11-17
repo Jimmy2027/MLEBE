@@ -12,7 +12,7 @@ import data_loader as dl
 
 
 
-def bids_tester(save_path, model, remote, test, shape, epochs, threshold = 0):
+def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =True):
     if remote == False:
         path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
     else:

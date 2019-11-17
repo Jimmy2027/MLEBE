@@ -26,7 +26,7 @@ import nibabel as nib
 test = True
 remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['bincross', 'dice']
+losses = ['dice']
 epochs = 300
 seed = 1
 shape = (128, 128)
@@ -118,8 +118,8 @@ for loss in losses:
 
     class bidstest(keras.callbacks.Callback):
         def on_epoch_end(self, epoch, log = {}):
-            if epoch % 10 == 0:
-                bids_tester.bids_tester(save_dir, self.model, remote, test, shape, epoch)
+            if epoch % 1 == 0:
+                bids_tester.bids_tester(save_dir, self.model, remote, shape, epoch) #Test should be True (default) to only predict 5 bids_images instead of all of them
             return
 
     bidstest_callback = bidstest()
