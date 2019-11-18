@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 from sklearn import model_selection
 import nibabel as nib
 
-
+#todo verify augmentation values
 #todo parse arguments?
 #todo calculate dice score
 #todo write README
@@ -82,7 +82,7 @@ for loss in losses:
     x_train1 = utils.get_data(x_train1_data,shape, save_dir, visualisation = visualisation)[0]
     y_train1 = utils.get_data(y_train1_data,shape, save_dir, visualisation = visualisation)[0]
     x_test, x_test_affines, x_test_headers, file_names = utils.get_data(x_test_data, shape, save_dir)
-    y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape, save_dir)[:3]  #todo ca fait aucun sens de preprocess 10 fois les memes masks
+    y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape, save_dir)[:3]
 
     print('*** saving Test data ***')
     x_test_struct = {
@@ -211,4 +211,3 @@ for loss in losses:
 
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
-
