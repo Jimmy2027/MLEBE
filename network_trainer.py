@@ -16,6 +16,7 @@ from matplotlib import pyplot as plt
 from sklearn import model_selection
 import nibabel as nib
 
+#todo write txt file with comment to experiment
 #todo verify augmentation values
 #todo parse arguments?
 #todo calculate dice score
@@ -54,12 +55,16 @@ for loss in losses:
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    data_gen_args = dict(rotation_range=0.2,
-                        width_shift_range=0.05,
-                        height_shift_range=0.05,
-                        shear_range=0.05,
-                        zoom_range=0.05,
+    data_gen_args = dict(rotation_range=90,
+                        zca_whitening = True,
+                        zca_epsilon = 1e-6,
+                        brightness_range = 0.98,
+                        width_shift_range=50,
+                        height_shift_range=50,
+                        shear_range=20,
+                        zoom_range=[0.6, 1.4],
                         horizontal_flip=True,
+                        vertical_flip = True,
                         fill_mode='nearest')
 
     """shape = (z,y,x)"""
