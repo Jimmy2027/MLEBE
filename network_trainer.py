@@ -61,19 +61,29 @@ for loss in losses:
     #                     zoom_range=0.05,
     #                     horizontal_flip=True,
     #                     fill_mode= 'nearest')
-    width_shit_val = 0.2
+
+    width_shit_val = 30
     width_shift_arg = dict(width_shift_range=width_shit_val)
     rot_val = 90
     rotation_arg = dict(rotation_range=rot_val)
-    height_shift_val = 0.2
+    height_shift_val = 30
     height_shift_arg = dict(height_shift_range=height_shift_val)
-    zoom_val = 0.5
+    zoom_val = 0.2
     zoom_arg = dict(zoom_range=zoom_val)
-    shear_val = 0.5
+    shear_val = 5
     shear_range_arg = dict(shear_range = shear_val)
+    zca_whitening_val = True
+    zca_whitening_arg = dict(zca_whitening = zca_whitening_val)
+    brightness_range_val = [0.5, 1.2]
+    brightness_range_arg = dict(brightness_range = brightness_range_val)
+    horizontal_flip_val = True
+    horizontal_flip_arg = dict(horizontal_flip = horizontal_flip_val)
+    vertical_flip_val = True
+    vertical_flip_arg = dict(vertical_flip = vertical_flip_val)
 
-    data_gen_argss = [width_shift_arg, rotation_arg, height_shift_arg, zoom_arg, shear_range_arg]
-    folders = ['width_shift{}'.format(width_shit_val), 'rotation{}'.format(rot_val), 'height_shift{}'.format(height_shift_val), 'zoom{}'.format(zoom_val), 'shear{}'.format(shear_val)]
+
+    data_gen_argss = [width_shift_arg, rotation_arg, height_shift_arg, zoom_arg, shear_range_arg, zca_whitening_arg, brightness_range_arg, horizontal_flip_arg, vertical_flip_arg]
+    folders = ['width_shift{}'.format(width_shit_val), 'rotation{}'.format(rot_val), 'height_shift{}'.format(height_shift_val), 'zoom' + str(zoom_val), 'shear{}'.format(shear_val), 'zca_whitening', 'brightness'+str(brightness_range_val), 'horizontal_flip', 'vertical_flip']
 
     for folder, data_gen_args in zip(folders, data_gen_argss):
         if not os.path.exists(save_dir + folder):
