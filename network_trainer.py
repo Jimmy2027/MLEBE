@@ -15,6 +15,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import model_selection
 import nibabel as nib
+import datetime
 
 #todo write txt file with comment to experiment
 #todo verify augmentation values
@@ -24,13 +25,14 @@ import nibabel as nib
 #todo write scratches with useful functions
 
 
-test = False
-remote = True
+test = True
+remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['dice']
+losses = ['dice', 'bincross']
 epochs = 300
 seed = 1
 shape = (128, 128)
+
 
 
 for loss in losses:
@@ -47,10 +49,10 @@ for loss in losses:
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
     if test == True:
-        epochs = 5
+        epochs = 1
         save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/'
     else:
-        save_dir = 'results/training_results/{loss}_{epochs}/'.format(loss = loss, epochs = epochs)
+        save_dir = 'results/training_results/{loss}_{epochs}_{date}/'.format(loss = loss, epochs = epochs, date = datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -58,15 +60,18 @@ for loss in losses:
     data_gen_args = dict(rotation_range=90,
                         zca_whitening = True,
                         zca_epsilon = 1e-6,
-                        brightness_range = 0.98,
-                        width_shift_range=50,
-                        height_shift_range=50,
-                        shear_range=20,
-                        zoom_range=[0.6, 1.4],
+                        brightness_range = [0.5, 1.2],
+                        width_shift_range=30,
+                        height_shift_range=30,
+                        shear_range= 5,
+                        zoom_range= 0.2,
                         horizontal_flip=True,
                         vertical_flip = True,
                         fill_mode='nearest')
-
+    experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
+    experiment_description.write("This experiment was run on {date_time} \n".format(date_time = datetime.datetime.now()))
+    experiment_description.write('Augmentation values: ' + str(data_gen_args.items()) + '\n')
+    experiment_description.close()
     """shape = (z,y,x)"""
 
 
