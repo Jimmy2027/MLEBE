@@ -1,10 +1,11 @@
 import data_loader as dl
 import utils
 import bids_tester
+import unet
 
 
 import pickle
-import unet
+import tensorflow
 import scoring_utils as su
 from tensorflow import keras
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
@@ -26,8 +27,8 @@ import random
 #todo write scratches with useful functions
 
 
-test = False
-remote = True
+test = True
+remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice_bincross', 'dice', 'bincross']
 losses = ['dice_bincross']
@@ -161,10 +162,17 @@ for loss in losses:
     else: print('wrong loss function, choose between bincross, dice or dice_bincross')
 
 
-    aug = kp.image.ImageDataGenerator(**data_gen_args)
+    img_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+    mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+
+    img_datagen.fit(x_train, augment=True, seed=seed)
+    mask_datagen.fit(y_train, augment=True, seed=seed)
+
+    print('fitting training data_generator')
+    train_generator = tensorflow.data.dataset.zip(img_datagen.flow(x_train), mask_datagen.flow(y_train))
 
 
-    history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint, bidstest_callback])
+    history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
 
 
