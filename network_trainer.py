@@ -61,8 +61,6 @@ for loss in losses:
         os.makedirs(save_dir)
 
     data_gen_args = dict(rotation_range=90,
-                        zca_whitening = True,
-                        zca_epsilon = 1e-6,
                         brightness_range = [0.5, 1.2],
                         width_shift_range=30,
                         height_shift_range=30,
@@ -161,18 +159,10 @@ for loss in losses:
                       metrics=['accuracy'])
     else: print('wrong loss function, choose between bincross, dice or dice_bincross')
 
-
-    img_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-    mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-
-    img_datagen.fit(x_train, augment=True, seed=seed)
-    mask_datagen.fit(y_train, augment=True, seed=seed)
-
-    print('fitting training data_generator')
-    train_generator = tensorflow.data.dataset.zip(img_datagen.flow(x_train), mask_datagen.flow(y_train))
+    aug = kp.image.ImageDataGenerator(**data_gen_args)
 
 
-    history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint, bidstest_callback])
+    history = model.fit_generator(aug.flow(x_train,y_train), steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
 
 
