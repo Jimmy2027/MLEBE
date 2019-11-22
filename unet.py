@@ -89,6 +89,11 @@ def dice_coef(y_true, y_pred, smooth=1):
 def dice_coef_loss(y_true, y_pred):
     return 1-dice_coef(y_true, y_pred)
 
+def dice_bincross_loss(y_true, y_pred):
+    return dice_coef_loss(y_true, y_pred) + tf.keras.losses.binary_crossentropy(y_true, y_pred)
+
+
+
 if __name__ == '__main__':      #only gets called if Unet.py is run
 
     model = unet((64, 128, 1))

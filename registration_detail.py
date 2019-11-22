@@ -1,13 +1,12 @@
 import itertools
 import matplotlib.pyplot as plt
-
-from samri.plotting.maps import contour_slices
-from samri.utilities import bids_substitution_iterator
+from SAMRI.samri.plotting.maps import contour_slices
+from SAMRI.samri.utilities import bids_substitution_iterator
 from joblib import Parallel, delayed
 import multiprocessing as mp
 
 # This is the autodetect function:
-from samri.utilities import bids_autofind_df
+from SAMRI.samri.utilities import bids_autofind_df
 
 num_cores = max(mp.cpu_count()-1,1)
 
@@ -15,8 +14,8 @@ templates = {
 	'generic':'/usr/share/mouse-brain-atlases/dsurqec_40micron_masked.nii',
 	}
 
-
-data_dir='/home/hendrik/src/mlebe/training_bids_data/'
+data_dir = '/Users/Hendrik/Documents/Semester_project/training_bids_data/'
+# data_dir = '/home/hendrik/src/mlebe/training_bids_data/'
 bids_df = bids_autofind_df(data_dir,
         path_template='sub-{{subject}}/ses-{{session}}/anat/'\
                 'sub-{{subject}}_ses-{{session}}_acq-{{acquisition}}_T2w.nii.gz',

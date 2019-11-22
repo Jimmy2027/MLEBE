@@ -16,6 +16,7 @@ from matplotlib import pyplot as plt
 from sklearn import model_selection
 import nibabel as nib
 import datetime
+import random
 
 #todo write txt file with comment to experiment
 #todo verify augmentation values
@@ -25,12 +26,13 @@ import datetime
 #todo write scratches with useful functions
 
 
-test = True
-remote = False
+test = False
+remote = True
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['dice', 'bincross']
+# losses = ['dice_bincross', 'dice', 'bincross']
+losses = ['dice_bincross']
 epochs = 300
-seed = 1
+seed = random.randint(0, 1000)
 shape = (128, 128)
 
 
@@ -68,9 +70,11 @@ for loss in losses:
                         horizontal_flip=True,
                         vertical_flip = True,
                         fill_mode='nearest')
+
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
-    experiment_description.write("This experiment was run on {date_time} \n".format(date_time = datetime.datetime.now()))
-    experiment_description.write('Augmentation values: ' + str(data_gen_args.items()) + '\n')
+    experiment_description.write("This experiment was run on {date_time} \n\n".format(date_time = datetime.datetime.now()))
+    experiment_description.write('Augmentation values: ' + str(data_gen_args.items()) + '\n\n')
+    experiment_description.write('Seed: {seed}'.format(seed = seed) + '\n\n')
     experiment_description.close()
     """shape = (z,y,x)"""
 
@@ -136,27 +140,26 @@ for loss in losses:
 
     if test == True:
         model = unet.twolayernetwork(input_shape, 3, 0.5)
-        if loss == 'bincross':
-            print('Training with loss: binary_crossentropy')
-            model.compile(loss='binary_crossentropy',
-                          optimizer='adam',
-                          metrics=['accuracy'])
-        elif loss == 'dice':
-            print('Training with loss: dice-loss')
-            model.compile(loss = unet.dice_coef_loss,
-                          optimizer='adam',
-                          metrics=['accuracy'])
-        else: print('wrong loss function, choose between bincross or dice')
-
     else:
         model = unet.unet(input_shape)
-        if loss == 'bincross':
-            print('Training with loss: binary_crossentropy')
-            model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
-        if loss == 'dice':
-            print('Training with loss: dice-loss')
-            model.compile(optimizer=Adam(lr=1e-4), loss=unet.dice_coef_loss, metrics=['accuracy'])
-        else: print('wrong loss function, choose between bincross or dice')
+
+    if loss == 'bincross':
+        print('Training with loss: binary_crossentropy')
+        model.compile(loss='binary_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+    elif loss == 'dice':
+        print('Training with loss: dice-loss')
+        model.compile(loss = unet.dice_coef_loss,
+                      optimizer='adam',
+                      metrics=['accuracy'])
+    elif loss == 'dice_bincross':
+        print('Training with loss: dice_bincross')
+        model.compile(loss=unet.dice_bincross_loss,
+                      optimizer='adam',
+                      metrics=['accuracy'])
+    else: print('wrong loss function, choose between bincross, dice or dice_bincross')
+
 
     aug = kp.image.ImageDataGenerator(**data_gen_args)
 
@@ -215,7 +218,7 @@ for loss in losses:
     for i in range(len(y_test)):
         output.append(np.squeeze(y_pred[i]))
 
-    # bids_tester.bids_tester(save_dir, model, remote, epochs)
+    bids_tester.bids_tester(save_dir, model, remote, shape, epochs)
 
     utils.save_datavisualisation3(x_test, y_test, output, save_dir , index_first = True, normalized = True, file_names = file_names)
 
