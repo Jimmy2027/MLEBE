@@ -19,10 +19,8 @@ import nibabel as nib
 import datetime
 import random
 
-#todo write txt file with comment to experiment
 #todo verify augmentation values
 #todo parse arguments?
-#todo calculate dice score
 #todo write README
 #todo write scratches with useful functions
 
@@ -64,7 +62,7 @@ for loss in losses:
                         brightness_range = [0.5, 1.2],
                         width_shift_range=30,
                         height_shift_range=30,
-                        shear_range= 5,
+                        shear_range = 5,
                         zoom_range= 0.2,
                         horizontal_flip=True,
                         vertical_flip = True,
