@@ -29,7 +29,7 @@ test = True
 remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice_bincross', 'dice', 'bincross']
-losses = ['dice_bincross']
+losses = ['dice']
 epochs = 300
 seed = random.randint(0, 1000)
 shape = (128, 128)
@@ -50,7 +50,7 @@ for loss in losses:
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
     if test == True:
-        epochs = 1
+        epochs = 5
         save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/'
     else:
         save_dir = 'results/training_results/{loss}_{epochs}_{date}/'.format(loss = loss, epochs = epochs, date = datetime.date.today())
@@ -67,6 +67,8 @@ for loss in losses:
                         horizontal_flip=True,
                         vertical_flip = True,
                         fill_mode='nearest')
+
+    # data_gen_args = dict(width_shift_range = 0.05)
 
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
     experiment_description.write("This experiment was run on {date_time} \n\n".format(date_time = datetime.datetime.now()))
@@ -160,7 +162,7 @@ for loss in losses:
     aug = kp.image.ImageDataGenerator(**data_gen_args)
 
 
-    history = model.fit_generator(aug.flow(x_train,y_train), steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint, bidstest_callback])
+    history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
 
 
