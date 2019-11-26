@@ -31,6 +31,7 @@ import random
 def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation = False):
 
         seed = random.randint(0, 1000)
+        print('training with seed: ', seed )
         if remote == True:
                 image_dir_remote = '/mnt/scratch/'
                 data_dir = '/usr/share/mouse-brain-atlases/'
@@ -50,17 +51,17 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-        data_gen_args = dict(rotation_range=90,
-                            brightness_range = [0.5, 1.2],
-                            width_shift_range=30,
-                            height_shift_range=30,
-                            shear_range = 5,
-                            zoom_range= 0.2,
-                            horizontal_flip=True,
-                            vertical_flip = True,
-                            fill_mode='nearest')
+        # data_gen_args = dict(rotation_range=90,
+        #                     brightness_range = [0.5, 1.2],
+        #                     width_shift_range=30,
+        #                     height_shift_range=30,
+        #                     shear_range = 5,
+        #                     zoom_range= 0.2,
+        #                     horizontal_flip=True,
+        #                     vertical_flip = True,
+        #                     fill_mode='nearest')
 
-        # data_gen_args = dict(width_shift_range = 0.05)
+        data_gen_args = dict(width_shift_range = 0.05)
 
         experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
         experiment_description.write("This experiment was run on {date_time} \n\n".format(date_time = datetime.datetime.now()))
