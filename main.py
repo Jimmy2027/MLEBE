@@ -1,10 +1,10 @@
 import network_trainer
 
-test = True
-remote = False
+test = False
+remote = True
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice_bincross', 'dice', 'bincross']
-losses = ['dice']
+losses = ['bincross', 'dice']
 epochs = 20
 shape = (128, 128)
 nmbr_tries = 0

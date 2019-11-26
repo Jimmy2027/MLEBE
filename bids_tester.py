@@ -43,6 +43,7 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =Tr
             temp = np.where(temp > threshold, 1, 0)
         y_pred.append(temp)
         img_datas.append(img_data)
+
     if np.max(y_pred == 0):
         print('Predictions are zero! Max y_pred: ', np.max(y_pred))
         return False
@@ -72,6 +73,8 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =Tr
         output.append(np.squeeze(y_pred[i]))
 
     utils.save_datavisualisation2(img_datas, output, save_path, index_first=True, normalized= True, file_names=file_names)
+
+    return True
 
 
 if __name__ == '__main__':

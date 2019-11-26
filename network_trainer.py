@@ -43,10 +43,10 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
             data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
         if test == True:
-            epochs = 5
+            epochs = 1
             save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = epochs, date = datetime.date.today(), tries = nmbr_tries)
         else:
-            save_dir = 'results/training_results/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = epochs, date = datetime.date.today(), tries = nmbr_tries)
+            save_dir = 'whatswrong/training_results/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = epochs, date = datetime.date.today(), tries = nmbr_tries)
 
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
@@ -126,6 +126,7 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
             def on_epoch_end(self, epoch, log = {}):
                 if epoch % 10 == 0:
                     if bids_tester.bids_tester(save_dir, self.model, remote, shape, epoch):  #Test should be True (default) to only predict 5 bids_images instead of all of them
+                        print('No faulty predictions!')
                         return
                     else:
 
@@ -167,8 +168,8 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
 
 
         print(history.history.keys())
-        if history.epoch[0] != epochs - 1:
-            print('Faulty predictions!')
+        if len(history.epoch) != epochs:
+            print('Faulty predictions! Epoch:', len(history.epoch), 'instead of', epochs)
             return True
         plt.figure()
 
