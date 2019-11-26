@@ -157,12 +157,23 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
                           metrics=['accuracy'])
         else: print('wrong loss function, choose between bincross, dice or dice_bincross')
 
-        aug = kp.image.ImageDataGenerator(**data_gen_args)
-
         augment_save_dir = save_dir + '/augment/'
+
+        aug = kp.image.ImageDataGenerator(**data_gen_args)
+        # image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+        # mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+        #
+        # image_generator = image_datagen.flow(x_train, save_to_dir = augment_save_dir)
+        #
+        # mask_generator = mask_datagen.flow(y_train, save_to_dir = augment_save_dir)
+        #
+        # train_generator = zip(image_generator, mask_generator)
+
         if not os.path.exists(augment_save_dir):
             os.makedirs(augment_save_dir)
         history = model.fit_generator(aug.flow(x_train, y_train, save_to_dir = augment_save_dir), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint, bidstest_callback])
+
+        # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
 
 

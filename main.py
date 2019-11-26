@@ -1,17 +1,18 @@
 import network_trainer
 
-test = False
-remote = True
+test = True
+remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice_bincross', 'dice', 'bincross']
 losses = ['bincross', 'dice']
 epochs = 20
 shape = (128, 128)
-nmbr_tries = 0
+
 
 
 for loss in losses:
     faulty_preds = True
+    nmbr_tries = 0
     while faulty_preds == True:
         nmbr_tries += 1
         print('Number of tries: ', nmbr_tries)
