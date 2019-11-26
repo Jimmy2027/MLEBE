@@ -136,6 +136,8 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2)
         earlystopper = EarlyStopping(monitor='val_accuracy', patience=15, verbose=1)
 
+        Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=False)
+
         if test == True:
             model = unet.twolayernetwork(input_shape, 3, 0.5)
         else:
@@ -144,12 +146,12 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         if loss == 'bincross':
             print('Training with loss: binary_crossentropy')
             model.compile(loss='binary_crossentropy',
-                          optimizer='adam',
+                          optimizer = Adam,
                           metrics=['accuracy'])
         elif loss == 'dice':
             print('Training with loss: dice-loss')
             model.compile(loss = unet.dice_coef_loss,
-                          optimizer='adam',
+                          optimizer= Adam,
                           metrics=['accuracy'])
         elif loss == 'dice_bincross':
             print('Training with loss: dice_bincross')

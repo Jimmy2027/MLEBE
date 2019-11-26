@@ -7,6 +7,8 @@ visualisation = False  #if visualisation true saves pre- and unpreprocessed imag
 losses = ['bincross', 'dice']
 epochs = 20
 shape = (128, 128)
+if test == True:
+    shape = (32, 32)
 
 
 
