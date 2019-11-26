@@ -8,7 +8,7 @@ import pickle
 import tensorflow
 import scoring_utils as su
 from tensorflow import keras
-from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from tensorflow.keras.optimizers import *
 import tensorflow.keras.preprocessing as kp
 import os
@@ -23,9 +23,6 @@ import random
 #todo parse arguments?
 #todo write README
 #todo write scratches with useful functions
-
-
-
 
 
 def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation = False):
@@ -132,8 +129,12 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
 
                         self.model.stop_training = True
 
-
+        """
+        Callbacks
+        """
         bidstest_callback = bidstest()
+        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2)
+        earlystopper = EarlyStopping(monitor='val_accuracy', patience=15, verbose=1)
 
         if test == True:
             model = unet.twolayernetwork(input_shape, 3, 0.5)
@@ -169,9 +170,9 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         #
         # train_generator = zip(image_generator, mask_generator)
 
-        if not os.path.exists(augment_save_dir):
-            os.makedirs(augment_save_dir)
-        history = model.fit_generator(aug.flow(x_train, y_train, save_to_dir = augment_save_dir), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[model_checkpoint, bidstest_callback])
+        # if not os.path.exists(augment_save_dir):
+        #     os.makedirs(augment_save_dir)
+        history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback])
 
         # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
