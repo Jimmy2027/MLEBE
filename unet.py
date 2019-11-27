@@ -81,7 +81,7 @@ def dice_coef(y_true, y_pred, smooth=1):
          =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
     ref: https://arxiv.org/pdf/1606.04797v1.pdf
     """
-    # y_pred = y_pred[np.where(y_pred> 0.5, 0, 1)]
+    # y_pred = np.where(y_pred > 0.5, 1, 0)
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)

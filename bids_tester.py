@@ -38,7 +38,7 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =Tr
         img_data = i.get_data()
         img_data = utils.preprocess(img_data, shape)
         i = np.expand_dims(img_data, -1)
-        temp = model.predict(i, verbose=1)
+        temp = model.predict(i, verbose=0)
         if threshold != 0:
             temp = np.where(temp > threshold, 1, 0)
         y_pred.append(temp)

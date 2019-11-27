@@ -48,17 +48,17 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-        # data_gen_args = dict(rotation_range=90,
-        #                     brightness_range = [0.5, 1.2],
-        #                     width_shift_range=30,
-        #                     height_shift_range=30,
-        #                     shear_range = 5,
-        #                     zoom_range= 0.2,
-        #                     horizontal_flip=True,
-        #                     vertical_flip = True,
-        #                     fill_mode='nearest')
+        data_gen_args = dict(rotation_range=90,
+                            brightness_range = [0.5, 1.2],
+                            width_shift_range=30,
+                            height_shift_range=30,
+                            shear_range = 5,
+                            zoom_range= 0.2,
+                            horizontal_flip=True,
+                            vertical_flip = True,
+                            fill_mode='nearest')
 
-        data_gen_args = dict(width_shift_range = 0.05)
+        # data_gen_args = dict(width_shift_range = 0.05)
 
         experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
         experiment_description.write("This experiment was run on {date_time} \n\n".format(date_time = datetime.datetime.now()))
@@ -125,8 +125,7 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
                     if bids_tester.bids_tester(save_dir, self.model, remote, shape, epoch):  #Test should be True (default) to only predict 5 bids_images instead of all of them
                         print('No faulty predictions!')
                         return
-                    else:
-
+                    else:   #if predictions are zero, training stops
                         self.model.stop_training = True
 
         """
@@ -134,7 +133,7 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         """
         bidstest_callback = bidstest()
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2)
-        earlystopper = EarlyStopping(monitor='val_accuracy', patience=15, verbose=1)
+        earlystopper = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
         Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=False)
 
@@ -174,7 +173,7 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
 
         # if not os.path.exists(augment_save_dir):
         #     os.makedirs(augment_save_dir)
-        history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback])
+        history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
 
         # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
@@ -214,7 +213,7 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         dice_scores = []
         for i in x_test:
             i = np.expand_dims(i, -1)
-            temp = model.predict(i, verbose=1)
+            temp = model.predict(i, verbose=0)
             y_pred.append(temp)
             dice_scores.append(su.dice(i, temp))
 
