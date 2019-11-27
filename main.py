@@ -6,7 +6,7 @@ visualisation = False  #if visualisation true saves pre- and unpreprocessed imag
 losses = ['dice', 'dice_bincross', 'bincross']
 # losses = ['bincross', 'dice']
 epochs = 20
-max_tries = 10
+max_tries = 5
 shape = (128, 128)
 if test == True:
     shape = (32, 32)

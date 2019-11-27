@@ -55,7 +55,7 @@ def load_img_remote(image_dir_remote):
     return data
 
 def load_img(image_dir):
-    print('*** loading images ***')
+    print('*** Loading images ***')
 
     im_data = []
     for root, dirs, files in os.walk(image_dir):
@@ -82,7 +82,7 @@ def load_img(image_dir):
 
 
 def load_mask(data_dir):
-    print('*** loading mask ***')
+    print('*** Loading mask ***')
     mask = []
     im_data = []
     for o in os.listdir(data_dir):

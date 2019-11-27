@@ -43,7 +43,7 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
             epochs = 1
             save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = epochs, date = datetime.date.today(), tries = nmbr_tries)
         else:
-            save_dir = 'whatswrong/training_results/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = epochs, date = datetime.date.today(), tries = nmbr_tries)
+            save_dir = 'with_augment_callb/training_results/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = epochs, date = datetime.date.today(), tries = nmbr_tries)
 
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
@@ -132,10 +132,10 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         Callbacks
         """
         bidstest_callback = bidstest()
-        reduce_lr = ReduceLROnPlateau(monitor='val_accuracy', factor=0.1, verbose = 1, patience=2)
+        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose = 1, patience=2)
         earlystopper = EarlyStopping(monitor='val_accuracy', patience=10, verbose = 1)
 
-        Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=False)
+        Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad = True)
 
         if test == True:
             model = unet.twolayernetwork(input_shape, 3, 0.5)
