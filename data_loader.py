@@ -15,7 +15,7 @@ def load_bidsdata():
     """
     paths = []
     filess = []
-    print('*** loading bidsdata ***')
+    print('*** Loading bidsdata ***')
     for o in os.listdir(not_preprocessed_dir):
         if not o.startswith('irsabi') and o.endswith('bidsdata'):
             for root, dirs, files in os.walk(os.path.join(not_preprocessed_dir, o)):
@@ -28,7 +28,7 @@ def load_bidsdata():
 
 
 def load_img_remote(image_dir_remote):
-    print('*** loading images ***')
+    print('*** Loading images ***')
     im_data = []
     for o in os.listdir(image_dir_remote):
         if o != 'irsabi':

@@ -28,7 +28,7 @@ import random
 def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation = False):
 
         seed = random.randint(0, 1000)
-        print('training with seed: ', seed )
+        print('Training with seed: ', seed )
         if remote == True:
                 image_dir_remote = '/mnt/scratch/'
                 data_dir = '/usr/share/mouse-brain-atlases/'
@@ -74,7 +74,7 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         for i in range(len(img_data)):
             mask_data.append(temp[0])
 
-        print('*** splitting data into Train, Validation and Test set ***')
+        print('*** Splitting data into Train, Validation and Test set ***')
         if test == True:
             x_train1_data, x_test_data , y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data, random_state = seed, test_size=0.9)
         else:
@@ -87,7 +87,7 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         x_test, x_test_affines, x_test_headers, file_names = utils.get_data(x_test_data, shape, save_dir)
         y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape, save_dir)[:3]
 
-        print('*** saving Test data ***')
+        print('*** Saving Test data ***')
         x_test_struct = {
             'x_test' : x_test,
             'x_test_affines' : x_test_affines,
@@ -132,8 +132,8 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
         Callbacks
         """
         bidstest_callback = bidstest()
-        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2)
-        earlystopper = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+        reduce_lr = ReduceLROnPlateau(monitor='val_accuracy', factor=0.1, verbose = 1, patience=2)
+        earlystopper = EarlyStopping(monitor='val_accuracy', patience=10, verbose = 1)
 
         Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=False)
 
@@ -144,21 +144,23 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
 
         if loss == 'bincross':
             print('Training with loss: binary_crossentropy')
-            model.compile(loss='binary_crossentropy',
-                          optimizer = Adam,
-                          metrics=['accuracy'])
+            loss = 'binary_crossentropy'
+
         elif loss == 'dice':
             print('Training with loss: dice-loss')
-            model.compile(loss = unet.dice_coef_loss,
-                          optimizer= Adam,
-                          metrics=['accuracy'])
+            loss = unet.dice_coef_loss
+
         elif loss == 'dice_bincross':
             print('Training with loss: dice_bincross')
-            model.compile(loss=unet.dice_bincross_loss,
-                          optimizer='adam',
-                          metrics=['accuracy'])
-        else: print('wrong loss function, choose between bincross, dice or dice_bincross')
+            loss = unet.dice_bincross_loss
 
+        elif loss == 'thr_bincross':
+            print('Training with loss: thr_bincross')
+            loss = unet.thr_dice_coef
+
+        else: print('Wrong loss function, choose between bincross, dice or dice_bincross')
+
+        model.compile(loss=loss , optimizer=Adam, metrics=['accuracy'])
         augment_save_dir = save_dir + '/augment/'
 
         aug = kp.image.ImageDataGenerator(**data_gen_args)

@@ -75,6 +75,21 @@ def twolayernetwork(img_shape, kernel_size, Dropout_rate):
 
     return model
 
+def thr_dice_coef(y_true, y_pred, smooth=1):
+    """
+    Dice = (2*|X & Y|)/ (|X|+ |Y|)
+         =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
+    ref: https://arxiv.org/pdf/1606.04797v1.pdf
+    """
+    y_pred_thr = K.cast(K.greater(K.clip(y_pred, 0, 1), 0.5), K.floatx())
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred_thr)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+def thr_dice_coef_loss(y_true, y_pred):
+    return 1-thr_dice_coef(y_true, y_pred)
+
 def dice_coef(y_true, y_pred, smooth=1):
     """
     Dice = (2*|X & Y|)/ (|X|+ |Y|)
