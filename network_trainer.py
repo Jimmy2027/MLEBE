@@ -25,7 +25,7 @@ import random
 #todo write scratches with useful functions
 
 
-def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation = False):
+def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_argss, visualisation = False):
 
         seed = random.randint(0, 1000)
         print('Training with seed: ', seed )
@@ -40,31 +40,24 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
             data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
         if test == True:
-            epochs = 1
-            save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = epochs, date = datetime.date.today(), tries = nmbr_tries)
+            epochss = np.ones(len(data_gen_argss), dtype =int)
+            save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = np.sum(epochss), date = datetime.date.today(), tries = nmbr_tries)
         else:
-            save_dir = 'with_augment_callb/training_results/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = epochs, date = datetime.date.today(), tries = nmbr_tries)
+            save_dir = 'with_augment_successiv/training_results/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = np.sum(epochss), date = datetime.date.today(), tries = nmbr_tries)
 
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-        data_gen_args = dict(rotation_range=90,
-                            brightness_range = [0.5, 1.2],
-                            width_shift_range=30,
-                            height_shift_range=30,
-                            shear_range = 5,
-                            zoom_range= 0.2,
-                            horizontal_flip=True,
-                            vertical_flip = True,
-                            fill_mode='nearest')
 
-        # data_gen_args = dict(width_shift_range = 0.05)
 
         experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
         experiment_description.write("This experiment was run on {date_time} \n\n".format(date_time = datetime.datetime.now()))
-        experiment_description.write('Augmentation values: ' + str(data_gen_args.items()) + '\n\n')
+        for i, data_gen_args in enumerate(data_gen_argss):
+            experiment_description.write('Augmentation_{} values: '.format(i) + str(data_gen_args.items()) + '\n\n')
         experiment_description.write('Seed: {seed}'.format(seed = seed) + '\n\n')
         experiment_description.close()
+
+
         """shape = (z,y,x)"""
 
 
@@ -160,86 +153,99 @@ def network_trainer(test, remote, loss, epochs, shape, nmbr_tries, visualisation
 
         else: print('Wrong loss function, choose between bincross, dice or dice_bincross')
 
-        model.compile(loss=loss , optimizer=Adam, metrics=['accuracy'])
-        augment_save_dir = save_dir + '/augment/'
 
-        aug = kp.image.ImageDataGenerator(**data_gen_args)
-        # image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-        # mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-        #
-        # image_generator = image_datagen.flow(x_train, save_to_dir = augment_save_dir)
-        #
-        # mask_generator = mask_datagen.flow(y_train, save_to_dir = augment_save_dir)
-        #
-        # train_generator = zip(image_generator, mask_generator)
+        """
+        Training
+        
+        """
+        counter = 1
+        for data_gen_args, epochs in zip(data_gen_argss, epochss):
+            if counter > 1:
+                print('\n\n\n\n********* \nTraining with higher augmentation values! \n*********\n\n\n\n')
+                model = history.model
+                save_dir = save_dir + '/{}_Step/'.format(counter)
+            model.compile(loss=loss , optimizer=Adam, metrics=['accuracy'])
+            augment_save_dir = save_dir + '/augment/'
 
-        # if not os.path.exists(augment_save_dir):
-        #     os.makedirs(augment_save_dir)
-        history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
+            aug = kp.image.ImageDataGenerator(**data_gen_args)
+            # image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+            # mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+            #
+            # image_generator = image_datagen.flow(x_train, save_to_dir = augment_save_dir)
+            #
+            # mask_generator = mask_datagen.flow(y_train, save_to_dir = augment_save_dir)
+            #
+            # train_generator = zip(image_generator, mask_generator)
 
-        # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
+            # if not os.path.exists(augment_save_dir):
+            #     os.makedirs(augment_save_dir)
+            history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
 
-
-
-
-        print(history.history.keys())
-        if len(history.epoch) != epochs:
-            print('Faulty predictions! Epoch:', len(history.epoch), 'instead of', epochs)
-            return True
-        plt.figure()
-
-        # Plot training & validation accuracy values:
-        plt.plot(history.history['accuracy'])
-        plt.plot(history.history['val_accuracy'])
-        plt.title('Model accuracy')
-        plt.ylabel('Accuracy')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Test'], loc='upper left')
-        plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
-        plt.close()
-
-        plt.figure()
-        # Plot training & validation loss values
-        plt.plot(history.history['loss'])
-        plt.plot(history.history['val_loss'])
-        plt.title('Model loss')
-        plt.ylabel('Loss')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Validation'], loc='upper left')
-        plt.savefig(os.path.join(save_dir, 'loss_values.png'))
-        plt.close()
+            # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
 
 
-        y_pred = []
-        dice_scores = []
-        for i in x_test:
-            i = np.expand_dims(i, -1)
-            temp = model.predict(i, verbose=0)
-            y_pred.append(temp)
-            dice_scores.append(su.dice(i, temp))
 
-        dice_score = np.median(dice_scores)
-        print('median Dice score: ', dice_score)
-        file_names = []
-        for i in range(len(y_pred)):
-            x_test_affine = x_test_data[i].affine
-            x_test_header = x_test_data[i].header
-            file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
-            file_names.append(file_name)
-            temp = np.moveaxis(y_pred[i], 0, 2)
-            img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
-            nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
+            print(history.history.keys())
+            if len(history.epoch) != epochs:
+                print('Faulty predictions! Epoch:', len(history.epoch), 'instead of', epochs)
+                return True
+            plt.figure()
 
-        output = []
-        for i in range(len(y_test)):
-            output.append(np.squeeze(y_pred[i]))
+            # Plot training & validation accuracy values:
+            plt.plot(history.history['accuracy'])
+            plt.plot(history.history['val_accuracy'])
+            plt.title('Model accuracy')
+            plt.ylabel('Accuracy')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Test'], loc='upper left')
+            plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
+            plt.close()
 
-        bids_tester.bids_tester(save_dir, model, remote, shape, epochs)
+            plt.figure()
+            # Plot training & validation loss values
+            plt.plot(history.history['loss'])
+            plt.plot(history.history['val_loss'])
+            plt.title('Model loss')
+            plt.ylabel('Loss')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Validation'], loc='upper left')
+            plt.savefig(os.path.join(save_dir, 'loss_values.png'))
+            plt.close()
 
-        utils.save_datavisualisation3(x_test, y_test, output, save_dir , index_first = True, normalized = True, file_names = file_names)
 
 
-        np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
+            y_pred = []
+            dice_scores = []
+            for i in x_test:
+                i = np.expand_dims(i, -1)
+                temp = model.predict(i, verbose=0)
+                y_pred.append(temp)
+                dice_scores.append(su.dice(i, temp))
+
+            dice_score = np.median(dice_scores)
+            print('median Dice score: ', dice_score)
+            file_names = []
+            for i in range(len(y_pred)):
+                x_test_affine = x_test_data[i].affine
+                x_test_header = x_test_data[i].header
+                file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
+                file_names.append(file_name)
+                temp = np.moveaxis(y_pred[i], 0, 2)
+                img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
+                nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
+
+            output = []
+            for i in range(len(y_test)):
+                output.append(np.squeeze(y_pred[i]))
+
+            bids_tester.bids_tester(save_dir, model, remote, shape, epochs)
+
+            utils.save_datavisualisation3(x_test, y_test, output, save_dir , index_first = True, normalized = True, file_names = file_names)
+
+
+            np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
+
+            counter += 1
 
         return False
