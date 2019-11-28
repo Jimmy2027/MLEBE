@@ -5,8 +5,8 @@ remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice', 'dice_bincross', 'bincross']
 losses = ['bincross']
-epochs = [10, 20, 20]
-min_epochs = 10
+epochs = [100, 100, 100]
+min_epochs = 15
 data_gen_args3 = dict(rotation_range=90,
                      brightness_range=[0.5, 1.2],
                      width_shift_range=30,

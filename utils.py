@@ -10,8 +10,10 @@ def get_data(data, shape, save_dir,  visualisation = False):
     """
 
     :param data: list of Nifit1Images
-    :param shape: (y,x)
-    :return:
+    :param shape: Tuple (y,x): shape of the images after preprocessing
+    :param save_dir: directory where images will be saved if visualisation is True
+    :param visualisation: Bool: if True, unpreprocessed images are saved
+    :return: img_data, affines, headers, file_names
     """
     if visualisation == True:
         unpreprocessed = []
@@ -38,10 +40,10 @@ def get_data(data, shape, save_dir,  visualisation = False):
 def preprocess(img, shape):
     """
     - moves axis such that (x,y,z) becomes (z,x,y)
-    - transforms the image such that shape is (z,128,128). If one dimension is bigger than 128 -> downscale, if one dimension is smaller -> zero-pad
+    - transforms the image such that shape is (z,shape). If one dimension is bigger than shape -> downscale, if one dimension is smaller -> zero-pad
     - normalizes the data
     :param img: img with shape (x,y,z)
-    :return: img with shape (z,128,128)
+    :return: img with shape (z,shape)
     """
     temp = np.moveaxis(img, 2, 0)
     img_data = pad_img(temp, shape)

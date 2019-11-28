@@ -13,6 +13,18 @@ import data_loader as dl
 
 
 def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =True):
+    """
+    Preprocesses the unpreprocessed bidsdata and predicts a mask for it
+
+    :param save_path:
+    :param model:
+    :param remote:
+    :param shape:
+    :param epochs:
+    :param threshold: Threshold of the mask
+    :param test:
+    :return: True if predictions are greater than 0, else False
+    """
     if remote == False:
         path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
     else:
