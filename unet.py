@@ -1,4 +1,3 @@
-"""taken from https://github.com/zhixuhao/unet"""
 
 import numpy as np
 import tensorflow as tf
@@ -8,6 +7,7 @@ from tensorflow.keras.optimizers import *
 from tensorflow.keras import backend as keras
 import tensorflow.keras.backend as K
 
+"""taken from https://github.com/zhixuhao/unet"""
 
 def unet(input_size, pretrained_weights=None):
     inputs = Input(input_size)
