@@ -25,7 +25,7 @@ import random
 #todo write scratches with useful functions
 
 
-def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_argss, visualisation = False):
+def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_argss, min_epochs, visualisation = False):
 
         seed = random.randint(0, 1000)
         print('Training with seed: ', seed )
@@ -41,6 +41,7 @@ def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_arg
 
         if test == True:
             epochss = np.ones(len(data_gen_argss), dtype =int)
+            min_epochs = 0
             save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = np.sum(epochss), date = datetime.date.today(), tries = nmbr_tries)
         else:
             save_dir = 'with_augment_successiv/training_results/{loss}_{epochs}_{date}_try{tries}/'.format(loss = loss, epochs = np.sum(epochss), date = datetime.date.today(), tries = nmbr_tries)
@@ -127,7 +128,7 @@ def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_arg
         bidstest_callback = bidstest()
         model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True, period=10)
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose = 1, patience=2)
-        # earlystopper = EarlyStopping(monitor='val_accuracy', patience=10, verbose = 1)
+        earlystopper = EarlyStopping(monitor='val_accuracy', patience = 10, verbose = 1)
 
         Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad = True)
 
@@ -180,7 +181,7 @@ def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_arg
 
             # if not os.path.exists(augment_save_dir):
             #     os.makedirs(augment_save_dir)
-            history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback])
+            history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
 
             # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
@@ -188,9 +189,10 @@ def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_arg
 
 
             print(history.history.keys())
-            if len(history.epoch) != epochs:
+            if len(history.epoch) < min_epochs:
                 print('Faulty predictions! Epoch:', len(history.epoch), 'instead of', epochs)
                 return True
+
             plt.figure()
 
             # Plot training & validation accuracy values:

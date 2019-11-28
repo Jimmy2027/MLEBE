@@ -6,7 +6,7 @@ visualisation = False  #if visualisation true saves pre- and unpreprocessed imag
 # losses = ['dice', 'dice_bincross', 'bincross']
 losses = ['bincross']
 epochs = [10, 20, 20]
-
+min_epochs = 10
 data_gen_args3 = dict(rotation_range=90,
                      brightness_range=[0.5, 1.2],
                      width_shift_range=30,
@@ -50,6 +50,6 @@ for loss in losses:
     while (faulty_preds == True) and (nmbr_tries < max_tries + 1):
         nmbr_tries += 1
         print('Number of tries: ', nmbr_tries)
-        faulty_preds = network_trainer.network_trainer(test, remote, loss, epochs, shape, nmbr_tries, data_gen_argss)
+        faulty_preds = network_trainer.network_trainer(test, remote, loss, epochs, shape, nmbr_tries, data_gen_argss, min_epochs)
 
 
