@@ -110,7 +110,7 @@ def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_arg
 
         print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
         input_shape = (x_train.shape[1:4])
-        model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose = 1, save_best_only=True, period = 10)
+
 
         class bidstest(keras.callbacks.Callback):
             def on_epoch_end(self, epoch, log = {}):
@@ -125,8 +125,9 @@ def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_arg
         Callbacks
         """
         bidstest_callback = bidstest()
+        model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss', verbose=1, save_best_only=True, period=10)
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose = 1, patience=2)
-        earlystopper = EarlyStopping(monitor='val_accuracy', patience=10, verbose = 1)
+        # earlystopper = EarlyStopping(monitor='val_accuracy', patience=10, verbose = 1)
 
         Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad = True)
 
@@ -179,7 +180,7 @@ def network_trainer(test, remote, loss, epochss, shape, nmbr_tries, data_gen_arg
 
             # if not os.path.exists(augment_save_dir):
             #     os.makedirs(augment_save_dir)
-            history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
+            history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch = len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback])
 
             # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
