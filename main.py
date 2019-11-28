@@ -6,7 +6,7 @@ visualisation = False  #if visualisation true saves pre- and unpreprocessed imag
 losses = ['dice', 'bincross', 'dice_bincross']
 # losses = ['bincross']
 epochss = [100, 100, 100]
-min_epochs = 15
+min_epochs = 60
 data_gen_args3 = dict(rotation_range=90,
                      brightness_range=[0.5, 1.2],
                      width_shift_range=30,
@@ -43,7 +43,10 @@ shape = (128, 128)
 if test == True:
     shape = (32, 32)
 
-# if pretrained:
+pretrained = False
+if pretrained:
+    model_path = ''
+    step = ''
 
 
 

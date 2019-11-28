@@ -25,6 +25,32 @@ import random
 #todo write scratches with useful functions
 
 def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper):
+    """
+    Trains the model
+
+    :param data_gen_args:
+    :param epochs:
+    :param loss:
+    :param remote:
+    :param shape:
+    :param x_train:
+    :param y_train:
+    :param x_val:
+    :param y_val:
+    :param x_test:
+    :param y_test:
+    :param save_dir:
+    :param x_test_data:
+    :param min_epochs:
+    :param model:
+    :param seed:
+    :param Adam:
+    :param reduce_lr:
+    :param model_checkpoint:
+    :param bidstest_callback:
+    :param earlystopper:
+    :return: Bool: (False if early stopped before min_epochs, False else), history
+    """
 
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
     experiment_description.write(
@@ -115,13 +141,13 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
 
-
     return False, history
 
 def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, visualisation = False):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
+    If the training is early stopped before 'min_epochs', the training is started again with reduced augmetnation values
 
     :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test is the code runs
     :param remote: Bool: If remote is True, the paths are set for remote computer
@@ -130,6 +156,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
     :param data_gen_argss: Array of dicts : arguments for the data augmentations, should have the same length than epochss
     :param min_epochs: int: The minimum amount of epochs the network should be trained on. If this number is not reached, the training will start again with a different seed #todo want to train with smaller augment values if..
+    :param max_tries: int: Integer indicating how many times the training should be started again with reduced augmentation values
     :param visualisation: Bool: if True, all images after preprocessing are saved
     :return: Bool: True if min_epochs is not reached, False otherwise
     """
@@ -147,7 +174,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
 
     if test == True:
         epochss = np.ones(len(data_gen_argss), dtype=int)
-        min_epochs = 0
+        #min_epochs = 0
         save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(
             loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
     else:
@@ -276,13 +303,12 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
 
         while (early_stopped == True) and (nmbr_tries < max_tries + 1):
             nmbr_tries += 1
-            print('Number of tries: ', nmbr_tries)
             if nmbr_tries > 1:
                 save_dir = save_dir + 'try{}/'.format(nmbr_tries)
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
 
-                print('\n\n\n\n********* \nTraining with reduced augmentation values! \n*********\n\n\n\n')
+                print('\n\n\n\n********* \nTraining with reduced augmentation values! Try {}\n*********\n\n\n\n'.format(nmbr_tries))
                 for x in data_gen_args:
                     temp = data_gen_args['{}'.format(x)]
                     if isinstance(temp, float):
