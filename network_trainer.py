@@ -85,7 +85,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     print(history.history.keys())
     if len(history.epoch) < min_epochs:
         print('Faulty predictions! Epoch:', len(history.epoch), 'instead of', epochs)
-        return True, None
+        return True, history
 
     plt.figure()
 
@@ -143,19 +143,19 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     return False, history
 
-def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, visualisation = False):
+def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, visualisation = False, pretrained = False, pretrained_model_path = None):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
     If the training is early stopped before 'min_epochs', the training is started again with reduced augmetnation values
 
-    :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test is the code runs
+    :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
     :param remote: Bool: If remote is True, the paths are set for remote computer
-    :param loss: Array of strings: with which loss the network will be trained
+    :param loss: string: loss with which the model will be trained
     :param epochss: Array with epochs. Should have the same length than data_gen_argss
     :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
     :param data_gen_argss: Array of dicts : arguments for the data augmentations, should have the same length than epochss
-    :param min_epochs: int: The minimum amount of epochs the network should be trained on. If this number is not reached, the training will start again with a different seed #todo want to train with smaller augment values if..
+    :param min_epochs: int: The minimum amount of epochs the network should be trained on. If this number is not reached, the training will start again with a different seed and reduced augmentation values
     :param max_tries: int: Integer indicating how many times the training should be started again with reduced augmentation values
     :param visualisation: Bool: if True, all images after preprocessing are saved
     :return: Bool: True if min_epochs is not reached, False otherwise
@@ -255,9 +255,10 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss',
                                        verbose=1, save_best_only=True, period=10)
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=2)
-    earlystopper = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+    earlystopper = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 
     Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=True)
+
 
     if test == True:
         model = unet.twolayernetwork(input_shape, 3, 0.5)
@@ -293,14 +294,14 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     for data_gen_args, epochs in zip(data_gen_argss, epochss):
         nmbr_tries = 0
         if counter > 1:
-            print('\n\n\n\n********* \nTraining with higher augmentation values! \n*********\n\n\n\n')
+            print('\n\n\n\n********* \nTraining with higher augmentation values! Taking model from try {} \n*********\n\n\n\n'. format(best_try + 1))
             model = history.model
             save_dir = save_dir + '{counter}_Step/'.format( counter = counter)
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
         early_stopped = True
-
+        histories = []
         while (early_stopped == True) and (nmbr_tries < max_tries + 1):
             nmbr_tries += 1
             if nmbr_tries > 1:
@@ -314,8 +315,13 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
                     if isinstance(temp, float):
                         data_gen_args['{}'.format(x)] = data_gen_args['{}'.format(x)] * 0.8
 
-            early_stopped, history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper)
-
+            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper)
+            histories.append(temp_history)
+        history_epochs = []
+        for x in histories:
+            history_epochs.append(len(x.epoch))
+            best_try = history_epochs.index(max(history_epochs))    #best_try is the try with the most epochs
+        history = histories[best_try]
         counter += 1
 
 
