@@ -13,7 +13,7 @@ import tensorflow.keras
 :param max_tries: int: Integer indicating how many times the training should be started again with reduced augmentation values
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
 
-PUSH NOT WORKING!!
+
 """
 
 

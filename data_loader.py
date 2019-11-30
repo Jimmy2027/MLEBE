@@ -79,7 +79,7 @@ def load_img(image_dir, blacklist):
             if file.endswith("TurboRARE_T2w.nii.gz"):
                 blacklisted = False
                 for i in blacklist:
-                    if all(elem in file for elem in i) == True:
+                    if all(elem in file for elem in i) == True: #not exactly what I want
                         blacklisted = True
                         print('blacklisted found: {}'.format(file))
                     # partial_blacklisted = True
