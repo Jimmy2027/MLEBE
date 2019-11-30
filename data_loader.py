@@ -39,8 +39,16 @@ def load_img_remote(image_dir_remote, blacklist):
                             if file.endswith("_T2w.nii.gz"):
                                 blacklisted = False
                                 for i in blacklist:
-                                    if file.endswith(i):
-                                        blacklisted = True
+                                    partial_blacklisted = True
+                                    while partial_blacklisted == True:
+                                        for j in i:
+                                            if (j in file) == True:
+                                                partial_blacklisted = True
+                                            else:
+                                                partial_blacklisted = False
+
+                                    if partial_blacklisted == True:
+                                        blacklisted == True
                                         print('blacklisted found: {}'.format(i))
                                 if blacklisted == False:
                                    im_data.append(os.path.join(root, file))
@@ -62,14 +70,31 @@ def load_img_remote(image_dir_remote, blacklist):
         data.append(img)
     return data
 
-def load_img(image_dir):
+def load_img(image_dir, blacklist):
     print('*** Loading images ***')
 
     im_data = []
     for root, dirs, files in os.walk(image_dir):
         for file in files:
             if file.endswith("TurboRARE_T2w.nii.gz"):
-                im_data.append(os.path.join(root, file))
+                blacklisted = False
+                for i in blacklist:
+                    if all(elem in file for elem in i) == True:
+                        blacklisted = True
+                        print('blacklisted found: {}'.format(file))
+                    # partial_blacklisted = True
+                    # while partial_blacklisted == True:
+                    #     for j in i:
+                    #         if (j in file) == True:
+                    #             partial_blacklisted = True
+                    #         else:
+                    #             partial_blacklisted = False
+
+                    # if partial_blacklisted == True:
+                    #     blacklisted == True
+                    #     print('blacklisted found: {}'.format(i))
+                if blacklisted == False:
+                    im_data.append(os.path.join(root, file))
 
     im_data = np.sort(im_data)
     print('*** Loading {} subjects ***'.format(len(im_data)))

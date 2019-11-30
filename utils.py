@@ -3,8 +3,10 @@ import imageio
 import numpy as np
 from matplotlib import pyplot as plt
 import os
+import pandas
 import cv2
 import data_loader as dl
+
 
 def get_data(data, shape, save_dir,  visualisation = False, verbose = False):
     """
@@ -280,7 +282,8 @@ def pad_img(img, shape):
 def write_blacklist(blacklist_dir):
     blacklist = []
     for file in os.listdir(blacklist_dir):
-        temp = file.replace('.pdf', '.nii.gz')
-        blacklist.append(temp)
+        temp = file.replace('.pdf', '')
+        temp2 = temp.split('_')
+        blacklist.append(temp2)
     return blacklist
 

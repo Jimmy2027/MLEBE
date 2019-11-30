@@ -14,8 +14,8 @@ import tensorflow.keras
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
 """
 
-test = False
-remote = True
+test = True
+remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice', 'bincross', 'dice_bincross']
 losses = ['bincross']
@@ -57,7 +57,10 @@ shape = (128, 128)
 if test == True:
     shape = (32, 32)
 
-blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
+if remote == True:
+    blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
+if remote == False:
+    blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
 
 
 

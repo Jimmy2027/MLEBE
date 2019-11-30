@@ -170,7 +170,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
 
     else:
         image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
-        img_data = dl.load_img(image_dir)
+        img_data = dl.load_img(image_dir, blacklist)
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
     if test == True:
