@@ -83,9 +83,6 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
 
     print(history.history.keys())
-    if len(history.epoch) < min_epochs:
-        print('Faulty predictions! Epoch:', len(history.epoch), 'instead of', epochs)
-        return True, history
 
     plt.figure()
 
@@ -141,9 +138,13 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
 
+    if len(history.epoch) < min_epochs:
+        print('Faulty predictions! Epoch:', len(history.epoch), 'instead of', epochs)
+        return True, history
+
     return False, history
 
-def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, visualisation = False, pretrained = False, pretrained_model_path = None):
+def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, visualisation = False, pretrained = False, pretrained_model_path = None):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -165,7 +166,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     if remote == True:
         image_dir_remote = '/mnt/scratch/'
         data_dir = '/usr/share/mouse-brain-atlases/'
-        img_data = dl.load_img_remote(image_dir_remote)
+        img_data = dl.load_img_remote(image_dir_remote, blacklist)
 
     else:
         image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
@@ -178,7 +179,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
         save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(
             loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
     else:
-        save_dir = 'with_augment_successiv/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        save_dir = 'with_augment_successiv2/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -236,6 +237,8 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25)
 
     print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
+    print('*** Training with {} slices ***'.format(x_train.shape[0]))
+    print('*** Validating with {} slices ***'.format(x_val.shape[0]))
     input_shape = (x_train.shape[1:4])
 
     """

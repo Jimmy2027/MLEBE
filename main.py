@@ -1,4 +1,5 @@
 import network_trainer
+import utils
 import tensorflow.keras
 
 """
@@ -13,12 +14,12 @@ import tensorflow.keras
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
 """
 
-test = True
-remote = False
+test = False
+remote = True
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['dice', 'bincross', 'dice_bincross']
-# losses = ['bincross']
-epochss = [100, 100, 100]
+# losses = ['dice', 'bincross', 'dice_bincross']
+losses = ['bincross']
+epochss = [300, 300, 300]
 min_epochs = 60
 data_gen_args3 = dict(rotation_range=90,
                      # brightness_range=[0.5, 1.2],
@@ -51,10 +52,14 @@ data_gen_args1 = dict(rotation_range=0.2,
                     fill_mode='nearest')
 
 data_gen_argss = [data_gen_args1, data_gen_args2, data_gen_args3]
-max_tries = 5
+max_tries = 3
 shape = (128, 128)
 if test == True:
     shape = (32, 32)
+
+blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
+
+
 
 pretrained = False
 if pretrained:
@@ -65,11 +70,10 @@ if pretrained:
     step = ''
 
 
-
 for i, loss in enumerate(losses):
     # if pretrained:
     #     # model = keras.models.load_model(model_paths[i], custom_objects={'dice_coef_loss': unet.dice_coef_loss})
 
-    network_trainer.network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries)
+    network_trainer.network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist)
 
 

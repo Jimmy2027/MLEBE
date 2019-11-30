@@ -6,7 +6,7 @@ import os
 import cv2
 import data_loader as dl
 
-def get_data(data, shape, save_dir,  visualisation = False):
+def get_data(data, shape, save_dir,  visualisation = False, verbose = False):
     """
 
     :param data: list of Nifit1Images
@@ -276,4 +276,11 @@ def pad_img(img, shape):
             padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
     return padded
 
+
+def write_blacklist(blacklist_dir):
+    blacklist = []
+    for file in os.listdir(blacklist_dir):
+        temp = file.replace('.pdf', '.nii.gz')
+        blacklist.append(temp)
+    return blacklist
 

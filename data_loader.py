@@ -27,7 +27,7 @@ def load_bidsdata():
     return paths, filess
 
 
-def load_img_remote(image_dir_remote):
+def load_img_remote(image_dir_remote, blacklist):
     print('*** Loading images ***')
     im_data = []
     for o in os.listdir(image_dir_remote):
@@ -37,11 +37,19 @@ def load_img_remote(image_dir_remote):
                     for root, dirs, files in os.walk(os.path.join(image_dir_remote, o, x)):
                         for file in files:
                             if file.endswith("_T2w.nii.gz"):
-                                im_data.append(os.path.join(root, file))
+                                blacklisted = False
+                                for i in blacklist:
+                                    if file.endswith(i):
+                                        blacklisted = True
+                                        print('blacklisted found: {}'.format(i))
+                                if blacklisted == False:
+                                   im_data.append(os.path.join(root, file))
 
 
 
     im_data = np.sort(im_data)
+    print('*** Loading {} subjects ***'.format(len(im_data)))
+
     data = []
     for i in im_data:
         img = nib.load(i)
@@ -64,6 +72,8 @@ def load_img(image_dir):
                 im_data.append(os.path.join(root, file))
 
     im_data = np.sort(im_data)
+    print('*** Loading {} subjects ***'.format(len(im_data)))
+
     data = []
 
     for i in im_data:
