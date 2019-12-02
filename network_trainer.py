@@ -109,7 +109,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     y_pred = []
     dice_scores = []
-    for i in x_test:
+    for i in y_test:
         i = np.expand_dims(i, -1)
         temp = model.predict(i, verbose=0)
         y_pred.append(temp)
@@ -123,9 +123,12 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         x_test_header = x_test_data[i].header
         file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
         file_names.append(file_name)
-        temp = np.moveaxis(y_pred[i], 0, 2)
-        img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
-        nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
+        mask_temp = np.moveaxis(y_pred[i], 0, 2)
+        img_temp = np.moveaxis(x_test[i], 0 , 2)
+        img = nib.Nifti1Image(img_temp, x_test_affine, x_test_header)
+        nib.save(img, os.path.join(save_dir, 'img_' + file_name))
+        mask = nib.Nifti1Image(mask_temp, x_test_affine, x_test_header)
+        nib.save(mask, os.path.join(save_dir, 'mask_' + file_name))
 
     output = []
     for i in range(len(y_test)):
@@ -305,12 +308,13 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
 
         early_stopped = True
         histories = []
+        new_save_dir = None
         while (early_stopped == True) and (nmbr_tries < max_tries + 1):
             nmbr_tries += 1
             if nmbr_tries > 1:
-                save_dir = save_dir + 'try{}/'.format(nmbr_tries)
-                if not os.path.exists(save_dir):
-                    os.makedirs(save_dir)
+                new_save_dir = save_dir + 'try{}/'.format(nmbr_tries)
+                if not os.path.exists(new_save_dir):
+                    os.makedirs(new_save_dir)
 
                 print('\n\n\n\n********* \nTraining with reduced augmentation values! Try {}\n*********\n\n\n\n'.format(nmbr_tries))
                 for x in data_gen_args:
@@ -318,8 +322,12 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
                     if isinstance(temp, float):
                         data_gen_args['{}'.format(x)] = data_gen_args['{}'.format(x)] * 0.8
 
-            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper)
+            if new_save_dir == None:
+                new_save_dir = save_dir
+
+            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper)
             histories.append(temp_history)
+
         history_epochs = []
         for x in histories:
             history_epochs.append(len(x.epoch))

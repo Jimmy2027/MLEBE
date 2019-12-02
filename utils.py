@@ -281,9 +281,17 @@ def pad_img(img, shape):
 
 def write_blacklist(blacklist_dir):
     blacklist = []
+    class blacklist_elem:
+        def __init__(self, subject, session):
+            self.subj = subject
+            self.sess = session
+
+
     for file in os.listdir(blacklist_dir):
         temp = file.replace('.pdf', '')
         temp2 = temp.split('_')
-        blacklist.append(temp2)
+
+
+        blacklist.append(blacklist_elem(temp2[0], temp2[1]))
     return blacklist
 
