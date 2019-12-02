@@ -55,18 +55,20 @@ def preprocess(img, shape):
 
 def resample_bidsdata(path):
     """
-    Resamples all the bidsdata and stores it to /var/tmp/resampled/
+    Resamples all the bidsdata and stores it to path
     AND changes dimensions to RAS
     """
     #fslhd header aufrufen
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     bids_datas, file_names = dl.load_bidsdata()
 
     for i in range(len(bids_datas)):
         input_image = bids_datas[i]
         file_name = file_names[i]
-        resample_cmd = 'ResampleImage 3 {input} '.format(input=input_image) + path + '{output} 0.2x0.2x0.2'.format(
-            output=file_name)
+        resample_cmd = 'ResampleImage 3 {input} '.format(input=input_image) + path + '{output} 0.2x0.2x0.2'.format(output=file_name)
         os.system(resample_cmd)
         print(resample_cmd)
         dimension_change_command = 'fslswapdim ' + path + '{input} LR PA IS '.format(input = file_name) + path+'{output}'.format(output = file_name)

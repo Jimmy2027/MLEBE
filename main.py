@@ -17,11 +17,11 @@ import tensorflow.keras
 """
 
 
-test = False
-remote = True
+test = True
+remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['dice', 'bincross', 'dice_bincross']
-# losses = ['bincross']
+# losses = ['dice', 'bincross', 'dice_bincross']
+losses = ['bincross']
 epochss = [300, 300, 300]
 min_epochs = 60
 data_gen_args3 = dict(rotation_range=90,

@@ -62,7 +62,10 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     experiment_description.close()
 
     model.compile(loss=loss, optimizer=Adam, metrics=['accuracy'])
-    augment_save_dir = save_dir + '/augment/'
+    augment_save_dir = save_dir + 'augment'
+
+    if not os.path.exists(augment_save_dir):
+        os.makedirs(augment_save_dir)
 
     aug = kp.image.ImageDataGenerator(**data_gen_args)
     # image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
@@ -72,11 +75,16 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     #
     # mask_generator = mask_datagen.flow(y_train, save_to_dir = augment_save_dir)
     #
+    #
     # train_generator = zip(image_generator, mask_generator)
-
+    #
     # if not os.path.exists(augment_save_dir):
     #     os.makedirs(augment_save_dir)
-    history = model.fit_generator(aug.flow(x_train, y_train), steps_per_epoch=len(x_train) / 32,
+    # history = model.fit_generator(train_generator,
+    #                               steps_per_epoch=len(x_train) / 32,
+    #                               validation_data=(x_val, y_val), epochs=epochs, verbose=1,
+    #                               callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
+    history = model.fit_generator(aug.flow(x = x_train, y = y_train, save_to_dir = augment_save_dir), steps_per_epoch=len(x_train) / 32,
                                   validation_data=(x_val, y_val), epochs=epochs, verbose=1,
                                   callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
 
@@ -226,6 +234,8 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
         'y_test_headers': y_test_headers,
     }
 
+
+
     xfile = open(save_dir + 'x_test_struct.pkl', 'wb')
     pickle.dump(x_test_struct, xfile)
     xfile.close()
@@ -238,6 +248,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     x_train1 = np.expand_dims(x_train1, -1)
     y_train1 = np.expand_dims(y_train1, -1)
     x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25)
+
 
     print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
     print('*** Training with {} slices ***'.format(x_train.shape[0]))

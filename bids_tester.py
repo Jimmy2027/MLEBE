@@ -28,7 +28,9 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =Tr
     if remote == False:
         path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
     else:
-        path = '/var/tmp/resampled/'
+        path = '/home/hendrik/src/mlebe/resampled/'
+        if not os.path.exists(path):
+            utils.resample_bidsdata(path)
     save_path = save_path + '/bids_ep{epoch}/'.format(epoch = epochs)
 
     if not os.path.exists(save_path):

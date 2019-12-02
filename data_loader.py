@@ -123,6 +123,8 @@ def load_mask(data_dir):
 
         data.append(img)
 
+    # preprocessed_mask = preprocess(data)
+
 
     return data
 
