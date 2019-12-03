@@ -1,5 +1,6 @@
 import network_trainer
 import utils
+import shutil
 import tensorflow.keras
 
 """
@@ -58,7 +59,7 @@ data_gen_argss = [data_gen_args1, data_gen_args2, data_gen_args3]
 max_tries = 3
 shape = (128, 128)
 if test == True:
-    shape = (32, 32)
+    shape = (128, 128)
 
 if remote == True:
     blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')

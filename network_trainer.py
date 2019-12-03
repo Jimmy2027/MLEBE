@@ -5,7 +5,7 @@ import unet
 
 
 import pickle
-import tensorflow
+import tensorflow as tf
 import scoring_utils as su
 from tensorflow import keras
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
@@ -52,6 +52,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     :return: Bool: (False if early stopped before min_epochs, False else), history
     """
 
+
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
     experiment_description.write(
         "This experiment was run on {date_time} \n\n".format(date_time=datetime.datetime.now()))
@@ -63,32 +64,57 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     model.compile(loss=loss, optimizer=Adam, metrics=['accuracy'])
     augment_save_dir = save_dir + 'augment'
+    # no_augment_save_dir = save_dir + 'not_augmented'
+    # if not os.path.exists(no_augment_save_dir):
+    #     os.makedirs(no_augment_save_dir)
+    #
+    # for i in range(x_train.shape[0]):
+    #     plt.imshow(np.squeeze(x_train[i,...]), cmap = 'gray')
+    #     plt.imshow(np.squeeze(y_train[i,...]), alpha = 0.3, cmap = 'Blues')
+    #     plt.savefig(no_augment_save_dir+'/img_{}'.format(i))
+    #     plt.close()
 
     if not os.path.exists(augment_save_dir):
         os.makedirs(augment_save_dir)
 
     aug = kp.image.ImageDataGenerator(**data_gen_args)
-    # image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-    # mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-    #
-    # image_generator = image_datagen.flow(x_train, save_to_dir = augment_save_dir)
-    #
-    # mask_generator = mask_datagen.flow(y_train, save_to_dir = augment_save_dir)
-    #
-    #
-    # train_generator = zip(image_generator, mask_generator)
-    #
-    # if not os.path.exists(augment_save_dir):
-    #     os.makedirs(augment_save_dir)
-    # history = model.fit_generator(train_generator,
-    #                               steps_per_epoch=len(x_train) / 32,
-    #                               validation_data=(x_val, y_val), epochs=epochs, verbose=1,
-    #                               callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
-    history = model.fit_generator(aug.flow(x = x_train, y = y_train, save_to_dir = augment_save_dir), steps_per_epoch=len(x_train) / 32,
-                                  validation_data=(x_val, y_val), epochs=epochs, verbose=1,
-                                  callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
 
-    # history = model.fit_generator(train_generator, steps_per_epoch=len(x_train) / 32, validation_data=(x_val, y_val), epochs=epochs,verbose=1, callbacks=[model_checkpoint, bidstest_callback])
+    """
+    What Guido is doing:
+    """
+    image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+    mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+    image_val_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+    mask_val_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+
+    image_generator = image_datagen.flow(x_train, seed = seed)
+    mask_generator = mask_datagen.flow(y_train, seed = seed)
+    image_val_generator = image_val_datagen.flow(x_val, seed = seed)
+    mask_val_generator = mask_val_datagen.flow(y_val, seed = seed)
+
+
+    imgs = [next(image_generator) for _ in range(10)]   # number of augmented images
+    masks = [next(mask_generator) for _ in range(10)]
+    imgs_val = [next(mask_val_generator) for _ in range(10)]
+    masks_val = [next(image_val_generator) for _ in range(10)]
+
+    imgs = np.concatenate(imgs)
+    masks = np.concatenate(masks)
+    imgs_val = np.concatenate(imgs_val)
+    masks_val = np.concatenate(imgs_val)
+
+    # for i in range(imgs.shape[0]):
+    #     plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
+    #     plt.imshow(np.squeeze(masks[i,...]), alpha = 0.3, cmap = 'Blues')
+    #     plt.savefig(augment_save_dir+'/img_{}'.format(i))
+    #     plt.close()
+
+    train_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs), tf.data.Dataset.from_tensor_slices(masks)))
+    train_dataset = train_dataset.repeat().shuffle(1000).batch(32)
+    validation_set = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs_val), tf.data.Dataset.from_tensor_slices(masks_val)))
+    validation_set = validation_set.repeat().shuffle(1000).batch(32)
+
+    history = model.fit(train_dataset, steps_per_epoch=len(x_train) / 32, validation_data= validation_set, epochs=epochs, validation_steps = len(x_train) / 32, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
 
     print(history.history.keys())
 
@@ -189,6 +215,10 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
         #min_epochs = 0
         save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(
             loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
+        import shutil
+        if os.path.exists(save_dir):
+            shutil.rmtree(save_dir)
+
     else:
         save_dir = 'with_augment_successiv2/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
 
