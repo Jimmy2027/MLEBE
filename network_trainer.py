@@ -101,7 +101,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     imgs = np.concatenate(imgs)
     masks = np.concatenate(masks)
     imgs_val = np.concatenate(imgs_val)
-    masks_val = np.concatenate(imgs_val)
+    masks_val = np.concatenate(masks_val)
 
     # for i in range(imgs.shape[0]):
     #     plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
@@ -114,7 +114,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     validation_set = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs_val), tf.data.Dataset.from_tensor_slices(masks_val)))
     validation_set = validation_set.repeat().shuffle(1000).batch(32)
 
-    history = model.fit(train_dataset, steps_per_epoch=len(x_train) / 32, validation_data= validation_set, epochs=epochs, validation_steps = len(x_train) / 32, verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
+    history = model.fit(train_dataset, steps_per_epoch= int(len(x_train) / 32), validation_data= validation_set, epochs=epochs, validation_steps = int(len(x_train) / 32), verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
 
     print(history.history.keys())
 

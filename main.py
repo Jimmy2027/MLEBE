@@ -23,7 +23,7 @@ remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice', 'bincross', 'dice_bincross']
 losses = ['bincross']
-epochss = [300, 300, 300]
+epochss = [300]
 min_epochs = 60
 data_gen_args3 = dict(rotation_range=90,
                      # brightness_range=[0.5, 1.2],
@@ -55,8 +55,8 @@ data_gen_args1 = dict(rotation_range=0.2,
                     vertical_flip=True,
                     fill_mode='nearest')
 
-data_gen_argss = [data_gen_args1, data_gen_args2, data_gen_args3]
-max_tries = 3
+data_gen_argss = [data_gen_args1]
+max_tries = 1
 shape = (128, 128)
 if test == True:
     shape = (128, 128)
