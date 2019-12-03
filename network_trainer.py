@@ -77,11 +77,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     if not os.path.exists(augment_save_dir):
         os.makedirs(augment_save_dir)
 
-    aug = kp.image.ImageDataGenerator(**data_gen_args)
 
-    """
-    What Guido is doing:
-    """
     image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
     mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
     image_val_datagen = kp.image.ImageDataGenerator(**data_gen_args)
@@ -93,21 +89,25 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     mask_val_generator = mask_val_datagen.flow(y_val, seed = seed)
 
 
-    imgs = [next(image_generator) for _ in range(10)]   # number of augmented images
-    masks = [next(mask_generator) for _ in range(10)]
-    imgs_val = [next(mask_val_generator) for _ in range(10)]
-    masks_val = [next(image_val_generator) for _ in range(10)]
+    imgs = [next(image_generator) for _ in range(100)]   # number of augmented images
+    masks = [next(mask_generator) for _ in range(100)]
+    imgs_val = [next(image_val_generator) for _ in range(100)]
+    masks_val = [next(mask_val_generator) for _ in range(100)]
 
     imgs = np.concatenate(imgs)
     masks = np.concatenate(masks)
     imgs_val = np.concatenate(imgs_val)
     masks_val = np.concatenate(masks_val)
 
-    # for i in range(imgs.shape[0]):
-    #     plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
-    #     plt.imshow(np.squeeze(masks[i,...]), alpha = 0.3, cmap = 'Blues')
-    #     plt.savefig(augment_save_dir+'/img_{}'.format(i))
-    #     plt.close()
+    for i in range(30):
+        plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
+        plt.imshow(np.squeeze(masks[i,...]), alpha = 0.3, cmap = 'Blues')
+        plt.savefig(augment_save_dir+'/img_{}'.format(i))
+        plt.close()
+        plt.imshow(np.squeeze(imgs_val[i,...]), cmap = 'gray')
+        plt.imshow(np.squeeze(masks_val[i,...]), alpha = 0.3, cmap = 'Blues')
+        plt.savefig(augment_save_dir+'/val_{}'.format(i))
+        plt.close()
 
     train_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs), tf.data.Dataset.from_tensor_slices(masks)))
     train_dataset = train_dataset.repeat().shuffle(1000).batch(32)
@@ -220,7 +220,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
             shutil.rmtree(save_dir)
 
     else:
-        save_dir = 'with_augment_successiv2/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        save_dir = 'custom_augm/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -301,7 +301,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     bidstest_callback = bidstest()
     model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss',
                                        verbose=1, save_best_only=True, period=10)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=2)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=5)
     earlystopper = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 
     Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=True)
