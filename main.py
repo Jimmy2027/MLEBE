@@ -23,8 +23,11 @@ remote = False
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice', 'bincross', 'dice_bincross']
 losses = ['bincross']
-epochss = [300, 300, 300]
-min_epochs = 60
+epochss = [300, 300, 300, 300]
+min_epochs = 15
+if test == True:
+    min_epochs = 0
+
 data_gen_args3 = dict(rotation_range=90,
                      # brightness_range=[0.5, 1.2],
                      width_shift_range=30,
@@ -55,11 +58,15 @@ data_gen_args1 = dict(rotation_range=0.2,
                     vertical_flip=True,
                     fill_mode='nearest')
 
-data_gen_argss = [data_gen_args1, data_gen_args2, data_gen_args3]
+data_gen_args0 = None
+
+data_gen_argss = [data_gen_args0, data_gen_args1, data_gen_args2, data_gen_args3]
 max_tries = 3
-shape = (128, 128)
 if test == True:
-    shape = (128, 128)
+    max_tries = 0
+shape = (64, 64)
+if test == True:
+    shape = (32, 32)
 
 if remote == True:
     blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
@@ -81,6 +88,6 @@ for i, loss in enumerate(losses):
     # if pretrained:
     #     # model = keras.models.load_model(model_paths[i], custom_objects={'dice_coef_loss': unet.dice_coef_loss})
 
-    network_trainer.network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist)
+    network_trainer.network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, visualisation=visualisation)
 
 

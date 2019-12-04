@@ -24,7 +24,7 @@ import random
 #todo write README
 #todo write scratches with useful functions
 
-def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper):
+def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper, augmentation = True):
     """
     Trains the model
 
@@ -56,65 +56,78 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
     experiment_description.write(
         "This experiment was run on {date_time} \n\n".format(date_time=datetime.datetime.now()))
-    experiment_description.write('Augmentation values: ' + str(data_gen_args.items()) + '\n\n')
+    if augmentation == True:
+        experiment_description.write('Augmentation values: ' + str(data_gen_args.items()) + '\n\n')
     experiment_description.write('Seed: {seed}'.format(seed=seed) + '\n\n')
     experiment_description.write('Shape: {shape}'.format(shape=shape) + '\n\n')
 
     experiment_description.close()
 
     model.compile(loss=loss, optimizer=Adam, metrics=['accuracy'])
-    augment_save_dir = save_dir + 'augment'
-    # no_augment_save_dir = save_dir + 'not_augmented'
-    # if not os.path.exists(no_augment_save_dir):
-    #     os.makedirs(no_augment_save_dir)
-    #
-    # for i in range(x_train.shape[0]):
-    #     plt.imshow(np.squeeze(x_train[i,...]), cmap = 'gray')
-    #     plt.imshow(np.squeeze(y_train[i,...]), alpha = 0.3, cmap = 'Blues')
-    #     plt.savefig(no_augment_save_dir+'/img_{}'.format(i))
-    #     plt.close()
 
-    if not os.path.exists(augment_save_dir):
-        os.makedirs(augment_save_dir)
+    if augmentation == True:
 
+        """
+        Data augmentation
+        """
 
-    image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-    mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-    image_val_datagen = kp.image.ImageDataGenerator(**data_gen_args)
-    mask_val_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+        augment_save_dir = save_dir + 'augment'
+        # no_augment_save_dir = save_dir + 'not_augmented'
+        # if not os.path.exists(no_augment_save_dir):
+        #     os.makedirs(no_augment_save_dir)
+        #
+        # for i in range(x_train.shape[0]):
+        #     plt.imshow(np.squeeze(x_train[i,...]), cmap = 'gray')
+        #     plt.imshow(np.squeeze(y_train[i,...]), alpha = 0.3, cmap = 'Blues')
+        #     plt.savefig(no_augment_save_dir+'/img_{}'.format(i))
+        #     plt.close()
 
-    image_generator = image_datagen.flow(x_train, seed = seed)
-    mask_generator = mask_datagen.flow(y_train, seed = seed)
-    image_val_generator = image_val_datagen.flow(x_val, seed = seed)
-    mask_val_generator = mask_val_datagen.flow(y_val, seed = seed)
+        if not os.path.exists(augment_save_dir):
+            os.makedirs(augment_save_dir)
 
 
-    imgs = [next(image_generator) for _ in range(100)]   # number of augmented images
-    masks = [next(mask_generator) for _ in range(100)]
-    imgs_val = [next(image_val_generator) for _ in range(100)]
-    masks_val = [next(mask_val_generator) for _ in range(100)]
+        image_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+        mask_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+        image_val_datagen = kp.image.ImageDataGenerator(**data_gen_args)
+        mask_val_datagen = kp.image.ImageDataGenerator(**data_gen_args)
 
-    imgs = np.concatenate(imgs)
-    masks = np.concatenate(masks)
-    imgs_val = np.concatenate(imgs_val)
-    masks_val = np.concatenate(masks_val)
+        image_generator = image_datagen.flow(x_train, seed = seed)
+        mask_generator = mask_datagen.flow(y_train, seed = seed)
+        image_val_generator = image_val_datagen.flow(x_val, seed = seed)
+        mask_val_generator = mask_val_datagen.flow(y_val, seed = seed)
 
-    for i in range(30):
-        plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
-        plt.imshow(np.squeeze(masks[i,...]), alpha = 0.3, cmap = 'Blues')
-        plt.savefig(augment_save_dir+'/img_{}'.format(i))
-        plt.close()
-        plt.imshow(np.squeeze(imgs_val[i,...]), cmap = 'gray')
-        plt.imshow(np.squeeze(masks_val[i,...]), alpha = 0.3, cmap = 'Blues')
-        plt.savefig(augment_save_dir+'/val_{}'.format(i))
-        plt.close()
 
-    train_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs), tf.data.Dataset.from_tensor_slices(masks)))
-    train_dataset = train_dataset.repeat().shuffle(1000).batch(32)
-    validation_set = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs_val), tf.data.Dataset.from_tensor_slices(masks_val)))
-    validation_set = validation_set.repeat().shuffle(1000).batch(32)
+        imgs = [next(image_generator) for _ in range(100)]   # number of augmented images
+        masks = [next(mask_generator) for _ in range(100)]
+        imgs_val = [next(image_val_generator) for _ in range(100)]
+        masks_val = [next(mask_val_generator) for _ in range(100)]
 
-    history = model.fit(train_dataset, steps_per_epoch= int(len(x_train) / 32), validation_data= validation_set, epochs=epochs, validation_steps = int(len(x_train) / 32), verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
+        imgs = np.concatenate(imgs)
+        masks = np.concatenate(masks)
+        imgs_val = np.concatenate(imgs_val)
+        masks_val = np.concatenate(masks_val)
+
+        for i in range(30):
+            plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
+            plt.imshow(np.squeeze(masks[i,...]), alpha = 0.3, cmap = 'Blues')
+            plt.savefig(augment_save_dir+'/img_{}'.format(i))
+            plt.close()
+            plt.imshow(np.squeeze(imgs_val[i,...]), cmap = 'gray')
+            plt.imshow(np.squeeze(masks_val[i,...]), alpha = 0.3, cmap = 'Blues')
+            plt.savefig(augment_save_dir+'/val_{}'.format(i))
+            plt.close()
+
+        train_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs), tf.data.Dataset.from_tensor_slices(masks)))
+        train_dataset = train_dataset.repeat().shuffle(1000).batch(32)
+        validation_set = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs_val), tf.data.Dataset.from_tensor_slices(masks_val)))
+        validation_set = validation_set.repeat().shuffle(1000).batch(32)
+
+        history = model.fit(train_dataset, steps_per_epoch= int(len(x_train) / 32), validation_data= validation_set, epochs=epochs, validation_steps = int(len(x_train) / 32), verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
+
+    else:
+        history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
+                            epochs=epochs, validation_steps=int(len(x_train) / 32), verbose=1,
+                            callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
 
     print(history.history.keys())
 
@@ -157,6 +170,10 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         x_test_header = x_test_data[i].header
         file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
         file_names.append(file_name)
+        if i == 0:
+            y_true_temp = np.moveaxis(y_test[i], 0, 2)
+            y_true_temp = nib.Nifti1Image(y_true_temp, x_test_affine, x_test_header)
+            nib.save(y_true_temp, os.path.join(save_dir, 'y_true_' + file_name))
         mask_temp = np.moveaxis(y_pred[i], 0, 2)
         img_temp = np.moveaxis(x_test[i], 0 , 2)
         img = nib.Nifti1Image(img_temp, x_test_affine, x_test_header)
@@ -231,6 +248,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     temp = dl.load_mask(data_dir)
     mask_data = []
 
+
     for i in range(len(img_data)):
         mask_data.append(temp[0])
 
@@ -245,10 +263,8 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
                                                                                                   test_size=0.1)
 
     print('*** Preprocessing ***')
-    x_train1 = utils.get_data(x_train1_data, shape, save_dir, visualisation=visualisation)[0]
-    y_train1 = utils.get_data(y_train1_data, shape, save_dir, visualisation=visualisation)[0]
-    x_test, x_test_affines, x_test_headers, file_names = utils.get_data(x_test_data, shape, save_dir)
-    y_test, y_test_affines, y_test_headers = utils.get_data(y_test_data, shape, save_dir)[:3]
+    x_train1, y_train1 = utils.get_image_and_mask(x_test_data, y_train1_data, shape, save_dir,  visualisation=visualisation)[:2]
+    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir)
 
     print('*** Saving Test data ***')
     x_test_struct = {
@@ -302,7 +318,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss',
                                        verbose=1, save_best_only=True, period=10)
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=5)
-    earlystopper = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+    earlystopper = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
 
     Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=True)
 
@@ -339,23 +355,24 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
     counter = 1
 
     for data_gen_args, epochs in zip(data_gen_argss, epochss):
+
+        if data_gen_args == None:
+            augmentation = False
+
         nmbr_tries = 0
         if counter > 1:
-            print('\n\n\n\n********* \nTraining with higher augmentation values! Taking model from try {} \n*********\n\n\n\n'. format(best_try + 1))
+            print('\n\n\n\n********* \nTraining with higher augmentation values! Taking model from try {} \n*********\n\n\n\n'.format(best_try + 1))
             model = history.model
-            save_dir = save_dir + '{counter}_Step/'.format( counter = counter)
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
+
 
         early_stopped = True
         histories = []
-        new_save_dir = None
+        new_save_dir = save_dir + '{counter}_Step/'.format( counter = counter)
         while (early_stopped == True) and (nmbr_tries < max_tries + 1):
             nmbr_tries += 1
             if nmbr_tries > 1:
-                new_save_dir = save_dir + 'try{}/'.format(nmbr_tries)
-                if not os.path.exists(new_save_dir):
-                    os.makedirs(new_save_dir)
+                new_save_dir = save_dir + '{counter}_Step/'.format( counter = counter) + 'try{}/'.format(nmbr_tries)
+
 
                 print('\n\n\n\n********* \nTraining with reduced augmentation values! Try {}\n*********\n\n\n\n'.format(nmbr_tries))
                 for x in data_gen_args:
@@ -363,10 +380,10 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
                     if isinstance(temp, float):
                         data_gen_args['{}'.format(x)] = data_gen_args['{}'.format(x)] * 0.8
 
-            if new_save_dir == None:
-                new_save_dir = save_dir
+            if not os.path.exists(new_save_dir):
+                os.makedirs(new_save_dir)
 
-            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper)
+            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper, augmentation= augmentation)
             histories.append(temp_history)
 
         history_epochs = []

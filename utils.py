@@ -8,6 +8,111 @@ import cv2
 import data_loader as dl
 
 
+def get_image_and_mask(image, mask, shape, save_dir, visualisation = False):
+    if visualisation == True:
+        img_unpreprocessed = []
+        mask_unpreprocessed = []
+
+    img_data = []
+    mask_data = []
+    img_affines = []
+    mask_affines = []
+    img_headers = []
+    mask_headers = []
+    img_file_names = []
+    mask_file_names = []
+    for i, m in zip(image, mask):
+        img_affines.append(i.affine)
+        mask_affines.append(m.affine)
+        img_headers.append(i.header)
+        mask_headers.append(m.header)
+        img_file_names.append(os.path.basename(i.file_map['image'].filename))
+        mask_file_names.append(os.path.basename(m.file_map['image'].filename))
+        img_temp = i.get_data()
+        mask_temp = m.get_data()
+
+        img_temp, id1, id2 = remove_black_columns(img_temp)
+        mask_temp = mask_temp[:,id1:id2,:]
+
+        if visualisation == True:
+            img_unpreprocessed.append(np.moveaxis(img_temp, 2, 0))
+            mask_unpreprocessed.append(np.moveaxis(mask_temp, 2, 0))
+
+
+
+
+        img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation)
+        mask_preprocessed = preprocess(mask_temp, shape, save_dir, visualisation)
+        img_data.append(img_preprocessed)
+        mask_data.append(mask_preprocessed)
+
+    save_datavisualisation1(mask_data, save_dir + '/visualisation/temp1/', index_first= True, normalized= True)
+
+    img, maks = remove_black_masks(img_data, mask_data, save_dir= save_dir, visualisation=visualisation)
+
+
+    if visualisation == True:
+
+        save_datavisualisation1(img_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=img_file_names, file_name_header= 'unpro_')
+        save_datavisualisation1(img_data, save_dir + '/visualisation/', index_first= True, normalized= True  ,file_names=img_file_names, file_name_header= 'prepr_')
+        save_datavisualisation1(mask_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=mask_file_names, file_name_header= 'unpro_', normalized= True)
+        save_datavisualisation1(mask_data, save_dir + '/visualisation/', index_first= True, normalized= True,file_names=mask_file_names, file_name_header= 'prepr_')
+
+    return img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers
+
+
+def remove_black_masks(img, mask, save_dir = None, visualisation = False):
+    if visualisation == True:
+        before_img = img
+        before_mask = mask
+    for n in range(len(img)):
+        for i in range(mask[n].shape[0]):
+            if np.max(mask[n][i]) == 0:
+                idx1 = i
+            else: break
+        img[n] = img[n][idx1 + 1:,...]
+        mask[n] = mask[n][idx1 + 1:,...]
+
+    for n in range(len(img)):
+        for i in range(mask[n].shape[0] -1, -1, -1):
+            if np.max(mask[n][i]) == 0:
+                idx2 = i
+            else: break
+        img[n] = img[n][:idx2, ...]
+        mask[n] = mask[n][:idx2, ...]
+
+    if visualisation == True:
+        save_datavisualisation2(before_img, img, save_dir + '/visualisation/remove_black_mask/', index_first= True, normalized= True)
+        save_datavisualisation2(before_mask, mask, save_dir + '/visualisation/remove_black_mask/', index_first=True,
+                                normalized=True)
+
+
+    return img, mask
+
+
+def remove_black_columns(img):
+    """
+    Looks at 20th slice and removes all the columns at the border of the image that are 0
+    :param img:
+    :return:
+    """
+
+    for i in range(img[..., 20].shape[1]):
+        if max(img[:, i, 20]) > 0:
+            id1 = i
+            break
+
+    for i in range(img[..., 20].shape[1] - 1, -1, -1):
+        if max(img[:, i, 20]) > 0:
+            id2 = i
+            break
+
+    new_img = img[:,id1:id2,:]
+
+    return new_img, id1, id2
+
+
+
 def get_data(data, shape, save_dir,  visualisation = False, verbose = False):
     """
 
@@ -28,6 +133,7 @@ def get_data(data, shape, save_dir,  visualisation = False, verbose = False):
         headers.append(i.header)
         file_names.append(os.path.basename(i.file_map['image'].filename))
         temp = i.get_data()
+
         if visualisation == True:
             unpreprocessed.append(np.moveaxis(temp, 2, 0))
         preprocessed = preprocess(temp, shape)
@@ -39,7 +145,7 @@ def get_data(data, shape, save_dir,  visualisation = False, verbose = False):
 
     return img_data, affines, headers, file_names
 
-def preprocess(img, shape):
+def preprocess(img, shape, save_dir = None, visualisation = False):
     """
     - moves axis such that (x,y,z) becomes (z,x,y)
     - transforms the image such that shape is (z,shape). If one dimension is bigger than shape -> downscale, if one dimension is smaller -> zero-pad
@@ -48,7 +154,7 @@ def preprocess(img, shape):
     :return: img with shape (z,shape)
     """
     temp = np.moveaxis(img, 2, 0)
-    img_data = pad_img(temp, shape)
+    img_data = pad_img(temp, shape, save_dir ,visualisation)
     img_data = data_normalization(img_data)
 
     return img_data
@@ -142,9 +248,15 @@ def save_datavisualisation1(img_data, save_folder, index_first = False, normaliz
             imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
         else:
             if file_name_header == False:
-                imageio.imwrite(save_folder + file_names[counter] + '.png', image)
+                i = 0
+                while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                imageio.imwrite(save_folder + file_names[counter] + '{}.png'.format(i), image)
             else:
-                imageio.imwrite(save_folder + file_name_header +file_names[counter] + '.png', image)
+                i = 0
+                while os.path.exists(save_folder + file_name_header +file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                imageio.imwrite(save_folder + file_name_header +file_names[counter] + '{}.png'.format(i), image)
         counter = counter + 1
 
 
@@ -163,6 +275,11 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
 
     counter = 0
     for i, j in zip(img_data_temp[:], myocar_labels_temp[:]):
+        if i.shape != j.shape:
+            i = np.pad(i, (((j.shape[0] - i.shape[0]) // 2, j.shape[0]- i.shape[0] - (j.shape[0] - i.shape[0]) // 2),
+                                   ((j.shape[1] - i.shape[1]) // 2, j.shape[1] - i.shape[1] - (j.shape[1] - i.shape[1]) // 2), (0, 0)))
+
+
         print(counter)
         print(i.shape)
         i_patch = i[:, :, 0]
@@ -185,9 +302,15 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
         image = np.vstack((i_patch, j_patch))
 
         if file_names == False:
-            imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
+            i = 0
+            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,)):
+                i += 1
+            imageio.imwrite(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,), image)
         else:
-            imageio.imwrite(save_folder + file_names[counter] + '.png', image)
+            i = 0
+            while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
+                i += 1
+            imageio.imwrite(save_folder + file_names[counter] + '{}.png'.format(i), image)
         counter = counter + 1
 
 
@@ -253,13 +376,18 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
 
 
-def pad_img(img, shape):
+def pad_img(img, shape, save_dir = None, visualisation = False):
     """
     Reshapes input image to shape. If input shape is bigger -> resize, if it is smaller -> zero-padd
     :param img:
     :param shape: shape in (y,x)
     :return:
     """
+    if visualisation == True:
+        before = []
+        before.append(img)
+
+
 
     padded = np.empty((img.shape[0], shape[0], shape[1]))
     padd_y = shape[0] - img.shape[1]
@@ -278,6 +406,11 @@ def pad_img(img, shape):
             padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
         else:
             padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
+
+    if visualisation == True:
+        after = []
+        after.append(padded)
+        save_datavisualisation2(before, after, save_dir + '/visualisation/pad_img/', index_first= True, normalized= True)
     return padded
 
 

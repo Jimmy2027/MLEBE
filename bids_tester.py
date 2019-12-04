@@ -12,7 +12,7 @@ import data_loader as dl
 
 
 
-def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =True):
+def bids_tester(save_path, model, remote, shape, epochs, threshold = 0.5, test =True):
     """
     Preprocesses the unpreprocessed bidsdata and predicts a mask for it
 
@@ -65,7 +65,7 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =Tr
     temp = np.concatenate(y_pred, 0)
     plt.figure()
     plt.hist(np.unique(temp))
-    plt.title('Histogram of the pixel values from the predicted masks')
+    plt.title('Histogram of the pixel values from the predicted masks after thresholding with threshold {}'.format(threshold))
     plt.savefig(os.path.join(save_path, 'hist.png'))
 
     file_names = []
@@ -78,9 +78,9 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0, test =Tr
         img_temp = np.moveaxis(img_datas[i], 0, 2)
         # img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
         mask = nib.Nifti1Image(mask_temp, x_test_affine)
-        nib.save(mask, os.path.join(save_path, 'mask_' + file_name))
+        nib.save(mask, os.path.join(save_path, 'mask_thr{}_'.format(threshold) + file_name))
         img = nib.Nifti1Image(img_temp, x_test_affine)
-        nib.save(img, os.path.join(save_path, 'resized_' + file_name))
+        nib.save(img, os.path.join(save_path, 'resized_thr{}'.format(threshold) + file_name))
 
     output = []
     for i in range(len(data)):
