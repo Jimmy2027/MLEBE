@@ -2,6 +2,7 @@ import network_trainer
 import utils
 import shutil
 import tensorflow.keras
+import os
 
 """
 :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
@@ -16,12 +17,13 @@ import tensorflow.keras
 
 
 """
-
+if os.path.exists('/usr/share/mouse-brain-atlases/'):
+    remote = True
+else: remote = False
 
 test = True
-remote = False
 visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
-remove_black_labels_and_columns = False
+remove_black_labels_and_columns = True
 # losses = ['dice', 'bincross', 'dice_bincross']
 losses = ['bincross']
 epochss = [300, 300, 300, 300]

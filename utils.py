@@ -30,14 +30,17 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
         mask_file_names.append(os.path.basename(m.file_map['image'].filename))
         img_temp = i.get_data()
         mask_temp = m.get_data()
+        img_temp = np.moveaxis(img_temp, 2, 0)
+        mask_temp = np.moveaxis(mask_temp, 2, 0)
 
         if visualisation == True:
-            img_unpreprocessed.append(np.moveaxis(img_temp, 2, 0))
-            mask_unpreprocessed.append(np.moveaxis(mask_temp, 2, 0))
+            img_unpreprocessed.append(img_temp)
+            mask_unpreprocessed.append(mask_temp)
 
         if remove_black_labels_and_columns:
-            img_temp, id1, id2 = remove_black_columns(img_temp)
-            mask_temp = mask_temp[:,id1:id2,:]
+            img_temp, mask_temp = remove_black_images(img_temp, mask_temp, save_dir, visualisation= visualisation)
+            img_temp, id1, id2 = remove_black_columns(img_temp, save_dir, visualisation)
+            mask_temp = mask_temp[:,:,id1:id2]
 
         img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation)
         mask_preprocessed = preprocess(mask_temp, shape, save_dir, visualisation)
@@ -81,6 +84,27 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
     return img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers
 
 
+def remove_black_images(img, mask, save_dir = None, visualisation = False):
+    new_img = img[:, :, :]
+    new_mask = mask[:, :, :]
+    if visualisation:
+        before_img = img[:,:,:]
+        before_mask = mask[:,:,:]
+
+
+    for z in range(img.shape[0]):
+        if np.max(img[z,...]) == 0:
+            new_img = np.delete(img, z, 0)
+            new_mask = np.delete(mask, z, 0)
+
+    if visualisation == True:
+        save_datavisualisation2(before_img, new_img, save_dir + '/visualisation/remove_black_img/', index_first= True, normalized= True)
+        save_datavisualisation2(before_mask, new_mask, save_dir + '/visualisation/remove_black_img/', index_first=True, normalized=True)
+
+
+    return new_img, new_mask
+
+
 def remove_black_masks(img, mask, save_dir = None, visualisation = False):
     if visualisation == True:
         before_img = list(img)
@@ -91,19 +115,21 @@ def remove_black_masks(img, mask, save_dir = None, visualisation = False):
         for i in range(mask[n].shape[0]):
             if np.max(mask[n][i]) == 0:
                 idx1 = i
-                idxs1.append(idx1+1)
+
             else: break
         img[n] = img[n][idx1 + 1:,...]
         mask[n] = mask[n][idx1 + 1:,...]
+        idxs1.append(idx1 + 1)
 
     for n in range(len(img)):
         for i in range(mask[n].shape[0] -1, -1, -1):
             if np.max(mask[n][i]) == 0:
                 idx2 = i
-                idxs2.append(idx2)
+
             else: break
         img[n] = img[n][:idx2, ...]
         mask[n] = mask[n][:idx2, ...]
+        idxs2.append(idx2)
 
     if visualisation == True:
         save_datavisualisation2(before_img, img, save_dir + '/visualisation/remove_black_mask/', index_first= True, normalized= True, idx1 = idxs1, idx2= idxs2)
@@ -113,24 +139,27 @@ def remove_black_masks(img, mask, save_dir = None, visualisation = False):
     return img, mask
 
 
-def remove_black_columns(img):
+def remove_black_columns(img, save_dir= None, visualisation = False):
     """
     Looks at 20th slice and removes all the columns at the border of the image that are 0
     :param img:
     :return:
     """
 
-    for i in range(img[..., 20].shape[1]):
-        if max(img[:, i, 20]) > 0:
+    for i in range(img[20, ...].shape[1]):
+        if max(img[20, :, i]) > 0:
             id1 = i
             break
 
-    for i in range(img[..., 20].shape[1] - 1, -1, -1):
-        if max(img[:, i, 20]) > 0:
+    for i in range(img[20, ...].shape[1] - 1, -1, -1):
+        if max(img[20, :, i]) > 0:
             id2 = i
             break
 
-    new_img = img[:,id1:id2,:]
+    new_img = img[:,:,id1:id2]
+
+    if visualisation:
+        save_datavisualisation2(new_img, img, save_dir + '/visualisation/remove_black_columns/' , normalized= True, index_first= True)
 
     return new_img, id1, id2
 
@@ -176,8 +205,7 @@ def preprocess(img, shape, save_dir = None, visualisation = False):
     :param img: img with shape (x,y,z)
     :return: img with shape (z,shape)
     """
-    temp = np.moveaxis(img, 2, 0)
-    img_data = pad_img(temp, shape, save_dir ,visualisation)
+    img_data = pad_img(img, shape, save_dir ,visualisation)
     img_data = data_normalization(img_data)
 
     return img_data
@@ -253,8 +281,7 @@ def save_datavisualisation1(img_data, save_folder, index_first = False, normaliz
 
     counter = 0
     for i in img_data_temp[:]:
-        print(counter)
-        print(i.shape)
+
         i_patch = i[:, :, 0]
         if normalized == True:
             i_patch = i_patch*255
@@ -288,8 +315,19 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
+    if not type(img_data) == list:
+        temp = list(img_data)
+        img_data = []
+        img_data.append(temp)
+
+    if not type(myocar_labels) == list:
+        temp = list(myocar_labels)
+        myocar_labels = []
+        myocar_labels.append(temp)
+
     img_data_temp = []
     myocar_labels_temp = []
+
 
     if index_first == True:
         for i in range(0, len(img_data)):
@@ -298,7 +336,7 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
 
     counter = 0
     for i, j in zip(img_data_temp[:], myocar_labels_temp[:]):
-        if i.shape != j.shape:
+        if i.shape != j.shape:  #j need to be bigger than i
             i = np.pad(i, (((j.shape[0] - i.shape[0]) // 2, j.shape[0]- i.shape[0] - (j.shape[0] - i.shape[0]) // 2),
                                    ((j.shape[1] - i.shape[1]) // 2, j.shape[1] - i.shape[1] - (j.shape[1] - i.shape[1]) // 2), (0,0)), mode= 'constant')
             if idx1 == None:
@@ -307,8 +345,6 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
                 j = np.pad(j, ((0, 0), (0, 0), (idx1[counter], idx2[counter])), mode= 'constant', constant_values=0.5)
 
 
-        print(counter)
-        print(i.shape)
         i_patch = i[:, :, 0]
         if normalized == True:
             i_patch = i_patch*255

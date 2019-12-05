@@ -10,6 +10,8 @@ import tensorflow.keras.backend as K
 """taken from https://github.com/zhixuhao/unet"""
 
 def unet(input_size, pretrained_weights=None):
+    print('\n*********\n\nTraining with unet\n\n*********\n')
+
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)

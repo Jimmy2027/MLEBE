@@ -97,10 +97,10 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         mask_val_generator = mask_val_datagen.flow(y_val, seed = seed)
 
 
-        imgs = [next(image_generator) for _ in range(100)]   # number of augmented images
-        masks = [next(mask_generator) for _ in range(100)]
-        imgs_val = [next(image_val_generator) for _ in range(100)]
-        masks_val = [next(mask_val_generator) for _ in range(100)]
+        imgs = [next(image_generator) for _ in range(1000)]   # number of augmented images
+        masks = [next(mask_generator) for _ in range(1000)]
+        imgs_val = [next(image_val_generator) for _ in range(1000)]
+        masks_val = [next(mask_val_generator) for _ in range(1000)]
 
         imgs = np.concatenate(imgs)
         masks = np.concatenate(masks)
@@ -208,7 +208,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
 
-    if len(history.epoch) < min_epochs:
+    if len(history.epoch) < min_epochs and augmentation:
         print('Faulty predictions! Epoch:', len(history.epoch), 'instead of', epochs)
         return True, history
 
@@ -345,7 +345,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
         model = unet.unet(input_shape)
 
     if loss == 'bincross':
-        print('\n*********\n\nTraining with loss: binary_crossentropy\n\n*********\n')
+        print(0)
         loss = 'binary_crossentropy'
 
     elif loss == 'dice':
