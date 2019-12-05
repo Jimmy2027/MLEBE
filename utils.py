@@ -300,11 +300,11 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
     for i, j in zip(img_data_temp[:], myocar_labels_temp[:]):
         if i.shape != j.shape:
             i = np.pad(i, (((j.shape[0] - i.shape[0]) // 2, j.shape[0]- i.shape[0] - (j.shape[0] - i.shape[0]) // 2),
-                                   ((j.shape[1] - i.shape[1]) // 2, j.shape[1] - i.shape[1] - (j.shape[1] - i.shape[1]) // 2), (0,0)))
+                                   ((j.shape[1] - i.shape[1]) // 2, j.shape[1] - i.shape[1] - (j.shape[1] - i.shape[1]) // 2), (0,0)), mode= 'constant')
             if idx1 == None:
-                j = np.pad(j, ((0,0),(0,0),((i.shape[2] - j.shape[2]) // 2, i.shape[2]- j.shape[2] - (i.shape[2] - j.shape[2]) // 2)), constant_values=0.5)
+                j = np.pad(j, ((0,0),(0,0),((i.shape[2] - j.shape[2]) // 2, i.shape[2]- j.shape[2] - (i.shape[2] - j.shape[2]) // 2)), mode ='constant', constant_values=0.5)
             else:
-                j = np.pad(j, ((0, 0), (0, 0), (idx1[counter], idx2[counter])), constant_values=0.5)
+                j = np.pad(j, ((0, 0), (0, 0), (idx1[counter], idx2[counter])), mode= 'constant', constant_values=0.5)
 
 
         print(counter)
