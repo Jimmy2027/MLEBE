@@ -8,7 +8,7 @@ import cv2
 import data_loader as dl
 
 
-def get_image_and_mask(image, mask, shape, save_dir, visualisation = False):
+def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_columns, visualisation = False):
     if visualisation == True:
         img_unpreprocessed = []
         mask_unpreprocessed = []
@@ -31,27 +31,47 @@ def get_image_and_mask(image, mask, shape, save_dir, visualisation = False):
         img_temp = i.get_data()
         mask_temp = m.get_data()
 
-        img_temp, id1, id2 = remove_black_columns(img_temp)
-        mask_temp = mask_temp[:,id1:id2,:]
-
         if visualisation == True:
             img_unpreprocessed.append(np.moveaxis(img_temp, 2, 0))
             mask_unpreprocessed.append(np.moveaxis(mask_temp, 2, 0))
 
-
-
+        if remove_black_labels_and_columns:
+            img_temp, id1, id2 = remove_black_columns(img_temp)
+            mask_temp = mask_temp[:,id1:id2,:]
 
         img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation)
         mask_preprocessed = preprocess(mask_temp, shape, save_dir, visualisation)
         img_data.append(img_preprocessed)
         mask_data.append(mask_preprocessed)
 
-    save_datavisualisation1(mask_data, save_dir + '/visualisation/temp1/', index_first= True, normalized= True)
-
-    img, maks = remove_black_masks(img_data, mask_data, save_dir= save_dir, visualisation=visualisation)
+    if visualisation:
+        save_datavisualisation1(mask_data, save_dir + '/visualisation/after_rem_black_cloumns/', index_first= True, normalized= True)
+    if remove_black_labels_and_columns:
+        img_data, mask_data = remove_black_masks(img_data, mask_data, save_dir= save_dir, visualisation=visualisation)
 
 
     if visualisation == True:
+        if not os.path.exists(save_dir + 'visualisation/preprocessed/'):
+            os.makedirs(save_dir + 'visualisation/preprocessed/')
+        counter = 0
+        for im, ma in zip(img_data, mask_data):
+            for i in range(im.shape[0]):
+                plt.imshow(np.squeeze(im[i, ...]), cmap='gray')
+                plt.imshow(np.squeeze(ma[i, ...]), alpha=0.3, cmap='Blues')
+                plt.savefig(save_dir + 'visualisation/preprocessed/img_{a}{i}'.format(a=counter,i=i))
+                plt.close()
+            counter += 1
+
+        if not os.path.exists(save_dir + 'visualisation/unpreprocessed/'):
+            os.makedirs(save_dir + 'visualisation/unpreprocessed/')
+        counter = 0
+        for im, ma in zip(img_unpreprocessed, mask_unpreprocessed):
+            for i in range(im.shape[0]):
+                plt.imshow(im[i, ...], cmap='gray')
+                plt.imshow(ma[i, ...], alpha=0.3, cmap='Blues')
+                plt.savefig(save_dir + 'visualisation/unpreprocessed/img_{a}{i}'.format(a=counter,i=i))
+                plt.close()
+            counter += 1
 
         save_datavisualisation1(img_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=img_file_names, file_name_header= 'unpro_')
         save_datavisualisation1(img_data, save_dir + '/visualisation/', index_first= True, normalized= True  ,file_names=img_file_names, file_name_header= 'prepr_')
@@ -63,12 +83,15 @@ def get_image_and_mask(image, mask, shape, save_dir, visualisation = False):
 
 def remove_black_masks(img, mask, save_dir = None, visualisation = False):
     if visualisation == True:
-        before_img = img
-        before_mask = mask
+        before_img = list(img)
+        before_mask = list(mask)
+    idxs1 = []
+    idxs2 = []
     for n in range(len(img)):
         for i in range(mask[n].shape[0]):
             if np.max(mask[n][i]) == 0:
                 idx1 = i
+                idxs1.append(idx1+1)
             else: break
         img[n] = img[n][idx1 + 1:,...]
         mask[n] = mask[n][idx1 + 1:,...]
@@ -77,14 +100,14 @@ def remove_black_masks(img, mask, save_dir = None, visualisation = False):
         for i in range(mask[n].shape[0] -1, -1, -1):
             if np.max(mask[n][i]) == 0:
                 idx2 = i
+                idxs2.append(idx2)
             else: break
         img[n] = img[n][:idx2, ...]
         mask[n] = mask[n][:idx2, ...]
 
     if visualisation == True:
-        save_datavisualisation2(before_img, img, save_dir + '/visualisation/remove_black_mask/', index_first= True, normalized= True)
-        save_datavisualisation2(before_mask, mask, save_dir + '/visualisation/remove_black_mask/', index_first=True,
-                                normalized=True)
+        save_datavisualisation2(before_img, img, save_dir + '/visualisation/remove_black_mask/', index_first= True, normalized= True, idx1 = idxs1, idx2= idxs2)
+        save_datavisualisation2(before_mask, mask, save_dir + '/visualisation/remove_black_mask/', index_first=True, normalized=True, idx1 = idxs1, idx2= idxs2)
 
 
     return img, mask
@@ -260,7 +283,7 @@ def save_datavisualisation1(img_data, save_folder, index_first = False, normaliz
         counter = counter + 1
 
 
-def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False, file_names = False):
+def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False, file_names = False, idx1 = None, idx2 = None):
 
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
@@ -277,7 +300,11 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
     for i, j in zip(img_data_temp[:], myocar_labels_temp[:]):
         if i.shape != j.shape:
             i = np.pad(i, (((j.shape[0] - i.shape[0]) // 2, j.shape[0]- i.shape[0] - (j.shape[0] - i.shape[0]) // 2),
-                                   ((j.shape[1] - i.shape[1]) // 2, j.shape[1] - i.shape[1] - (j.shape[1] - i.shape[1]) // 2), (0, 0)))
+                                   ((j.shape[1] - i.shape[1]) // 2, j.shape[1] - i.shape[1] - (j.shape[1] - i.shape[1]) // 2), (0,0)))
+            if idx1 == None:
+                j = np.pad(j, ((0,0),(0,0),((i.shape[2] - j.shape[2]) // 2, i.shape[2]- j.shape[2] - (i.shape[2] - j.shape[2]) // 2)), constant_values=0.5)
+            else:
+                j = np.pad(j, ((0, 0), (0, 0), (idx1[counter], idx2[counter])), constant_values=0.5)
 
 
         print(counter)

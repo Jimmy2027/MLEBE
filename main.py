@@ -20,7 +20,8 @@ import tensorflow.keras
 
 test = True
 remote = False
-visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
+visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
+remove_black_labels_and_columns = False
 # losses = ['dice', 'bincross', 'dice_bincross']
 losses = ['bincross']
 epochss = [300, 300, 300, 300]
@@ -66,7 +67,7 @@ if test == True:
     max_tries = 0
 shape = (64, 64)
 if test == True:
-    shape = (32, 32)
+    shape = (128, 128)
 
 if remote == True:
     blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
@@ -88,6 +89,6 @@ for i, loss in enumerate(losses):
     # if pretrained:
     #     # model = keras.models.load_model(model_paths[i], custom_objects={'dice_coef_loss': unet.dice_coef_loss})
 
-    network_trainer.network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, visualisation=visualisation)
+    network_trainer.network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation)
 
 
