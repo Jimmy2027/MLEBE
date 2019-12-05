@@ -93,7 +93,10 @@ def remove_black_images(img, mask, save_dir = None, visualisation = False):
 
     counter = 0
     for z in range(img.shape[0]):
-        if np.max(img[z,...]) == 0:
+        # plt.imshow(img[z, ...])
+        # plt.title(str(np.sum(np.concatenate(img[z, ...]))))
+        # plt.savefig(save_dir + 'temp_{}'.format(z))
+        if np.max(img[z,...]) == 0 or np.sum(np.concatenate(img[z, ...])) < 15000:
             new_img = np.delete(new_img, z - counter, 0)
             new_mask = np.delete(new_mask, z - counter, 0)
             counter += 1
