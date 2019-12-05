@@ -91,11 +91,13 @@ def remove_black_images(img, mask, save_dir = None, visualisation = False):
         before_img = img[:,:,:]
         before_mask = mask[:,:,:]
 
-
+    counter = 0
     for z in range(img.shape[0]):
         if np.max(img[z,...]) == 0:
-            new_img = np.delete(img, z, 0)
-            new_mask = np.delete(mask, z, 0)
+            new_img = np.delete(new_img, z - counter, 0)
+            new_mask = np.delete(new_mask, z - counter, 0)
+            counter += 1
+
 
     if visualisation == True:
         save_datavisualisation2(before_img, new_img, save_dir + '/visualisation/remove_black_img/', index_first= True, normalized= True)
@@ -336,9 +338,9 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
 
     counter = 0
     for i, j in zip(img_data_temp[:], myocar_labels_temp[:]):
-        if i.shape != j.shape:  #j need to be bigger than i
+        if i.shape != j.shape:  #j need to be bigger than i     #todo this needs to be generalised
             i = np.pad(i, (((j.shape[0] - i.shape[0]) // 2, j.shape[0]- i.shape[0] - (j.shape[0] - i.shape[0]) // 2),
-                                   ((j.shape[1] - i.shape[1]) // 2, j.shape[1] - i.shape[1] - (j.shape[1] - i.shape[1]) // 2), (0,0)), mode= 'constant')
+                                   ((j.shape[1] - i.shape[1]) // 2, j.shape[1] - i.shape[1] - (j.shape[1] - i.shape[1]) // 2), (0,0)), mode= 'constant', constant_values=0.5)
             if idx1 == None:
                 j = np.pad(j, ((0,0),(0,0),((i.shape[2] - j.shape[2]) // 2, i.shape[2]- j.shape[2] - (i.shape[2] - j.shape[2]) // 2)), mode ='constant', constant_values=0.5)
             else:

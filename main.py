@@ -25,7 +25,7 @@ test = True
 visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = True
 # losses = ['dice', 'bincross', 'dice_bincross']
-losses = ['bincross']
+losses = ['dice_bincross']
 epochss = [300, 300, 300, 300]
 min_epochs = 15
 if test == True:
