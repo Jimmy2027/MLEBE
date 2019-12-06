@@ -253,7 +253,7 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
             shutil.rmtree(save_dir)
 
     else:
-        save_dir = 'custom_augm/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        save_dir = 'no_black/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

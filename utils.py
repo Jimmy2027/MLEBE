@@ -42,8 +42,8 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
             img_temp, id1, id2 = remove_black_columns(img_temp, save_dir, visualisation)
             mask_temp = mask_temp[:,:,id1:id2]
 
-        img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation)
-        mask_preprocessed = preprocess(mask_temp, shape, save_dir, visualisation)
+        img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation, switched_axis= True)
+        mask_preprocessed = preprocess(mask_temp, shape, save_dir, visualisation, switched_axis = True)
         img_data.append(img_preprocessed)
         mask_data.append(mask_preprocessed)
 
@@ -85,6 +85,7 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
 
 
 def remove_black_images(img, mask, save_dir = None, visualisation = False):
+
     new_img = img[:, :, :]
     new_mask = mask[:, :, :]
     if visualisation:
@@ -92,21 +93,22 @@ def remove_black_images(img, mask, save_dir = None, visualisation = False):
         before_mask = mask[:,:,:]
 
     counter = 0
-    for z in range(img.shape[0]):
+    if not img.shape[0] == 0:
+        for z in range(img.shape[0]):
 
-        if np.max(img[z,...]) == 0 or np.sum(np.concatenate(img[z, ...])) < 15000:
-            temp_path = check_path(save_dir + '/visualisation/remove_black_img/', 'removed_{}'.format(z))
-            plt.imshow(img[z, ...])
-            plt.title(str(np.sum(np.concatenate(img[z, ...]))))
-            plt.savefig(temp_path)
-            new_img = np.delete(new_img, z - counter, 0)
-            new_mask = np.delete(new_mask, z - counter, 0)
-            counter += 1
+            if np.max(img[z,...]) == 0 or np.sum(np.concatenate(img[z, ...])) < 15000:
+                # temp_path = check_path(save_dir + '/visualisation/remove_black_img/', 'removed_{}'.format(z))
+                # plt.imshow(img[z, ...])
+                # plt.title(str(np.sum(np.concatenate(img[z, ...]))))
+                # plt.savefig(temp_path)
+                new_img = np.delete(new_img, z - counter, 0)
+                new_mask = np.delete(new_mask, z - counter, 0)
+                counter += 1
 
 
-    if visualisation == True:
-        save_datavisualisation2(before_img, new_img, save_dir + '/visualisation/remove_black_img/', index_first= True)
-        save_datavisualisation2(before_mask, new_mask, save_dir + '/visualisation/remove_black_img/', index_first=True)
+        if visualisation == True:
+            save_datavisualisation2(before_img, new_img, save_dir + '/visualisation/remove_black_img/', index_first= True, file_name_header= 'img')
+            save_datavisualisation2(before_mask, new_mask, save_dir + '/visualisation/remove_black_img/', index_first=True, file_name_header= 'mask')
 
 
     return new_img, new_mask
@@ -204,7 +206,7 @@ def get_data(data, shape, save_dir,  visualisation = False, verbose = False):
 
     return img_data, affines, headers, file_names
 
-def preprocess(img, shape, save_dir = None, visualisation = False):
+def preprocess(img, shape, save_dir = None, visualisation = False, switched_axis = False):
     """
     - moves axis such that (x,y,z) becomes (z,x,y)
     - transforms the image such that shape is (z,shape). If one dimension is bigger than shape -> downscale, if one dimension is smaller -> zero-pad
@@ -212,7 +214,10 @@ def preprocess(img, shape, save_dir = None, visualisation = False):
     :param img: img with shape (x,y,z)
     :return: img with shape (z,shape)
     """
-    img_data = pad_img(img, shape, save_dir ,visualisation)
+    if switched_axis == False:
+        img_temp = np.moveaxis(img, 2, 0)
+
+    img_data = pad_img(img_temp, shape, save_dir ,visualisation)
     img_data = data_normalization(img_data)
 
     return img_data
@@ -302,7 +307,10 @@ def save_datavisualisation1(img_data, save_folder, index_first = False, normaliz
         image = i_patch
 
         if file_names == False:
-            imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
+            i = 0
+            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,)):
+                i += 1
+            imageio.imwrite(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,), image)
         else:
             if file_name_header == False:
                 i = 0
@@ -317,7 +325,7 @@ def save_datavisualisation1(img_data, save_folder, index_first = False, normaliz
         counter = counter + 1
 
 
-def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False, file_names = False, idx1 = None, idx2 = None):
+def save_datavisualisation2(img_data, myocar_labels, save_folder, file_name_header = False, index_first = False, normalized = False, file_names = False, idx1 = None, idx2 = None):
 
     if normalized == False:
         img_data = data_normalization(img_data)
@@ -381,10 +389,16 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = 
                 i += 1
             imageio.imwrite(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,), image)
         else:
-            i = 0
-            while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
-                i += 1
-            imageio.imwrite(save_folder + file_names[counter] + '{}.png'.format(i), image)
+            if file_name_header == False:
+                i = 0
+                while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                imageio.imwrite(save_folder + file_names[counter] + '{}.png'.format(i), image)
+            else:
+                i = 0
+                while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                imageio.imwrite(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i), image)
         counter = counter + 1
 
 

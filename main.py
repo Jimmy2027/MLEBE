@@ -21,11 +21,11 @@ if os.path.exists('/usr/share/mouse-brain-atlases/'):
     remote = True
 else: remote = False
 
-test = True
+test = False
 visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = True
-# losses = ['dice', 'bincross', 'dice_bincross']
-losses = ['dice_bincross']
+losses = ['dice', 'bincross', 'dice_bincross']
+# losses = ['dice_bincross']
 epochss = [300, 300, 300, 300]
 min_epochs = 15
 if test == True:
