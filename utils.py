@@ -93,18 +93,20 @@ def remove_black_images(img, mask, save_dir = None, visualisation = False):
 
     counter = 0
     for z in range(img.shape[0]):
-        # plt.imshow(img[z, ...])
-        # plt.title(str(np.sum(np.concatenate(img[z, ...]))))
-        # plt.savefig(save_dir + 'temp_{}'.format(z))
+
         if np.max(img[z,...]) == 0 or np.sum(np.concatenate(img[z, ...])) < 15000:
+            temp_path = check_path(save_dir + '/visualisation/remove_black_img/', 'removed_{}'.format(z))
+            plt.imshow(img[z, ...])
+            plt.title(str(np.sum(np.concatenate(img[z, ...]))))
+            plt.savefig(temp_path)
             new_img = np.delete(new_img, z - counter, 0)
             new_mask = np.delete(new_mask, z - counter, 0)
             counter += 1
 
 
     if visualisation == True:
-        save_datavisualisation2(before_img, new_img, save_dir + '/visualisation/remove_black_img/', index_first= True, normalized= True)
-        save_datavisualisation2(before_mask, new_mask, save_dir + '/visualisation/remove_black_img/', index_first=True, normalized=True)
+        save_datavisualisation2(before_img, new_img, save_dir + '/visualisation/remove_black_img/', index_first= True)
+        save_datavisualisation2(before_mask, new_mask, save_dir + '/visualisation/remove_black_img/', index_first=True)
 
 
     return new_img, new_mask
@@ -146,18 +148,18 @@ def remove_black_masks(img, mask, save_dir = None, visualisation = False):
 
 def remove_black_columns(img, save_dir= None, visualisation = False):
     """
-    Looks at 20th slice and removes all the columns at the border of the image that are 0
+    Looks at 20th slice and removes all the columns at the border of the images that are 0
     :param img:
     :return:
     """
 
-    for i in range(img[20, ...].shape[1]):
-        if max(img[20, :, i]) > 0:
+    for i in range(img[0, ...].shape[1]):
+        if max(img[0, :, i]) > 0:
             id1 = i
             break
 
-    for i in range(img[20, ...].shape[1] - 1, -1, -1):
-        if max(img[20, :, i]) > 0:
+    for i in range(img[0, ...].shape[1] - 1, -1, -1):
+        if max(img[0, :, i]) > 0:
             id2 = i
             break
 
@@ -317,6 +319,10 @@ def save_datavisualisation1(img_data, save_folder, index_first = False, normaliz
 
 def save_datavisualisation2(img_data, myocar_labels, save_folder, index_first = False, normalized = False, file_names = False, idx1 = None, idx2 = None):
 
+    if normalized == False:
+        img_data = data_normalization(img_data)
+        myocar_labels = data_normalization(myocar_labels)
+        normalized = True
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
@@ -498,3 +504,12 @@ def write_blacklist(blacklist_dir):
         blacklist.append(blacklist_elem(temp2[0], temp2[1]))
     return blacklist
 
+
+def check_path(path, filename):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    i = 0
+    while os.path.exists(path + filename + '{}'.format(i)):
+        i += 1
+
+    return path + filename + '{}'.format(i)

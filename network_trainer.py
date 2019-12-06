@@ -279,8 +279,8 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
                                                                                                   test_size=0.1)
 
     print('*** Preprocessing ***')
-    x_train1, y_train1 = utils.get_image_and_mask(x_test_data, y_train1_data, shape, save_dir, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)[:2]
-    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir, remove_black_labels_and_columns=remove_black_labels_and_columns)
+    x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)[:2]
+    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)
 
     print('*** Saving Test data ***')
     x_test_struct = {

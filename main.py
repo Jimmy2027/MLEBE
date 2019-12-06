@@ -67,7 +67,7 @@ data_gen_argss = [data_gen_args0, data_gen_args1, data_gen_args2, data_gen_args3
 max_tries = 3
 if test == True:
     max_tries = 0
-shape = (64, 64)
+shape = (128, 128)
 if test == True:
     shape = (128, 128)
 
