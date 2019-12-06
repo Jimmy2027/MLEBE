@@ -39,6 +39,8 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
 
         if remove_black_labels_and_columns:
             img_temp, mask_temp = remove_black_images(img_temp, mask_temp, save_dir, visualisation= visualisation)
+            if img_temp == None:
+                continue
             img_temp, id1, id2 = remove_black_columns(img_temp, save_dir, visualisation)
             mask_temp = mask_temp[:,:,id1:id2]
 
@@ -105,6 +107,10 @@ def remove_black_images(img, mask, save_dir = None, visualisation = False):
                 new_mask = np.delete(new_mask, z - counter, 0)
                 counter += 1
 
+        if new_img.shape[0] == 0:
+            save_datavisualisation1(before_img, save_dir + '/visualisation/gfhsghsdh/',
+                                    index_first=True, file_name_header='img')
+            return None, None
 
         if visualisation == True:
             save_datavisualisation2(before_img, new_img, save_dir + '/visualisation/remove_black_img/', index_first= True, file_name_header= 'img')
@@ -215,9 +221,9 @@ def preprocess(img, shape, save_dir = None, visualisation = False, switched_axis
     :return: img with shape (z,shape)
     """
     if switched_axis == False:
-        img_temp = np.moveaxis(img, 2, 0)
+        img = np.moveaxis(img, 2, 0)
 
-    img_data = pad_img(img_temp, shape, save_dir ,visualisation)
+    img_data = pad_img(img, shape, save_dir ,visualisation)
     img_data = data_normalization(img_data)
 
     return img_data

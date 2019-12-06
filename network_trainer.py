@@ -214,7 +214,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     return False, history
 
-def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,visualisation = False, pretrained = False, pretrained_model_path = None):
+def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,visualisation = False, pretrained = False, pretrained_model_path = None):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -253,7 +253,10 @@ def network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epoc
             shutil.rmtree(save_dir)
 
     else:
-        save_dir = 'no_black/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        i = 0
+        while os.path.exists(file_name + '{}/'.format(i)):
+            i += 1
+        save_dir = file_name + '{i}/training_results/{loss}_{epochs}_{date}/'.format(i=i,loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

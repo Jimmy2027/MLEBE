@@ -21,6 +21,7 @@ if os.path.exists('/usr/share/mouse-brain-atlases/'):
     remote = True
 else: remote = False
 
+file_name = 'no_black'
 test = False
 visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = True
@@ -91,6 +92,6 @@ for i, loss in enumerate(losses):
     # if pretrained:
     #     # model = keras.models.load_model(model_paths[i], custom_objects={'dice_coef_loss': unet.dice_coef_loss})
 
-    network_trainer.network_trainer(test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation)
+    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation)
 
 
