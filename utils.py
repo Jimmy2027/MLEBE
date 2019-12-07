@@ -57,8 +57,9 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
 
     if visualisation:
         save_datavisualisation1(mask_data, save_dir + '/visualisation/after_rem_black_cloumns/', index_first= True, normalized= True)
-    if remove_black_labels_and_columns:
-        img_data, mask_data = remove_black_masks(img_data, mask_data, save_dir= save_dir, visualisation=visualisation)
+
+    # if remove_black_labels_and_columns:
+    #     img_data, mask_data = remove_black_masks(img_data, mask_data, save_dir= save_dir, visualisation=visualisation)
 
 
     if visualisation == True:
@@ -285,7 +286,6 @@ def data_normalization(data):
     :param data: shape: (y, x)
     :return: normalised input
     """
-#todo normalise volume-wise
     data = data*1.
     data = np.clip(data, 0, np.percentile(data, 99))
 
