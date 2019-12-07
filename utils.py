@@ -6,6 +6,7 @@ import os
 import pandas
 import cv2
 import data_loader as dl
+import scipy
 
 
 def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_columns, visualisation = False):
@@ -28,8 +29,10 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
         mask_headers.append(m.header)
         img_file_names.append(os.path.basename(i.file_map['image'].filename))
         mask_file_names.append(os.path.basename(m.file_map['image'].filename))
-        img_temp = i.get_data()
-        mask_temp = m.get_data()
+        img = i.get_data()
+        img_temp = img[:,:,:]
+        mask = m.get_data()
+        mask_temp = mask[:, :, :]
         img_temp = np.moveaxis(img_temp, 2, 0)
         mask_temp = np.moveaxis(mask_temp, 2, 0)
 
@@ -37,15 +40,18 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
             img_unpreprocessed.append(img_temp)
             mask_unpreprocessed.append(mask_temp)
 
-        if remove_black_labels_and_columns:
-            img_temp, mask_temp = remove_black_images(img_temp, mask_temp, save_dir, visualisation= visualisation)
-            if img_temp == None:
-                continue
-            img_temp, id1, id2 = remove_black_columns(img_temp, save_dir, visualisation)
-            mask_temp = mask_temp[:,:,id1:id2]
+        fitted_mask = arrange_mask(img_temp, mask_temp, save_dir)
+
+        # if remove_black_labels_and_columns:
+
+            # img_temp, mask_temp = remove_black_images(img_temp, mask_temp, save_dir, visualisation= visualisation)
+            # if img_temp is None:
+            #     continue
+            # img_temp, id1, id2 = remove_black_columns(img_temp, save_dir, visualisation)
+            # mask_temp = mask_temp[:,:,id1:id2]
 
         img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation, switched_axis= True)
-        mask_preprocessed = preprocess(mask_temp, shape, save_dir, visualisation, switched_axis = True)
+        mask_preprocessed = preprocess(fitted_mask, shape, save_dir, visualisation, switched_axis = True)
         img_data.append(img_preprocessed)
         mask_data.append(mask_preprocessed)
 
@@ -86,6 +92,28 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
     return img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers
 
 
+def arrange_mask(img, mask, save_dir):
+
+    new_mask = mask[:,:,:]
+
+    new_mask[img == 0] = 0
+
+    fixed_mask = new_mask[:, :, :]
+
+    structure = [[1,0,1], [1,1,1], [0,1,0]]
+
+    for i in range(new_mask.shape[0]):
+        fixed_mask[i] = scipy.ndimage.morphology.binary_fill_holes(new_mask[i], structure=structure)
+
+
+    save_datavisualisation3(img,new_mask, fixed_mask, save_dir + 'arrange_mask/', index_first= True)
+
+    return fixed_mask
+
+
+
+
+
 def remove_black_images(img, mask, save_dir = None, visualisation = False):
 
     new_img = img[:, :, :]
@@ -98,7 +126,7 @@ def remove_black_images(img, mask, save_dir = None, visualisation = False):
     if not img.shape[0] == 0:
         for z in range(img.shape[0]):
 
-            if np.max(img[z,...]) == 0 or np.sum(np.concatenate(img[z, ...])) < 15000:
+            if np.max(img[z,...]) == 0:
                 # temp_path = check_path(save_dir + '/visualisation/remove_black_img/', 'removed_{}'.format(z))
                 # plt.imshow(img[z, ...])
                 # plt.title(str(np.sum(np.concatenate(img[z, ...]))))
@@ -257,14 +285,13 @@ def data_normalization(data):
     :param data: shape: (y, x)
     :return: normalised input
     """
+#todo normalise volume-wise
+    data = data*1.
+    data = np.clip(data, 0, np.percentile(data, 99))
 
-    for i in range(data.shape[0]):
-        data[i] = data[i]*1.
-        data[i] = np.clip(data[i], 0, np.percentile(data[i], 99))
-
-        data[i] = data[i] - np.amin(data[i])
-        if np.amax(data[i]) != 0:
-            data[i] = data[i] / np.amax(data[i])
+    data = data - np.amin(data)
+    if np.amax(data) != 0:
+        data = data / np.amax(data)
     return data
 
 
@@ -276,7 +303,7 @@ def save_img(img_data, path):
         plt.imshow(img_data[j, ...], cmap='gray')
         plt.savefig(os.path.join(path, 'img_{}.png'.format(j)))
 
-def save_datavisualisation1(img_data, save_folder, index_first = False, normalized = False, file_names = False, file_name_header = False):
+def save_datavisualisation1(img_data, save_folder, index_first = True, normalized = False, file_names = False, file_name_header = False):
     """
 
     :param img_data:
@@ -331,7 +358,7 @@ def save_datavisualisation1(img_data, save_folder, index_first = False, normaliz
         counter = counter + 1
 
 
-def save_datavisualisation2(img_data, myocar_labels, save_folder, file_name_header = False, index_first = False, normalized = False, file_names = False, idx1 = None, idx2 = None):
+def save_datavisualisation2(img_data, myocar_labels, save_folder, file_name_header = False, index_first = True, normalized = False, file_names = False, idx1 = None, idx2 = None):
 
     if normalized == False:
         img_data = data_normalization(img_data)
@@ -421,8 +448,30 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
 
     :return:
     """
+    if normalized == False:
+        img_data = data_normalization(img_data)
+        myocar_labels = data_normalization(myocar_labels)
+        normalized = True
+
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
+
+    if not type(img_data) == list:
+        temp = list(img_data)
+        img_data = []
+        img_data.append(temp)
+
+    if not type(myocar_labels) == list:
+        temp = list(myocar_labels)
+        myocar_labels = []
+        myocar_labels.append(temp)
+
+    if not type(predicted_labels) == list:
+        temp = list(predicted_labels)
+        predicted_labels = []
+        predicted_labels.append(temp)
+
+
     img_data_temp = []
     myocar_labels_temp = []
     predicted_labels_temp = []
@@ -433,6 +482,8 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
             predicted_labels_temp.append(np.moveaxis(predicted_labels[i], 0, -1))
     counter = 0
     for i, j, k in zip(img_data_temp[:], myocar_labels_temp[:], predicted_labels_temp[:]):
+
+
 
         i_patch = i[:, :, 0]
         if normalized == True:
@@ -462,9 +513,11 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
         image = np.vstack((i_patch, j_patch, k_patch))
 
         if file_names == False:
-            imageio.imwrite(save_folder + 'mds' + '%d.png' % (counter,), image)
+            path = check_path(save_folder, 'img' + '%d' % (counter,))
+            imageio.imwrite(path + '.png', image)
         else:
-            imageio.imwrite(save_folder + file_names[counter] + '.png', image)
+            path = check_path(save_folder,  file_names[counter])
+            imageio.imwrite(path + '.png', image)
 
         counter = counter + 1
 
@@ -525,11 +578,11 @@ def write_blacklist(blacklist_dir):
     return blacklist
 
 
-def check_path(path, filename):
+def check_path(path, filename = 'img', format = '.png'):
     if not os.path.exists(path):
         os.makedirs(path)
     i = 0
-    while os.path.exists(path + filename + '{}'.format(i)):
+    while os.path.isfile(path + filename + '{}'.format(i) + format):
         i += 1
 
     return path + filename + '{}'.format(i)

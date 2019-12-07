@@ -22,7 +22,7 @@ if os.path.exists('/usr/share/mouse-brain-atlases/'):
 else: remote = False
 
 file_name = 'no_black'
-test = False
+test = True
 visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = True
 losses = ['dice', 'bincross', 'dice_bincross']

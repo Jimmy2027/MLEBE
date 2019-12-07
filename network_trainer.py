@@ -18,6 +18,7 @@ from sklearn import model_selection
 import nibabel as nib
 import datetime
 import random
+import copy
 
 #todo verify augmentation values
 #todo parse arguments?
@@ -269,7 +270,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
 
     for i in range(len(img_data)):
-        mask_data.append(temp[0])
+        mask_data.append(copy.deepcopy(temp[0]))
 
     print('*** Splitting data into Train, Validation and Test set ***')
     if test == True:
