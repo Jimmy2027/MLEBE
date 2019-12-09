@@ -19,13 +19,14 @@ import nibabel as nib
 import datetime
 import random
 import copy
+import warnings
 
 #todo verify augmentation values
 #todo parse arguments?
 #todo write README
 #todo write scratches with useful functions
 
-def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper, augmentation = True, visualisation = False):
+def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, augmentation = True, visualisation = False):
     """
     Trains the model
 
@@ -52,6 +53,106 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     :param earlystopper:
     :return: Bool: (False if early stopped before min_epochs, False else), history
     """
+    class myModelCheckpoint(keras.callbacks.Callback):
+        """Save the model after every epoch.
+        `filepath` can contain named formatting options,
+        which will be filled with the values of `epoch` and
+        keys in `logs` (passed in `on_epoch_end`).
+        For example: if `filepath` is `weights.{epoch:02d}-{val_loss:.2f}.hdf5`,
+        then the model checkpoints will be saved with the epoch number and
+        the validation loss in the filename.
+        # Arguments
+            filepath: string, path to save the model file.
+            monitor: quantity to monitor.
+            verbose: verbosity mode, 0 or 1.
+            save_best_only: if `save_best_only=True`,
+                the latest best model according to
+                the quantity monitored will not be overwritten.
+            save_weights_only: if True, then only the model's weights will be
+                saved (`model.save_weights(filepath)`), else the full model
+                is saved (`model.save(filepath)`).
+            mode: one of {auto, min, max}.
+                If `save_best_only=True`, the decision
+                to overwrite the current save file is made
+                based on either the maximization or the
+                minimization of the monitored quantity. For `val_acc`,
+                this should be `max`, for `val_loss` this should
+                be `min`, etc. In `auto` mode, the direction is
+                automatically inferred from the name of the monitored quantity.
+            period: Interval (number of epochs) between checkpoints.
+        """
+
+        def __init__(self, filepath, monitor='val_loss', verbose=0,
+                     save_best_only=False, save_weights_only=False,
+                     mode='auto', period=1):
+            super(myModelCheckpoint, self).__init__()
+            self.monitor = monitor
+            self.verbose = verbose
+            self.filepath = filepath
+            self.save_best_only = save_best_only
+            self.save_weights_only = save_weights_only
+            self.period = period
+            self.epochs_since_last_save = 0
+
+            if mode not in ['auto', 'min', 'max']:
+                warnings.warn('ModelCheckpoint mode %s is unknown, '
+                              'fallback to auto mode.' % (mode),
+                              RuntimeWarning)
+                mode = 'auto'
+
+            if mode == 'min':
+                self.monitor_op = np.less
+                self.best = np.Inf
+            elif mode == 'max':
+                self.monitor_op = np.greater
+                self.best = -np.Inf
+            else:
+                if 'acc' in self.monitor or self.monitor.startswith('fmeasure'):
+                    self.monitor_op = np.greater
+                    self.best = -np.Inf
+                else:
+                    self.monitor_op = np.less
+                    self.best = np.Inf
+
+        def on_epoch_end(self, epoch, logs=None):
+            logs = logs or {}
+            self.epochs_since_last_save += 1
+            if self.epochs_since_last_save >= self.period:
+                self.epochs_since_last_save = 0
+                filepath = self.filepath.format(epoch=epoch + 1, **logs)
+                if self.save_best_only:
+                    current = logs.get(self.monitor)
+                    if current is None:
+                        warnings.warn('Can save best model only with %s available, '
+                                      'skipping.' % (self.monitor), RuntimeWarning)
+                    else:
+                        if self.monitor_op(current, self.best):
+                            if self.verbose > 0:
+                                print('\nEpoch %05d: %s improved from %0.5f to %0.5f,'
+                                      ' saving model to %s'
+                                      % (epoch + 1, self.monitor, self.best,
+                                         current, filepath))
+                            self.best = current
+                            if self.save_weights_only:
+                                self.model.save_weights(filepath, overwrite=True)
+                            else:
+                                self.model.save(filepath, overwrite=True)
+                        else:
+                            if self.verbose > 0:
+                                print('\nEpoch %05d: %s did not improve from %0.5f' %
+                                      (epoch + 1, self.monitor, self.best))
+                else:
+                    if self.verbose > 0:
+                        print('\nEpoch %05d: saving model to %s' % (epoch + 1, filepath))
+                    if self.save_weights_only:
+                        self.model.save_weights(filepath, overwrite=True)
+                    else:
+                        self.model.save(filepath, overwrite=True)
+
+
+    model_checkpoint = myModelCheckpoint(save_dir + 'unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, period=1)
+
+    callbacks.append(model_checkpoint)
 
 
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
@@ -123,7 +224,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         validation_set = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs_val), tf.data.Dataset.from_tensor_slices(masks_val)))
         validation_set = validation_set.repeat().shuffle(1000).batch(32)
 
-        history = model.fit(train_dataset, steps_per_epoch= int(len(x_train) / 32), validation_data= validation_set, epochs=epochs, validation_steps = int(len(x_train) / 32), verbose=1, callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
+        history = model.fit(train_dataset, steps_per_epoch= int(len(x_train) / 32), validation_data= validation_set, epochs=epochs, validation_steps = int(len(x_train) / 32), verbose=1, callbacks=callbacks)
 
     else:
         if visualisation:
@@ -144,7 +245,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
                 plt.close()
         history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
                             epochs=epochs, validation_steps=int(len(x_train) / 32), verbose=1,
-                            callbacks=[reduce_lr, model_checkpoint, bidstest_callback, earlystopper])
+                            callbacks=callbacks)
 
     print(history.history.keys())
 
@@ -178,6 +279,12 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         temp = model.predict(i, verbose=0)
         y_pred.append(temp)
         dice_scores.append(su.dice(i, temp))
+
+    temp = np.concatenate(y_pred, 0)
+    plt.figure()
+    plt.hist(np.unique(temp))
+    plt.title('Histogram of the pixel values from the predicted masks')
+    plt.savefig(os.path.join(save_dir, 'hist.png'))
 
     dice_score = np.median(dice_scores)
     print('median Dice score: ', dice_score)
@@ -241,7 +348,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     else:
         image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
-        img_data = dl.load_img(image_dir, blacklist)
+        img_data = dl.load_img(image_dir, blacklist, test)
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
     if test == True:
@@ -254,10 +361,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
             shutil.rmtree(save_dir)
 
     else:
-        i = 0
-        while os.path.exists(file_name + '{}/'.format(i)):
-            i += 1
-        save_dir = file_name + '{i}/training_results/{loss}_{epochs}_{date}/'.format(i=i,loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        save_dir = file_name + '/training_results/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -324,6 +428,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     """
     Callbacks
     """
+
+
     class bidstest(keras.callbacks.Callback):
         def on_epoch_end(self, epoch, log={}):
             if epoch % 10 == 0:
@@ -335,21 +441,15 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
                     self.model.stop_training = True
 
     bidstest_callback = bidstest()
-    model_checkpoint = ModelCheckpoint(save_dir + '/unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='loss',
-                                       verbose=1, save_best_only=True, period=10)
+
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=5)
-    earlystopper = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+    earlystopper = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 
     Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=True)
 
-
-    if test == True:
-        model = unet.twolayernetwork(input_shape, 3, 0.5)
-    else:
-        model = unet.unet(input_shape)
+    callbacks = [bidstest_callback, reduce_lr, earlystopper]
 
     if loss == 'bincross':
-        print(0)
         loss = 'binary_crossentropy'
 
     elif loss == 'dice':
@@ -366,6 +466,16 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     else:
         print('\n*********\n\nWrong loss function, choose between bincross, dice or dice_bincross\n\n*********\n')
+
+
+    if test == True:
+        model = unet.twolayernetwork(input_shape, 3, 0.5)
+    else:
+        if pretrained:
+            model = keras.models.load_model(pretrained_model_path, custom_objects={'dice_coef_loss': unet.dice_coef_loss})
+        else:
+            model = unet.unet(input_shape)
+
 
     """
     Training
@@ -403,11 +513,13 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
             if not os.path.exists(new_save_dir):
                 os.makedirs(new_save_dir)
-
-            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, reduce_lr, model_checkpoint, bidstest_callback, earlystopper, augmentation= augmentation, visualisation=visualisation)
+            if counter == len(epochss):
+                callbacks = [bidstest_callback, reduce_lr]
+            print(counter, len(epochss))
+            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, augmentation= augmentation, visualisation=visualisation)
             histories.append(temp_history)
 
-        history_epochs = []
+        history_epochs = []     #todo here I should take the model with min val_loss
         for x in histories:
             history_epochs.append(len(x.epoch))
             best_try = history_epochs.index(max(history_epochs))    #best_try is the try with the most epochs

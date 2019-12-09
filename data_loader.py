@@ -27,7 +27,7 @@ def load_bidsdata():
     return paths, filess
 
 
-def load_img_remote(image_dir_remote, blacklist):
+def load_img_remote(image_dir_remote, blacklist, test = False):
     print('*** Loading images ***')
     im_data = []
     for o in os.listdir(image_dir_remote):
@@ -61,9 +61,12 @@ def load_img_remote(image_dir_remote, blacklist):
 
 
         data.append(img)
+
+    if test:
+        data = data[:10]
     return data
 
-def load_img(image_dir, blacklist):
+def load_img(image_dir, blacklist, test = False):
     print('*** Loading images ***')
 
     im_data = []
@@ -81,6 +84,9 @@ def load_img(image_dir, blacklist):
 
     im_data = np.sort(im_data)
     print('*** Loading {} subjects ***'.format(len(im_data)))
+
+    if test == True:
+        im_data = im_data[:10]
 
     data = []
 
@@ -109,6 +115,7 @@ def load_mask(data_dir):
 
     data = []
     im_data = np.sort(im_data)
+
 
     for i in im_data:
         img = nib.load(i)

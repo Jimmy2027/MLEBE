@@ -40,7 +40,7 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
             img_unpreprocessed.append(img_temp)
             mask_unpreprocessed.append(mask_temp)
 
-        fitted_mask = arrange_mask(img_temp, mask_temp, save_dir)
+        fitted_mask = arrange_mask(img_temp, mask_temp, save_dir, visualisation)
 
         # if remove_black_labels_and_columns:
 
@@ -93,7 +93,7 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
     return img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers
 
 
-def arrange_mask(img, mask, save_dir):
+def arrange_mask(img, mask, save_dir, visualisation = False):
 
     new_mask = mask[:,:,:]
 
@@ -106,8 +106,8 @@ def arrange_mask(img, mask, save_dir):
     for i in range(new_mask.shape[0]):
         fixed_mask[i] = scipy.ndimage.morphology.binary_fill_holes(new_mask[i], structure=structure)
 
-
-    save_datavisualisation3(img,new_mask, fixed_mask, save_dir + 'arrange_mask/', index_first= True)
+    if visualisation == True:
+        save_datavisualisation3(img,new_mask, fixed_mask, save_dir + 'visualisation/arrange_mask/', index_first= True)
 
     return fixed_mask
 

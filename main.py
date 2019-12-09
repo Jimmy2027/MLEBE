@@ -22,18 +22,23 @@ if os.path.exists('/usr/share/mouse-brain-atlases/'):
 else: remote = False
 
 file_name = 'no_black'
+i = 0
+while os.path.exists(file_name + '{}/'.format(i)):
+    i += 1
+file_name = '{filename}{i}'.format(filename = file_name, i=i)
+
 test = True
-visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
+visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = False
-losses = ['dice', 'bincross', 'dice_bincross']
+losses = ['dice', 'dice_bincross', 'bincross']
 # losses = ['dice_bincross']
 epochss = [300, 300, 300, 300]
-min_epochs = 15
+min_epochs = 60
 if test == True:
     min_epochs = 0
 
 data_gen_args3 = dict(rotation_range=90,
-                     # brightness_range=[0.5, 1.2],
+                     brightness_range=[0.9, 1.1],
                      width_shift_range=30,
                      height_shift_range=30,
                      shear_range=5,
@@ -43,7 +48,7 @@ data_gen_args3 = dict(rotation_range=90,
                      fill_mode='nearest')
 
 data_gen_args2 = dict(rotation_range=45,
-                     # brightness_range=[0.5, 1.2],
+                     brightness_range=[0.9, 1.1],
                      width_shift_range=15,
                      height_shift_range=15,
                      shear_range=5,
@@ -53,7 +58,7 @@ data_gen_args2 = dict(rotation_range=45,
                      fill_mode='nearest')
 
 data_gen_args1 = dict(rotation_range=0.2,
-                    # brightness_range=[0.9, 1.1], #if training step 1 doesn0t work anymore it's because I added this line
+                    brightness_range=[0.9, 1.1], #if training step 1 doesn0t work anymore it's because I added this line
                     width_shift_range=0.05,
                     height_shift_range=0.05,
                     shear_range=0.05,
@@ -63,6 +68,7 @@ data_gen_args1 = dict(rotation_range=0.2,
                     fill_mode='nearest')
 
 data_gen_args0 = None
+
 
 data_gen_argss = [data_gen_args0, data_gen_args1, data_gen_args2, data_gen_args3]
 max_tries = 3
@@ -80,18 +86,18 @@ if remote == False:
 
 
 pretrained = False
-if pretrained:
-    model_path1 = ''
-    model_path2 = ''
-    model_path3 = ''
-    model_paths = [model_path1, model_path2, model_path3]
-    step = ''
+
+model_path1 = ''
+model_path2 = ''
+model_path3 = ''
+model_paths = [model_path1, model_path2, model_path3]
+step = ''
+
+
 
 
 for i, loss in enumerate(losses):
-    # if pretrained:
-    #     # model = keras.models.load_model(model_paths[i], custom_objects={'dice_coef_loss': unet.dice_coef_loss})
 
-    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation)
+    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i])
 
 
