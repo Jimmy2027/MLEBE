@@ -40,6 +40,8 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
             img_unpreprocessed.append(img_temp)
             mask_unpreprocessed.append(mask_temp)
 
+
+
         fitted_mask = arrange_mask(img_temp, mask_temp, save_dir, visualisation)
 
         # if remove_black_labels_and_columns:
@@ -520,6 +522,72 @@ def save_datavisualisation3(img_data, myocar_labels, predicted_labels, save_fold
             imageio.imwrite(path + '.png', image)
 
         counter = counter + 1
+
+
+def save_datavisualisation(images, save_folder, file_name_header = False, normalized = False, file_names = False):
+    """
+
+    :param images: a list of lists of sliced images, where the slice index is in the first dimension
+    :param save_folder:
+    :param file_name_header:
+    :param normalized:
+    :param file_names:
+    :return:
+    """
+    if normalized == False:
+        for l in range(len(images)):
+            for i in range(len(images[l])):
+                images[l][i] = data_normalization(images[l][i])
+
+
+        # if not type(list) == list:
+        #     temp = list(list)
+        #     img = []
+        #     img.append(temp)
+
+
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+
+
+    for img in range(len(images[0])): #number of images that will be saved at the end
+        counter = 0
+        patches = []
+        for list in range(len(images)):
+            patch = images[list][img][0, :, :] * 255
+            for slice in range(1, images[list][img].shape[0]):
+                temp = images[list][img][slice,:,:] * 255
+                patch = np.hstack((patch, temp))
+
+
+            patches.append(patch)
+
+
+        patch = patches[0]
+        for i in range(1,len(patches)):
+            patch = np.vstack((patch, patches[i]))
+
+        image = np.vstack(patches)
+
+        if file_names == False:
+            i = 0
+            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,)):
+                i += 1
+            imageio.imwrite(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,), image)
+        else:
+            if file_name_header == False:
+                i = 0
+                while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                imageio.imwrite(save_folder + file_names[counter] + '{}.png'.format(i), image)
+            else:
+                i = 0
+                while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                imageio.imwrite(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i), image)
+        counter = counter + 1
+
+
 
 
 

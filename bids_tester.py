@@ -12,7 +12,7 @@ import data_loader as dl
 
 
 
-def bids_tester(save_path, model, remote, shape, epochs, threshold = 0.5, test =True):
+def bids_tester(save_path, model, remote, shape, epochs, test =True):
     """
     Preprocesses the unpreprocessed bidsdata and predicts a mask for it
 
@@ -53,8 +53,6 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0.5, test =
         img_data = utils.preprocess(img_data, shape)
         i = np.expand_dims(img_data, -1)
         temp = model.predict(i, verbose=0)
-        if threshold != 0:
-            temp = np.where(temp > threshold, 1, 0)
         y_pred.append(temp)
         img_datas.append(img_data)
     print('\nMax y_pred: ', np.max(np.concatenate(y_pred)))
@@ -65,8 +63,9 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0.5, test =
     temp = np.concatenate(y_pred, 0)
     plt.figure()
     plt.hist(np.unique(temp))
-    plt.title('Histogram of the pixel values from the predicted masks after thresholding with threshold {}'.format(threshold))
+    plt.title('Histogram of the pixel values from the predicted masks')
     plt.savefig(os.path.join(save_path, 'hist.png'))
+
 
     file_names = []
     for i in range(len(y_pred)):
@@ -82,11 +81,18 @@ def bids_tester(save_path, model, remote, shape, epochs, threshold = 0.5, test =
         img = nib.Nifti1Image(img_temp, x_test_affine)
         nib.save(img, os.path.join(save_path, 'resized_thr{}'.format(threshold) + file_name))
 
-    output = []
-    for i in range(len(data)):
-        output.append(np.squeeze(y_pred[i]))
+    thresholds = [0, 0.5, 0.7, 0.8, 0.9]
+    outputs = []
+    for thr in thresholds:
+        if thr == 0:
+            outputs.append(np.squeeze(y_pred))
+        else:
+            outputs.append(np.where(np.squeeze(y_pred) > thr, 1, 0))
+    list = [img_datas]
+    for o in outputs:
+        list.append(o)
+    utils.save_datavisualisation(list, save_path,file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
 
-    utils.save_datavisualisation2(img_datas, output, save_path, index_first=True, normalized= True, file_names=file_names)
 
     return True
 
