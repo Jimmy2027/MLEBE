@@ -1,13 +1,17 @@
 import numpy as np
 from tensorflow import keras
-import utils
-import unet
 import scoring_utils as su
 import os
 import nibabel as nib
 import data_loader as dl
 import pickle
 from matplotlib import pyplot as plt
+
+import utils
+import unet
+import bids_tester
+
+
 
 remote = False
 loss = 'dice'
@@ -72,6 +76,8 @@ for i in range(len(y_pred)):
     temp = np.moveaxis(y_pred[i], 0, 2)
     img = nib.Nifti1Image(y_pred[i], y_test_affine, y_test_header)
     nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
+
+bids_tester(save_dir, model, remote, shape)
 
 thresholds = [0, 0.5, 0.7, 0.8, 0.9]
 outputs = []

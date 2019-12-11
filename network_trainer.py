@@ -441,8 +441,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     class bidstest(keras.callbacks.Callback):
         def on_epoch_end(self, epoch, log={}):
             if epoch % 10 == 0:
-                if bids_tester.bids_tester(new_save_dir, self.model, remote, shape,
-                                           epoch):  # Test should be True (default) to only predict 5 bids_images instead of all of them
+                if bids_tester.bids_tester(new_save_dir, self.model, remote, shape, epoch):  # Test should be True (default) to only predict 5 bids_images instead of all of them
                     print('No faulty predictions!')
                     return
                 else:  # if predictions are zero, training stops

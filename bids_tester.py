@@ -12,7 +12,7 @@ import data_loader as dl
 
 
 
-def bids_tester(save_path, model, remote, shape, epochs, test =True):
+def bids_tester(save_path, model, remote, shape, epochs = 0, test =True, threshold = 0.5):
     """
     Preprocesses the unpreprocessed bidsdata and predicts a mask for it
 
@@ -21,7 +21,7 @@ def bids_tester(save_path, model, remote, shape, epochs, test =True):
     :param remote:
     :param shape:
     :param epochs:
-    :param threshold: Threshold of the mask
+    :param threshold: Threshold of the mask (only used for the nib images)
     :param test:
     :return: True if predictions are greater than 0, else False
     """
@@ -43,6 +43,7 @@ def bids_tester(save_path, model, remote, shape, epochs, test =True):
             data.append(img)
 
     y_pred = []
+    y_pred_thr = []
     img_datas = []
 
     if test:
@@ -53,7 +54,10 @@ def bids_tester(save_path, model, remote, shape, epochs, test =True):
         img_data = utils.preprocess(img_data, shape)
         i = np.expand_dims(img_data, -1)
         temp = model.predict(i, verbose=0)
+        if threshold != 0:
+            temp_thr = np.where(temp > threshold, 1, 0)
         y_pred.append(temp)
+        y_pred_thr.appemd(temp_thr)
         img_datas.append(img_data)
     print('\nMax y_pred: ', np.max(np.concatenate(y_pred)))
     if np.max(np.concatenate(y_pred)) == 0:
@@ -73,7 +77,7 @@ def bids_tester(save_path, model, remote, shape, epochs, test =True):
         x_test_header = data[i].header
         file_name = os.path.basename(data[i].file_map['image'].filename)
         file_names.append(file_name)
-        mask_temp = np.moveaxis(y_pred[i], 0, 2)
+        mask_temp = np.moveaxis(y_pred_thr[i], 0, 2)
         img_temp = np.moveaxis(img_datas[i], 0, 2)
         # img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
         mask = nib.Nifti1Image(mask_temp, x_test_affine)
