@@ -57,7 +57,7 @@ def bids_tester(save_path, model, remote, shape, epochs = 0, test =True, thresho
         if threshold != 0:
             temp_thr = np.where(temp > threshold, 1, 0)
         y_pred.append(temp)
-        y_pred_thr.appemd(temp_thr)
+        y_pred_thr.append(temp_thr)
         img_datas.append(img_data)
     print('\nMax y_pred: ', np.max(np.concatenate(y_pred)))
     if np.max(np.concatenate(y_pred)) == 0:
@@ -89,12 +89,13 @@ def bids_tester(save_path, model, remote, shape, epochs = 0, test =True, thresho
     outputs = []
     for thr in thresholds:
         if thr == 0:
-            outputs.append(np.squeeze(y_pred))
+            outputs.append([np.squeeze(img) for img in y_pred])
         else:
-            outputs.append(np.where(np.squeeze(y_pred) > thr, 1, 0))
+            outputs.append([np.where(np.squeeze(img) > thr, 1, 0) for img in y_pred])
     list = [img_datas]
     for o in outputs:
         list.append(o)
+
     utils.save_datavisualisation(list, save_path,file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
 
 

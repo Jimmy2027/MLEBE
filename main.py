@@ -28,7 +28,7 @@ while os.path.exists(file_name + '{}/'.format(i)):
 file_name = '{filename}{i}'.format(filename = file_name, i=i)
 
 test = True
-visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
+visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = False
 losses = ['dice', 'dice_bincross', 'bincross']
 # losses = ['dice_bincross']

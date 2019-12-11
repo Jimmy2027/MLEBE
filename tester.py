@@ -12,7 +12,7 @@ import unet
 import bids_tester
 
 
-
+test = True
 remote = False
 loss = 'dice'
 
@@ -50,6 +50,11 @@ y_test, y_test_affines, y_test_headers = y_test_struct['y_test'], y_test_struct[
 
 # y_pred = np.load(path +'/y_pred.npy', allow_pickle= True)
 
+if test == True:
+    x_test = x_test[:10]
+    y_test = y_test[:10]
+
+
 y_pred = []
 dice_scores = []
 
@@ -65,6 +70,18 @@ plt.hist(np.unique(temp))
 plt.title('Histogram of the pixel values from the predicted masks')
 plt.savefig(os.path.join(save_dir, 'hist.png'))
 
+thresholds = [0, 0.5, 0.7, 0.8, 0.9]
+outputs = []
+for thr in thresholds:
+    if thr == 0:
+        outputs.append([np.squeeze(img) for img in y_pred])
+    else:
+        outputs.append([np.where(np.squeeze(img) > thr, 1, 0) for img in y_pred])
+list = [x_test, y_test]
+for o in outputs:
+    list.append(o)
+utils.save_datavisualisation(list, save_dir, file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
+
 dice_score = np.median(dice_scores)
 print('median Dice score: ', dice_score)
 file_namess = []
@@ -77,18 +94,9 @@ for i in range(len(y_pred)):
     img = nib.Nifti1Image(y_pred[i], y_test_affine, y_test_header)
     nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
 
-bids_tester(save_dir, model, remote, shape)
 
-thresholds = [0, 0.5, 0.7, 0.8, 0.9]
-outputs = []
-for thr in thresholds:
-    if thr == 0:
-        outputs.append(np.squeeze(y_pred))
-    else:
-        outputs.append(np.where(np.squeeze(y_pred) > thr, 1, 0))
-list = [x_test, y_test]
-for o in outputs:
-    list.append(o)
-utils.save_datavisualisation(list, save_dir, file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
+
 
 np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
+
+bids_tester.bids_tester(save_dir, model, remote, shape)
