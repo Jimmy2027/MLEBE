@@ -309,9 +309,9 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     outputs = []
     for thr in thresholds:
         if thr == 0:
-            outputs.append(np.squeeze(y_pred))
+            outputs.append([np.squeeze(img) for img in y_pred])
         else:
-            outputs.append(np.where(np.squeeze(y_pred) > thr, 1, 0))
+            outputs.append([np.where(np.squeeze(img) > thr, 1, 0) for img in y_pred])
     list = [x_test, y_test]
     for o in outputs:
         list.append(o)
@@ -480,8 +480,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     else:
         if pretrained:
             model = keras.models.load_model(pretrained_model_path, custom_objects={'dice_coef_loss': unet.dice_coef_loss})
-            data_gen_argss = data_gen_argss[pretrained_step:]
-            epochss = data_gen_argss[pretrained_step :]
+            data_gen_argss = data_gen_argss[pretrained_step-1:]
+            epochss = data_gen_argss[pretrained_step -1:]
         else:
             model = unet.unet(input_shape)
 

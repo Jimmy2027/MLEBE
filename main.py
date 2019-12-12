@@ -85,7 +85,7 @@ if remote == False:
 
 
 
-pretrained = True
+pretrained = False
 
 model_path1 = '/Users/Hendrik/Desktop/new_hope0/training_results/dice_1200_2019-12-09/1_Step/unet_ep70_val_loss0.01.hdf5'
 model_path2 = ''
