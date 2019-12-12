@@ -21,7 +21,7 @@ if os.path.exists('/usr/share/mouse-brain-atlases/'):
     remote = True
 else: remote = False
 
-file_name = 'no_black'
+file_name = 'new_new_hope'
 i = 0
 while os.path.exists(file_name + '{}/'.format(i)):
     i += 1
@@ -38,7 +38,7 @@ if test == True:
     min_epochs = 0
 
 data_gen_args3 = dict(rotation_range=90,
-                     brightness_range=[0.9, 1.1],
+                     # brightness_range=[0.9, 1.1],
                      width_shift_range=30,
                      height_shift_range=30,
                      shear_range=5,
@@ -48,7 +48,7 @@ data_gen_args3 = dict(rotation_range=90,
                      fill_mode='nearest')
 
 data_gen_args2 = dict(rotation_range=45,
-                     brightness_range=[0.9, 1.1],
+                     # brightness_range=[0.9, 1.1],
                      width_shift_range=15,
                      height_shift_range=15,
                      shear_range=5,
@@ -58,7 +58,7 @@ data_gen_args2 = dict(rotation_range=45,
                      fill_mode='nearest')
 
 data_gen_args1 = dict(rotation_range=0.2,
-                    brightness_range=[0.9, 1.1], #if training step 1 doesn0t work anymore it's because I added this line
+                    # brightness_range=[0.9, 1.1], #if training step 1 doesn0t work anymore it's because I added this line
                     width_shift_range=0.05,
                     height_shift_range=0.05,
                     shear_range=0.05,
@@ -85,19 +85,24 @@ if remote == False:
 
 
 
-pretrained = False
+pretrained = True
 
-model_path1 = ''
+model_path1 = '/Users/Hendrik/Desktop/new_hope0/training_results/dice_1200_2019-12-09/1_Step/unet_ep70_val_loss0.01.hdf5'
 model_path2 = ''
 model_path3 = ''
-model_paths = [model_path1, model_path2, model_path3]
-step = ''
+model_paths = [model_path1]
+pretrained_loss = 'dice'
+pretrained_step = 1
+
 
 
 
 
 for i, loss in enumerate(losses):
+    if loss == pretrained_loss:
+        pretrained = True
+    else: pretrained = False
 
-    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i])
+    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step)
 
 

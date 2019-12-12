@@ -330,7 +330,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     return False, history
 
-def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,visualisation = False, pretrained = False, pretrained_model_path = None):
+def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = None):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -480,6 +480,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     else:
         if pretrained:
             model = keras.models.load_model(pretrained_model_path, custom_objects={'dice_coef_loss': unet.dice_coef_loss})
+            data_gen_argss = data_gen_argss[pretrained_step:]
+            epochss = data_gen_argss[pretrained_step :]
         else:
             model = unet.unet(input_shape)
 
@@ -488,8 +490,10 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     Training
 
     """
+    if pretrained:
+        counter = pretrained_step + 1
+    else: counter = 1
 
-    counter = 1
 
     for data_gen_args, epochs in zip(data_gen_argss, epochss):
 
@@ -498,7 +502,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
         else: augmentation = True
 
         nmbr_tries = 0
-        if counter > 1:
+        if counter > 1 and pretrained == False:
             print('\n\n\n\n********* \nTraining with higher augmentation values! Taking model from try {} \n*********\n\n\n\n'.format(best_try + 1))
             model = history.model
 
