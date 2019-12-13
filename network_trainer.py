@@ -160,6 +160,8 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         "This experiment was run on {date_time} \n\n".format(date_time=datetime.datetime.now()))
     if augmentation == True:
         experiment_description.write('Augmentation values: ' + str(data_gen_args.items()) + '\n\n')
+
+    experiment_description.write('Callbacks: {callback}'.format(callback=str(callbacks)) + '\n\n')
     experiment_description.write('Seed: {seed}'.format(seed=seed) + '\n\n')
     experiment_description.write('Shape: {shape}'.format(shape=shape) + '\n\n')
 
@@ -282,9 +284,11 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     temp = np.concatenate(y_pred, 0)
     plt.figure()
-    plt.hist(np.unique(temp))
+    plt.hist(np.squeeze(temp).flatten(), bins='auto')
+    plt.yscale('log')
     plt.title('Histogram of the pixel values from the predicted masks')
     plt.savefig(os.path.join(save_dir, 'hist.png'))
+    plt.close()
 
     dice_score = np.median(dice_scores)
     print('median Dice score: ', dice_score)
@@ -330,7 +334,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     return False, history
 
-def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = None):
+def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = 0, pretrained_seed = None):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -347,7 +351,10 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     :param visualisation: Bool: if True, all images after preprocessing are saved
     :return: Bool: True if min_epochs is not reached, False otherwise
     """
-    seed = random.randint(0, 1000)
+    if pretrained:
+        seed = pretrained_seed
+    else: seed = random.randint(0, 1000)
+
     print('Training with seed: ', seed)
     if remote == True:
         image_dir_remote = '/mnt/scratch/'
@@ -361,7 +368,6 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     if test == True:
         epochss = np.ones(len(data_gen_argss), dtype=int)
-        #min_epochs = 0
         save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(
             loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
         import shutil
@@ -388,11 +394,11 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     if test == True:
         x_train1_data, x_test_data, y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data,
                                                                                                   random_state=seed,
-                                                                                                  test_size=0.9)
+                                                                                                  test_size=0.9, shuffle = True)
     else:
         x_train1_data, x_test_data, y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data,
                                                                                                   random_state=seed,
-                                                                                                  test_size=0.1)
+                                                                                                  test_size=0.1, shuffle = True)
 
     print('*** Preprocessing ***')
     x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)[:2]
@@ -425,7 +431,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     y_train1 = np.concatenate(y_train1, axis=0)
     x_train1 = np.expand_dims(x_train1, -1)
     y_train1 = np.expand_dims(y_train1, -1)
-    x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25)
+    x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25, shuffle= True, random_state= seed)
 
 
     print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
@@ -476,12 +482,22 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
 
     if test == True:
-        model = unet.twolayernetwork(input_shape, 3, 0.5)
+        if pretrained:
+            model = keras.models.load_model(pretrained_model_path, custom_objects={'dice_coef_loss': unet.dice_coef_loss})
+            data_gen_argss = data_gen_argss[pretrained_step:]
+            epochss = epochss[pretrained_step:]
+            print(len(data_gen_argss))
+            print(epochss)
+        else:
+            model = unet.twolayernetwork(input_shape, 3, 0.5)
+
     else:
         if pretrained:
             model = keras.models.load_model(pretrained_model_path, custom_objects={'dice_coef_loss': unet.dice_coef_loss})
-            data_gen_argss = data_gen_argss[pretrained_step-1:]
-            epochss = data_gen_argss[pretrained_step -1:]
+            data_gen_argss = data_gen_argss[pretrained_step:]
+            epochss = data_gen_argss[pretrained_step:]
+            print(len(data_gen_argss))
+            print(epochss)
         else:
             model = unet.unet(input_shape)
 
@@ -524,13 +540,13 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
             if not os.path.exists(new_save_dir):
                 os.makedirs(new_save_dir)
-            if counter == len(epochss):
+            if data_gen_args == data_gen_argss[-1]:           #todo to verify if this works
                 callbacks = [bidstest_callback, reduce_lr]
-            print('Step',counter,'of', len(epochss))
+            print('Step',counter,'of', len(epochss) + pretrained_step)
             early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, augmentation= augmentation, visualisation=visualisation)
             histories.append(temp_history)
 
-        history_epochs = []     #todo here I should take the model with min val_loss
+        history_epochs = []
         for x in histories:
             history_epochs.append(len(x.epoch))
             best_try = history_epochs.index(max(history_epochs))    #best_try is the try with the most epochs

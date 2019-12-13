@@ -8,6 +8,11 @@ from tensorflow.keras import backend as keras
 import tensorflow.keras.backend as K
 
 """taken from https://github.com/zhixuhao/unet"""
+#todo try different dimensions
+#todo try to correct for training image imbalance (increase the number of fisrt slices)
+#todo try spatial dropout
+#todo try transposed convolution instead of upsampling
+
 
 def unet(input_size, pretrained_weights=None):
     print('\n*********\n\nTraining with unet\n\n*********\n')

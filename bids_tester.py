@@ -66,9 +66,11 @@ def bids_tester(save_path, model, remote, shape, epochs = 0, test =True, thresho
 
     temp = np.concatenate(y_pred, 0)
     plt.figure()
-    plt.hist(np.unique(temp))
+    plt.hist(np.squeeze(temp).flatten(), bins='auto')
+    plt.yscale('log')
     plt.title('Histogram of the pixel values from the predicted masks')
     plt.savefig(os.path.join(save_path, 'hist.png'))
+    plt.close()
 
 
     file_names = []

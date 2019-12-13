@@ -30,9 +30,9 @@ file_name = '{filename}{i}'.format(filename = file_name, i=i)
 test = True
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = False
-losses = ['dice', 'dice_bincross', 'bincross']
-# losses = ['dice_bincross']
-epochss = [300, 300, 300, 300]
+# losses = ['dice_bincross', 'dice', 'bincross']
+losses = ['dice']
+epochss = [300, 300, 300, 600]
 min_epochs = 60
 if test == True:
     min_epochs = 0
@@ -74,11 +74,14 @@ data_gen_argss = [data_gen_args0, data_gen_args1, data_gen_args2, data_gen_args3
 max_tries = 3
 if test == True:
     max_tries = 0
-shape = (128, 128)
+    # data_gen_argss = data_gen_argss[:1]
+    #     #     # epochss = epochss[:1]
+shape = (64, 64)
 if test == True:
-    shape = (128, 128)
+    shape = (64, 64)
 
 if remote == True:
+
     blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
 if remote == False:
     blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
@@ -86,23 +89,29 @@ if remote == False:
 
 
 pretrained = False
+if remote == False:
+    model_path1 = '/Users/Hendrik/Documents/mlebe_data/models/unet_ep300_val_loss0.10.hdf5'
+else:
+    model_path1 = '/Users/Hendrik/Desktop/new_hope0/training_results/dice_1200_2019-12-09/1_Step/unet_ep70_val_loss0.01.hdf5'
 
-model_path1 = '/Users/Hendrik/Desktop/new_hope0/training_results/dice_1200_2019-12-09/1_Step/unet_ep70_val_loss0.01.hdf5'
+
 model_path2 = ''
 model_path3 = ''
-model_paths = [model_path1]
-pretrained_loss = 'dice'
+model_paths = [model_path1, '', ''] #needs to have the same lenght than epochss
+pretrained_loss = ['dice', '', '']  #needs to have the same lenght than epochss
 pretrained_step = 1
+pretrained_seed = ''
 
 
 
 
 
 for i, loss in enumerate(losses):
-    if loss == pretrained_loss:
-        pretrained = True
-    else: pretrained = False
+    if pretrained:
+        if loss == pretrained_loss[i]:
+            pretrained = True
+        else: pretrained = False
 
-    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step)
+    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step, pretrained_seed = pretrained_seed)
 
 

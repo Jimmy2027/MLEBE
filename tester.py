@@ -66,9 +66,15 @@ for i in x_test:
 
 temp = np.concatenate(y_pred, 0)
 plt.figure()
-plt.hist(np.unique(temp))
+plt.hist(np.squeeze(temp).flatten(), bins = 'auto')
+plt.yscale('log')
 plt.title('Histogram of the pixel values from the predicted masks')
 plt.savefig(os.path.join(save_dir, 'hist.png'))
+plt.close()
+
+# _ = plt.hist(np.squeeze(temp).flatten(), bins='auto')
+# plt.savefig(os.path.join(save_dir, 'hist.png'))
+
 
 thresholds = [0, 0.5, 0.7, 0.8, 0.9]
 outputs = []
