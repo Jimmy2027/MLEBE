@@ -12,7 +12,7 @@ import data_loader as dl
 
 
 
-def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =True, threshold = 0.5):
+def func_tester(remote, slice_view, test, model, shape):
     """
     Preprocesses the unpreprocessed bidsdata and predicts a mask for it
 
@@ -25,50 +25,66 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
     :param test:
     :return: True if predictions are greater than 0, else False
     """
-    if remote == 'local':
-        path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
-    elif remote == 'höngg':
-        path = '/home/hendrik/src/mlebe/resampled/'
-        if not os.path.exists(path):
-            utils.resample_bidsdata(path)
-    elif remote == 'leonhard':
-        path = '/cluster/scratch/klugh/resampled/'
-        if not os.path.exists(path):
-            utils.resample_bidsdata(path)
 
-    save_path = save_path + '/bids_ep{epoch}/'.format(epoch = epochs)
+    if remote == 'höngg':
+        image_dir_remote = '/mnt/scratch/'
+        data_dir = '/usr/share/mouse-brain-atlases/'
+        img_datas = dl.load_func_img(image_dir_remote, test)
+    elif remote == 'leonhard':
+        image_dir_remote = '/cluster/scratch/klugh/preprocessed'
+        data_dir = '/cluster/scratch/klugh/mouse-brain-atlases/'
+        img_datas = dl.load_func_img(image_dir_remote, test)
+
+    else:
+        image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
+        img_datas = dl.load_func_img(image_dir, test)
+
+        data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
+
+    data = []
+    img_data = []
+    for i in img_datas:
+        temp = i.get_data()
+        data.append(temp)
+        if slice_view == 'coronal':
+            img_temp = np.empty((temp.shape[1], shape[0],shape[1], temp.shape[-1]))
+        elif slice_view == 'sagittal':
+            img_temp = np.empty((temp.shape[0], shape[0], shape[1], temp.shape[-1]))
+        elif slice_view == 'axial':
+            img_temp = np.empty((temp.shape[2], shape[0], shape[1], temp.shape[-1]))
+        for frame in range(img_temp.shape[-1]):
+            img_temp[...,frame] = utils.preprocess(temp[...,frame], shape, slice_view)
+
+        img_data.append(img_temp)
+
+
+    save_path = 'func_tester/'
+
 
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
-    data = []  # list of Nifti1Images
-    for o in os.listdir(path):
-        if not o.startswith('.'):
-            img = nib.load(os.path.join(path, o))
-            data.append(img)
 
     y_pred = []
     y_pred_thr = []
     img_datas = []
 
-    if test:
-        data = data[:5]
+    threshold = 0
 
-    for i in data:
-        img_data = i.get_data()
-        img_data = utils.preprocess(img_data, shape, slice_view=slice_view)
-        i = np.expand_dims(img_data, -1)
-        temp = model.predict(i, verbose=0)
-        if threshold != 0:
-            temp_thr = np.where(temp > threshold, 1, 0)
-        y_pred.append(temp)
-        y_pred_thr.append(temp_thr)
-        img_datas.append(img_data)
-    print('\nMax y_pred: ', np.max(np.concatenate(y_pred)))
-    if np.max(np.concatenate(y_pred)) == 0:
-        print('Predictions are zero! Max y_pred: ', np.max(np.concatenate(y_pred)))
-        return False
 
+    for j in img_data:
+        placeholder = np.empty((j.shape))
+        for i in range(j.shape[-1]):
+
+            temp = model.predict(j[...,i], verbose=0)
+            temp = np.expand_dims(temp, -1)
+            if threshold != 0:
+                temp_thr = np.where(temp > threshold, 1, 0)
+            placeholder[...,i] = temp
+        y_pred.append(placeholder)
+
+
+    something = 0
     temp = np.concatenate(y_pred, 0)
     plt.figure()
     plt.hist(np.squeeze(temp).flatten(), bins='auto')
@@ -122,34 +138,33 @@ if __name__ == '__main__':
     # resample_save_path = '/var/tmp/resampled/'
     # utils.resample_bidsdata(resample_save_path)
 
+
+
     remote = False
     test = True
-    loss = 'bincross'
-    shape = (128, 128)
+    slice_view = 'coronal'
+    loss = 'dice_bincross'
+    shape = (64, 64)
     threshold = 0
 
     if remote == False:
         path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
-        model_path = '/Users/Hendrik/Documents/Semester_project/results/unet_ep01_val_loss5.48.hdf5'
+        model_path = '/Users/Hendrik/Documents/mlebe_data/models/dice_bincross/unet_ep01_val_loss1.55.hdf5'
         save_path = '/Users/Hendrik/Documents/mlebe_data/temp_bids/'
     else:
         path = '/var/tmp/resampled/'
         model_path = '/home/hendrik/src/mlebe/results/training_results/Dice_50/unet_ep05_val_loss0.04.hdf5'
         save_path = '/home/hendrik/src/mlebe/results/bids_predictions_thr{}/'.format(threshold)
 
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    data = []  # list of Nifti1Images
-    for o in os.listdir(path):
-        if not o.startswith('.'):
-            img = nib.load(os.path.join(path, o))
-            data.append(img)
-
     if loss == 'dice':
         model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': unet.dice_coef_loss})
     elif loss == 'bincross':
         model = keras.models.load_model(model_path)
+    elif loss == 'dice_bincross':
+        model = keras.models.load_model(model_path, custom_objects={'dice_bincross_loss': unet.dice_bincross_loss})
     else:
         print('wrong loss function defined')
+
+    func_tester(remote, slice_view, test, model, shape)
 
 

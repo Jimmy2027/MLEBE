@@ -334,7 +334,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     return False, history
 
-def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,slice_view,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = 0, pretrained_seed = None):
+def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, data_type, remove_black_labels_and_columns,slice_view,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = 0, pretrained_seed = None):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -359,15 +359,25 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     if remote == 'höngg':
         image_dir_remote = '/mnt/scratch/'
         data_dir = '/usr/share/mouse-brain-atlases/'
-        img_data = dl.load_img_remote(image_dir_remote, blacklist)
+        if data_type == 'anat':
+            img_data = dl.load_img_remote(image_dir_remote, blacklist)
+        elif data_type == 'func':
+            img_data = dl.load_func_img(image_dir_remote, blacklist)
     elif remote == 'leonhard':
-        image_dir_remote = '/cluster/scratch/preprocessed'
-        data_dir = '/cluster/scratch/mouse-brain-atlases/'
-        img_data = dl.load_img_remote(image_dir_remote, blacklist)
+        image_dir_remote = '/cluster/scratch/klugh/preprocessed'
+        data_dir = '/cluster/scratch/klugh/mouse-brain-atlases/'
+        if data_type == 'anat':
+            img_data = dl.load_img_remote(image_dir_remote, blacklist)
+        elif data_type == 'func':
+            img_data = dl.load_func_img(image_dir_remote, blacklist)
 
     else:
         image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
-        img_data = dl.load_img(image_dir, blacklist, test)
+        if data_type == 'anat':
+            img_data = dl.load_img(image_dir, blacklist, test)
+        elif data_type == 'func':
+            img_data = dl.load_func_img(image_dir, blacklist)
+
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
     if test == True:
@@ -380,6 +390,9 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     else:
         save_dir = file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        if remote == 'leonhard':
+            save_dir = '/cluster/scratch/klugh/'+file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss, epochs=np.sum(epochss),
+                                                                     date=datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

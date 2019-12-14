@@ -136,7 +136,40 @@ def load_mask(data_dir):
     return data
 
 
+def load_func_img(image_dir_remote,test = False):
+    print('*** Loading images ***')
+    im_data = []
+    for o in os.listdir(image_dir_remote):
+        if o != 'irsabi' and not o.startswith('.'):
+            for x in os.listdir(os.path.join(image_dir_remote, o)):
+                if x.endswith('preprocessing'):
+                    for root, dirs, files in os.walk(os.path.join(image_dir_remote, o, x)):
+                            if root.endswith('func'):
+                                for file in files:
+                                    if file.endswith(".nii.gz"):
+                                        im_data.append(os.path.join(root, file))
 
+
+
+    im_data = np.sort(im_data)
+    print('*** Loading {} subjects ***'.format(len(im_data)))
+
+    if test == True:
+        im_data = im_data[:1]
+
+    data = []
+    for i in im_data:
+        img = nib.load(i)
+        # img_data = img.get_data()
+        # temp = np.moveaxis(img_data,2,0)
+        # img_data = pad_img(temp, shape)
+        # img_data = data_normalization(img_data)
+
+
+        data.append(img)
+
+
+    return data
 
 
 if __name__ == '__main__':

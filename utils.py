@@ -9,6 +9,7 @@ import data_loader as dl
 import scipy
 
 
+
 def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_columns, slice_view, visualisation = False):
     if visualisation == True:
         img_unpreprocessed = []
@@ -36,7 +37,7 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
         if slice_view == 'coronal':
             img_temp = np.moveaxis(img_temp, 1, 0)
             mask_temp = np.moveaxis(mask_temp, 1, 0)
-        elif slice_view == 'transverse':
+        elif slice_view == 'axial':
             img_temp = np.moveaxis(img_temp, 2, 0)
             mask_temp = np.moveaxis(mask_temp, 2, 0)
 
@@ -257,7 +258,7 @@ def preprocess(img, shape,slice_view, save_dir = None, visualisation = False, sw
     if switched_axis == False:
         if slice_view == 'coronal':
             img = np.moveaxis(img, 1, 0)
-        elif slice_view == 'transverse':
+        elif slice_view == 'axial':
             img = np.moveaxis(img, 2, 0)
 
     img_data = pad_img(img, shape, save_dir ,visualisation)
