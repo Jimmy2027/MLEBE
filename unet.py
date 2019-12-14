@@ -12,6 +12,7 @@ import tensorflow.keras.backend as K
 #todo try to correct for training image imbalance (increase the number of fisrt slices)
 #todo try spatial dropout
 #todo try transposed convolution instead of upsampling
+#todo train model on functional data
 
 
 def unet(input_size, pretrained_weights=None):

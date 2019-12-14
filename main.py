@@ -28,8 +28,11 @@ while os.path.exists(file_name + '{}/'.format(i)):
 file_name = '{filename}{i}'.format(filename = file_name, i=i)
 
 test = True
-visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
+visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = False
+slice_view = 'coronal'
+shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), transverse: (63,96)
+
 # losses = ['dice_bincross', 'dice', 'bincross']
 losses = ['dice']
 epochss = [300, 300, 300, 600]
@@ -76,9 +79,9 @@ if test == True:
     max_tries = 0
     # data_gen_argss = data_gen_argss[:1]
     #     #     # epochss = epochss[:1]
-shape = (64, 64)
-if test == True:
-    shape = (64, 64)
+
+# if test == True:
+#     shape = (64, 64)
 
 if remote == True:
 
@@ -112,6 +115,6 @@ for i, loss in enumerate(losses):
             pretrained = True
         else: pretrained = False
 
-    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step, pretrained_seed = pretrained_seed)
+    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, slice_view = slice_view, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step, pretrained_seed = pretrained_seed)
 
 

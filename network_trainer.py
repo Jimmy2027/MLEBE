@@ -26,7 +26,7 @@ import warnings
 #todo write README
 #todo write scratches with useful functions
 
-def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, augmentation = True, visualisation = False):
+def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False):
     """
     Trains the model
 
@@ -303,7 +303,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
             y_true_temp = nib.Nifti1Image(y_true_temp, x_test_affine, x_test_header)
             nib.save(y_true_temp, os.path.join(save_dir, 'y_true_' + file_name))
         mask_temp = np.moveaxis(y_pred[i], 0, 2)
-        img_temp = np.moveaxis(x_test[i], 0 , 2)
+        img_temp = np.moveaxis(x_test[i], 0, 2)
         img = nib.Nifti1Image(img_temp, x_test_affine, x_test_header)
         nib.save(img, os.path.join(save_dir, 'img_' + file_name))
         mask = nib.Nifti1Image(mask_temp, x_test_affine, x_test_header)
@@ -323,7 +323,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
 
 
-    bids_tester.bids_tester(save_dir, model, remote, shape, epochs)
+    bids_tester.bids_tester(save_dir, model, remote, shape, slice_view, epochs)
 
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
@@ -334,7 +334,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     return False, history
 
-def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = 0, pretrained_seed = None):
+def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, remove_black_labels_and_columns,slice_view,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = 0, pretrained_seed = None):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -401,8 +401,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
                                                                                                   test_size=0.1, shuffle = True)
 
     print('*** Preprocessing ***')
-    x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)[:2]
-    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)
+    x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)[:2]
+    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)
 
     print('*** Saving Test data ***')
     x_test_struct = {
@@ -447,7 +447,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     class bidstest(keras.callbacks.Callback):
         def on_epoch_end(self, epoch, log={}):
             if epoch % 10 == 0:
-                if bids_tester.bids_tester(new_save_dir, self.model, remote, shape, epoch):  # Test should be True (default) to only predict 5 bids_images instead of all of them
+                if bids_tester.bids_tester(new_save_dir, self.model, remote, shape, slice_view = slice_view, epochs= epoch):  # Test should be True (default) to only predict 5 bids_images instead of all of them
                     print('No faulty predictions!')
                     return
                 else:  # if predictions are zero, training stops
@@ -543,7 +543,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
             if data_gen_args == data_gen_argss[-1]:           #todo to verify if this works
                 callbacks = [bidstest_callback, reduce_lr]
             print('Step',counter,'of', len(epochss) + pretrained_step)
-            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, augmentation= augmentation, visualisation=visualisation)
+            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view = slice_view, augmentation= augmentation, visualisation=visualisation)
             histories.append(temp_history)
 
         history_epochs = []

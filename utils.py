@@ -9,7 +9,7 @@ import data_loader as dl
 import scipy
 
 
-def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_columns, visualisation = False):
+def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_columns, slice_view, visualisation = False):
     if visualisation == True:
         img_unpreprocessed = []
         mask_unpreprocessed = []
@@ -33,8 +33,12 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
         img_temp = img[:,:,:]
         mask = m.get_data()
         mask_temp = mask[:, :, :]
-        img_temp = np.moveaxis(img_temp, 2, 0)
-        mask_temp = np.moveaxis(mask_temp, 2, 0)
+        if slice_view == 'coronal':
+            img_temp = np.moveaxis(img_temp, 1, 0)
+            mask_temp = np.moveaxis(mask_temp, 1, 0)
+        elif slice_view == 'transverse':
+            img_temp = np.moveaxis(img_temp, 2, 0)
+            mask_temp = np.moveaxis(mask_temp, 2, 0)
 
         if visualisation == True:
             img_unpreprocessed.append(img_temp)
@@ -44,9 +48,8 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
 
         fitted_mask = arrange_mask(img_temp, mask_temp, save_dir, visualisation)
 
-        # if remove_black_labels_and_columns:
 
-            # img_temp, mask_temp = remove_black_images(img_temp, mask_temp, save_dir, visualisation= visualisation)
+        img_temp, fitted_mask = remove_black_images(img_temp, fitted_mask, save_dir, visualisation= visualisation)
             # if img_temp is None:
             #     continue
             # img_temp, id1, id2 = remove_black_columns(img_temp, save_dir, visualisation)
@@ -243,7 +246,7 @@ def get_data(data, shape, save_dir,  visualisation = False, verbose = False):
 
     return img_data, affines, headers, file_names
 
-def preprocess(img, shape, save_dir = None, visualisation = False, switched_axis = False):
+def preprocess(img, shape,slice_view, save_dir = None, visualisation = False, switched_axis = False):
     """
     - moves axis such that (x,y,z) becomes (z,x,y)
     - transforms the image such that shape is (z,shape). If one dimension is bigger than shape -> downscale, if one dimension is smaller -> zero-pad
@@ -252,7 +255,10 @@ def preprocess(img, shape, save_dir = None, visualisation = False, switched_axis
     :return: img with shape (z,shape)
     """
     if switched_axis == False:
-        img = np.moveaxis(img, 2, 0)
+        if slice_view == 'coronal':
+            img = np.moveaxis(img, 1, 0)
+        elif slice_view == 'transverse':
+            img = np.moveaxis(img, 2, 0)
 
     img_data = pad_img(img, shape, save_dir ,visualisation)
     img_data = data_normalization(img_data)

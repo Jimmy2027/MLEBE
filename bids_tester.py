@@ -12,7 +12,7 @@ import data_loader as dl
 
 
 
-def bids_tester(save_path, model, remote, shape, epochs = 0, test =True, threshold = 0.5):
+def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =True, threshold = 0.5):
     """
     Preprocesses the unpreprocessed bidsdata and predicts a mask for it
 
@@ -51,7 +51,7 @@ def bids_tester(save_path, model, remote, shape, epochs = 0, test =True, thresho
 
     for i in data:
         img_data = i.get_data()
-        img_data = utils.preprocess(img_data, shape)
+        img_data = utils.preprocess(img_data, shape, slice_view=slice_view)
         i = np.expand_dims(img_data, -1)
         temp = model.predict(i, verbose=0)
         if threshold != 0:
@@ -79,8 +79,16 @@ def bids_tester(save_path, model, remote, shape, epochs = 0, test =True, thresho
         x_test_header = data[i].header
         file_name = os.path.basename(data[i].file_map['image'].filename)
         file_names.append(file_name)
-        mask_temp = np.moveaxis(y_pred_thr[i], 0, 2)
-        img_temp = np.moveaxis(img_datas[i], 0, 2)
+        if slice_view == 'coronal':
+            img_temp = np.moveaxis(img_datas[i], 1, 0)
+            mask_temp = np.moveaxis(y_pred_thr[i], 1, 0)
+        elif slice_view == 'transverse':
+            mask_temp = np.moveaxis(y_pred_thr[i], 0, 2)
+            img_temp = np.moveaxis(img_datas[i], 0, 2)
+        else:
+            mask_temp = y_pred_thr[i]
+            img_temp = img_datas[i]
+
         # img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
         mask = nib.Nifti1Image(mask_temp, x_test_affine)
         nib.save(mask, os.path.join(save_path, 'mask_thr{}_'.format(threshold) + file_name))
