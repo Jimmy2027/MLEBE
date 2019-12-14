@@ -356,9 +356,13 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     else: seed = random.randint(0, 1000)
 
     print('Training with seed: ', seed)
-    if remote == True:
+    if remote == 'höngg':
         image_dir_remote = '/mnt/scratch/'
         data_dir = '/usr/share/mouse-brain-atlases/'
+        img_data = dl.load_img_remote(image_dir_remote, blacklist)
+    elif remote == 'leonhard':
+        image_dir_remote = '/cluster/scratch/preprocessed'
+        data_dir = '/cluster/scratch/mouse-brain-atlases/'
         img_data = dl.load_img_remote(image_dir_remote, blacklist)
 
     else:

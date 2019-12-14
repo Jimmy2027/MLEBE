@@ -18,8 +18,10 @@ import os
 
 """
 if os.path.exists('/usr/share/mouse-brain-atlases/'):
-    remote = True
-else: remote = False
+    remote = 'höngg'
+elif os.path.exists('/cluster/scratch/klugh/mouse-brain-atlases/'):
+    remote = 'leonhard'
+else: remote = 'local'
 
 file_name = 'new_new_hope'
 i = 0
@@ -30,8 +32,8 @@ file_name = '{filename}{i}'.format(filename = file_name, i=i)
 test = True
 visualisation = True  #if visualisation true saves pre- and unpreprocessed images for visualisation
 remove_black_labels_and_columns = False
-slice_view = 'coronal'
-shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), transverse: (63,96)
+slice_view = 'sagittal'
+shape = (128, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), transverse: (63,96)
 
 # losses = ['dice_bincross', 'dice', 'bincross']
 losses = ['dice']
@@ -83,12 +85,13 @@ if test == True:
 # if test == True:
 #     shape = (64, 64)
 
-if remote == True:
+if remote == 'höngg':
 
     blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
-if remote == False:
+if remote == 'local':
     blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
-
+if remote == 'leonhard':
+    blacklist = utils.write_blacklist('/cluster/scratch/klugh/')
 
 
 pretrained = False

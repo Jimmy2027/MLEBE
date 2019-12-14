@@ -25,12 +25,17 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
     :param test:
     :return: True if predictions are greater than 0, else False
     """
-    if remote == False:
+    if remote == 'local':
         path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
-    else:
+    elif remote == 'höngg':
         path = '/home/hendrik/src/mlebe/resampled/'
         if not os.path.exists(path):
             utils.resample_bidsdata(path)
+    elif remote == 'leonhard':
+        path = '/cluster/scratch/klugh/resampled/'
+        if not os.path.exists(path):
+            utils.resample_bidsdata(path)
+
     save_path = save_path + '/bids_ep{epoch}/'.format(epoch = epochs)
 
     if not os.path.exists(save_path):
