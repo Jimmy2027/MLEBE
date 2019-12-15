@@ -356,7 +356,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     else: seed = random.randint(0, 1000)
 
     print('Training with seed: ', seed)
-    if remote == 'höngg':
+    if remote == 'hongg':
         image_dir_remote = '/mnt/scratch/'
         data_dir = '/usr/share/mouse-brain-atlases/'
         if data_type == 'anat':
@@ -382,11 +382,21 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     if test == True:
         epochss = np.ones(len(data_gen_argss), dtype=int)
-        save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(
-            loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
-        import shutil
-        if os.path.exists('/Users/Hendrik/Documents/mlebe_data/results/test/'):
-            shutil.rmtree('/Users/Hendrik/Documents/mlebe_data/results/test/')
+
+        if remote =='local':
+            save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(
+                loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
+            import shutil
+            if os.path.exists('/Users/Hendrik/Documents/mlebe_data/results/test/'):
+                shutil.rmtree('/Users/Hendrik/Documents/mlebe_data/results/test/')
+
+        if remote =='hongg':
+            save_dir = 'test/{loss}_{epochs}_{date}/'.format(
+                loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
+            import shutil
+            if os.path.exists('test/'):
+                shutil.rmtree('test/')
+
 
     else:
         save_dir = file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())

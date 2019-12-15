@@ -18,7 +18,7 @@ import os
 
 """
 if os.path.exists('/usr/share/mouse-brain-atlases/'):
-    remote = 'höngg'
+    remote = 'hongg'
 elif os.path.exists('/cluster/scratch/klugh/mouse-brain-atlases/'):
     remote = 'leonhard'
 else: remote = 'local'
@@ -90,7 +90,7 @@ if test == True:
 # if test == True:
 #     shape = (64, 64)
 
-if remote == 'höngg':
+if remote == 'hongg':
 
     blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
 if remote == 'local':
