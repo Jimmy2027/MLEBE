@@ -12,7 +12,7 @@ import data_loader as dl
 
 
 
-def func_tester(remote, slice_view, test, model, shape):
+def func_tester(remote, slice_view, test, model, shape, threshold):
     """
     Preprocesses the unpreprocessed bidsdata and predicts a mask for it
 
@@ -41,11 +41,10 @@ def func_tester(remote, slice_view, test, model, shape):
 
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
-    data = []
+
     img_data = []
     for i in img_datas:
         temp = i.get_data()
-        data.append(temp)
         if slice_view == 'coronal':
             img_temp = np.empty((temp.shape[1], shape[0],shape[1], temp.shape[-1]))
         elif slice_view == 'sagittal':
@@ -67,70 +66,46 @@ def func_tester(remote, slice_view, test, model, shape):
 
     y_pred = []
     y_pred_thr = []
-    img_datas = []
 
-    threshold = 0
+
 
 
     for j in img_data:
         placeholder = np.empty((j.shape))
         for i in range(j.shape[-1]):
 
-            temp = model.predict(j[...,i], verbose=0)
-            temp = np.expand_dims(temp, -1)
+            temp = model.predict(np.expand_dims(j[...,i], -1), verbose=1)
+
             if threshold != 0:
                 temp_thr = np.where(temp > threshold, 1, 0)
-            placeholder[...,i] = temp
+            placeholder[...,i] = np.squeeze(temp)
         y_pred.append(placeholder)
 
 
-    something = 0
-    temp = np.concatenate(y_pred, 0)
-    plt.figure()
-    plt.hist(np.squeeze(temp).flatten(), bins='auto')
-    plt.yscale('log')
-    plt.title('Histogram of the pixel values from the predicted masks')
-    plt.savefig(os.path.join(save_path, 'hist.png'))
-    plt.close()
 
 
     file_names = []
     for i in range(len(y_pred)):
-        x_test_affine = data[i].affine
-        x_test_header = data[i].header
-        file_name = os.path.basename(data[i].file_map['image'].filename)
+        affine = img_datas[i].affine
+        file_name = os.path.basename(img_datas[i].file_map['image'].filename)
         file_names.append(file_name)
         if slice_view == 'coronal':
-            img_temp = np.moveaxis(img_datas[i], 1, 0)
-            mask_temp = np.moveaxis(y_pred_thr[i], 1, 0)
+            img_temp = np.moveaxis(img_data[i], 1, 0)
+            mask_temp = np.moveaxis(y_pred[i], 1, 0)
         elif slice_view == 'axial':
-            mask_temp = np.moveaxis(y_pred_thr[i], 0, 2)
-            img_temp = np.moveaxis(img_datas[i], 0, 2)
+            mask_temp = np.moveaxis(img_data[i], 0, 2)
+            img_temp = np.moveaxis(y_pred[i], 0, 2)
         else:
             mask_temp = y_pred_thr[i]
             img_temp = img_datas[i]
 
-        # img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
-        mask = nib.Nifti1Image(mask_temp, x_test_affine)
+        # img = nib.Nifti1Image(temp, affine, x_test_header)
+        mask = nib.Nifti1Image(mask_temp, affine)
         nib.save(mask, os.path.join(save_path, 'mask_thr{}_'.format(threshold) + file_name))
-        img = nib.Nifti1Image(img_temp, x_test_affine)
+        img = nib.Nifti1Image(img_temp, affine)
         nib.save(img, os.path.join(save_path, 'resized_thr{}'.format(threshold) + file_name))
 
-    thresholds = [0, 0.5, 0.7, 0.8, 0.9]
-    outputs = []
-    for thr in thresholds:
-        if thr == 0:
-            outputs.append([np.squeeze(img) for img in y_pred])
-        else:
-            outputs.append([np.where(np.squeeze(img) > thr, 1, 0) for img in y_pred])
-    list = [img_datas]
-    for o in outputs:
-        list.append(o)
 
-    utils.save_datavisualisation(list, save_path,file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
-
-
-    return True
 
 
 if __name__ == '__main__':
@@ -143,14 +118,14 @@ if __name__ == '__main__':
     remote = False
     test = True
     slice_view = 'coronal'
-    loss = 'dice_bincross'
+    loss = 'dice'
     shape = (64, 64)
     threshold = 0
 
     if remote == False:
         path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
-        model_path = '/Users/Hendrik/Documents/mlebe_data/models/dice_bincross/unet_ep01_val_loss1.55.hdf5'
-        save_path = '/Users/Hendrik/Documents/mlebe_data/temp_bids/'
+        model_path = '/Users/Hendrik/Documents/mlebe_data/models/sixty_four/dice/unet_ep01_val_loss0.67.hdf5'
+        save_path = '/Users/Hendrik/Documents/mlebe_data/meh/'
     else:
         path = '/var/tmp/resampled/'
         model_path = '/home/hendrik/src/mlebe/results/training_results/Dice_50/unet_ep05_val_loss0.04.hdf5'
@@ -165,6 +140,6 @@ if __name__ == '__main__':
     else:
         print('wrong loss function defined')
 
-    func_tester(remote, slice_view, test, model, shape)
+    func_tester(remote, slice_view, test, model, shape, threshold)
 
 

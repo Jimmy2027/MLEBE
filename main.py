@@ -34,12 +34,12 @@ Hyperparameters
 """
 test = True
 pretrained = False
-slice_view = 'sagittal'
+slice_view = 'coronal'
 data_type = 'anat'
-shape = (128, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
+shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False  #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['dice_bincross', 'dice', 'bincross']
-# losses = ['dice']
+# losses = ['dice_bincross', 'dice', 'bincross']
+losses = ['dice']
 remove_black_labels_and_columns = False
 
 epochss = [300, 300, 300, 600]
