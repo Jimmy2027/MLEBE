@@ -381,7 +381,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
     if test == True:
-        epochss = np.ones(len(data_gen_argss), dtype=int)
+        epochss = np.ones(len(data_gen_argss), dtype=int) * 50
 
         if remote =='local':
             save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(

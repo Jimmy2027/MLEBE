@@ -74,7 +74,7 @@ def func_tester(remote, slice_view, test, model, shape, threshold):
         placeholder = np.empty((j.shape))
         for i in range(j.shape[-1]):
 
-            temp = model.predict(np.expand_dims(j[...,i], -1), verbose=1)
+            temp = model.predict(np.expand_dims(j[...,i], -1), verbose=0)
 
             if threshold != 0:
                 temp_thr = np.where(temp > threshold, 1, 0)
