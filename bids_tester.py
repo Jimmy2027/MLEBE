@@ -27,7 +27,7 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
     """
     if remote == 'local':
         path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
-    elif remote == 'höngg':
+    elif remote == 'hongg':
         path = '/home/hendrik/src/mlebe/resampled/'
         if not os.path.exists(path):
             utils.resample_bidsdata(path)
@@ -71,8 +71,7 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
 
     temp = np.concatenate(y_pred, 0)
     plt.figure()
-    plt.hist(np.squeeze(temp).flatten(), bins='auto')
-    plt.yscale('log')
+    plt.hist(np.unique(temp))
     plt.title('Histogram of the pixel values from the predicted masks')
     plt.savefig(os.path.join(save_path, 'hist.png'))
     plt.close()

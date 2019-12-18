@@ -7,6 +7,8 @@ import utils
 import unet
 from tensorflow import keras
 from matplotlib import pyplot as plt
+import nipype.pipeline.engine as pe
+from nipype.interfaces import fsl
 
 import data_loader as dl
 
@@ -40,6 +42,13 @@ def func_tester(remote, slice_view, test, model, shape, threshold):
         img_datas = dl.load_func_img(image_dir, test)
 
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
+
+
+    temporal_mean = []
+    for i in img_datas:
+        # temporal_mean.append(pe.Node(interface=fsl.MeanImage(), name="temporal_mean"))
+        temporal_mean.append(fsl.MeanImage(i))
+        something =0
 
 
     img_data = []
@@ -123,11 +132,9 @@ if __name__ == '__main__':
     threshold = 0
 
     if remote == False:
-        path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
         model_path = '/Users/Hendrik/Documents/mlebe_data/models/sixty_four/dice/unet_ep01_val_loss0.67.hdf5'
         save_path = '/Users/Hendrik/Documents/mlebe_data/meh/'
     else:
-        path = '/var/tmp/resampled/'
         model_path = '/home/hendrik/src/mlebe/results/training_results/Dice_50/unet_ep05_val_loss0.04.hdf5'
         save_path = '/home/hendrik/src/mlebe/results/bids_predictions_thr{}/'.format(threshold)
 

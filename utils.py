@@ -8,7 +8,7 @@ import cv2
 import data_loader as dl
 import scipy
 
-
+#todo if train add first and last slices additionaly ?
 
 def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_columns, slice_view, visualisation = False):
     if visualisation == True:
@@ -103,6 +103,8 @@ def arrange_mask(img, mask, save_dir, visualisation = False):
 
     new_mask = mask[:,:,:]
 
+
+
     new_mask[img == 0] = 0
 
     fixed_mask = new_mask[:, :, :]
@@ -113,7 +115,7 @@ def arrange_mask(img, mask, save_dir, visualisation = False):
         fixed_mask[i] = scipy.ndimage.morphology.binary_fill_holes(new_mask[i], structure=structure)
 
     if visualisation == True:
-        save_datavisualisation3(img,new_mask, fixed_mask, save_dir + 'visualisation/arrange_mask/', index_first= True)
+        save_datavisualisation([img,mask,new_mask,fixed_mask], save_dir + 'visualisation/arrange_mask/')
 
     return fixed_mask
 
@@ -546,11 +548,11 @@ def save_datavisualisation(images, save_folder, file_name_header = False, normal
             for i in range(len(images[l])):
                 images[l][i] = data_normalization(images[l][i])
 
+            if not type(images[l]) is type(images):
+                temp = []
+                temp.append(images[l])
+                images[l] = temp
 
-        # if not type(list) == list:
-        #     temp = list(list)
-        #     img = []
-        #     img.append(temp)
 
 
     if not os.path.exists(save_folder):

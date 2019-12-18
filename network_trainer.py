@@ -259,7 +259,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     plt.title('Model accuracy')
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
-    plt.legend(['Train', 'Test'], loc='upper left')
+    plt.legend(['Train', 'Validation'], loc='upper left')
     plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
     plt.close()
 
@@ -284,8 +284,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     temp = np.concatenate(y_pred, 0)
     plt.figure()
-    plt.hist(np.squeeze(temp).flatten(), bins='auto')
-    plt.yscale('log')
+    plt.hist(np.unique(temp))
     plt.title('Histogram of the pixel values from the predicted masks')
     plt.savefig(os.path.join(save_dir, 'hist.png'))
     plt.close()
@@ -298,10 +297,10 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         x_test_header = x_test_data[i].header
         file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
         file_names.append(file_name)
-        if i == 0:
-            y_true_temp = np.moveaxis(y_test[i], 0, 2)
-            y_true_temp = nib.Nifti1Image(y_true_temp, x_test_affine, x_test_header)
-            nib.save(y_true_temp, os.path.join(save_dir, 'y_true_' + file_name))
+
+        y_true_temp = np.moveaxis(y_test[i], 0, 2)
+        y_true_temp = nib.Nifti1Image(y_true_temp, x_test_affine, x_test_header)
+        nib.save(y_true_temp, os.path.join(save_dir, 'y_true_' + file_name))
         mask_temp = np.moveaxis(y_pred[i], 0, 2)
         img_temp = np.moveaxis(x_test[i], 0, 2)
         img = nib.Nifti1Image(img_temp, x_test_affine, x_test_header)
@@ -346,7 +345,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     :param epochss: Array with epochs. Should have the same length than data_gen_argss
     :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
     :param data_gen_argss: Array of dicts : arguments for the data augmentations, should have the same length than epochss
-    :param min_epochs: int: The minimum amount of epochs the network should be trained on. If this number is not reached, the training will start again with a different seed and reduced augmentation values
+    :param min_epochs: int: The minimum amount of epochs the network should be trained on. If this number is not reached, the training will start again with reduced augmentation values
     :param max_tries: int: Integer indicating how many times the training should be started again with reduced augmentation values
     :param visualisation: Bool: if True, all images after preprocessing are saved
     :return: Bool: True if min_epochs is not reached, False otherwise
@@ -566,7 +565,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
             if not os.path.exists(new_save_dir):
                 os.makedirs(new_save_dir)
-            if data_gen_args == data_gen_argss[-1]:           #todo to verify if this works
+            if data_gen_args == data_gen_argss[-1]:
                 callbacks = [bidstest_callback, reduce_lr]
             print('Step',counter,'of', len(epochss) + pretrained_step)
             early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view = slice_view, augmentation= augmentation, visualisation=visualisation)
