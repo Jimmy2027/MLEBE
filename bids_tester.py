@@ -69,7 +69,7 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
         print('Predictions are zero! Max y_pred: ', np.max(np.concatenate(y_pred)))
         return False
 
-    temp = np.concatenate(y_pred, 0)
+        temp = np.concatenate(y_pred, 0)
     plt.figure()
     plt.hist(np.unique(temp))
     plt.title('Histogram of the pixel values from the predicted masks')

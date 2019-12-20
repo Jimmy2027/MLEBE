@@ -23,7 +23,7 @@ elif os.path.exists('/cluster/scratch/klugh/mouse-brain-atlases/'):
     remote = 'leonhard'
 else: remote = 'local'
 
-file_name = 'new_new_hope'
+file_name = 'coronal'
 i = 0
 while os.path.exists(file_name + '{}/'.format(i)):
     i += 1
@@ -32,12 +32,12 @@ file_name = '{filename}{i}'.format(filename = file_name, i=i)
 """
 Hyperparameters
 """
-test = True
+test = False
 pretrained = False
 slice_view = 'coronal'
 data_type = 'anat'
 shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
-visualisation = True #if visualisation true saves pre- and unpreprocessed images for visualisation
+visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice_bincross', 'dice', 'bincross']
 losses = ['dice']
 remove_black_labels_and_columns = False
@@ -83,7 +83,7 @@ data_gen_args0 = None
 data_gen_argss = [data_gen_args0, data_gen_args1, data_gen_args2, data_gen_args3]
 max_tries = 3
 if test == True:
-    max_tries = 0
+    max_tries = 2
     # data_gen_argss = data_gen_argss[:1]
     #     #     # epochss = epochss[:1]
 

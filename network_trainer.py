@@ -380,7 +380,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
     if test == True:
-        epochss = np.ones(len(data_gen_argss), dtype=int) * 50
+        epochss = np.ones(len(data_gen_argss), dtype=int)
 
         if remote =='local':
             save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(
@@ -414,6 +414,9 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     for i in range(len(img_data)):
         mask_data.append(copy.deepcopy(temp[0]))
+
+    utils.get_image_and_mask(img_data,mask_data, shape,  save_dir, remove_black_labels_and_columns, slice_view) #with this line can save all the images with the mask to create a blacklist
+    sdfsddf
 
     print('*** Splitting data into Train, Validation and Test set ***')
     if test == True:
@@ -529,7 +532,9 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     """
     Training
-
+    Two loop variables: 
+    - counter counts the number of steps
+    - nmbr_tries counts the number of tries per step
     """
     if pretrained:
         counter = pretrained_step + 1
@@ -560,8 +565,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
                 print('\n\n\n\n********* \nTraining with reduced augmentation values! Try {}\n*********\n\n\n\n'.format(nmbr_tries))
                 for x in data_gen_args:
                     temp = data_gen_args['{}'.format(x)]
-                    if isinstance(temp, float):
-                        data_gen_args['{}'.format(x)] = data_gen_args['{}'.format(x)] * 0.8
+                    if isinstance(temp, float) or isinstance(temp, int) and not isinstance(temp, bool):
+                        data_gen_args['{}'.format(x)] = np.round(data_gen_args['{}'.format(x)] * 0.8, 4)
 
             if not os.path.exists(new_save_dir):
                 os.makedirs(new_save_dir)

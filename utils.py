@@ -3,7 +3,7 @@ import imageio
 import numpy as np
 from matplotlib import pyplot as plt
 import os
-import pandas
+import pickle
 import cv2
 import data_loader as dl
 import scipy
@@ -96,7 +96,34 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
         save_datavisualisation1(mask_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=mask_file_names, file_name_header= 'unpro_', normalized= True)
         save_datavisualisation1(mask_data, save_dir + '/visualisation/', index_first= True, normalized= True,file_names=mask_file_names, file_name_header= 'prepr_')
 
+    save_images(img_data, mask_data, img_file_names, save_dir) #with this line can save all the images with the mask to create a blacklist
+
     return img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers
+
+
+
+def save_images(images, mask, img_file_names,save_dir):
+    """
+    can save all the images with the mask to create a blacklist
+    :param images:
+    :param mask:
+    :param img_file_names:
+    :param save_dir:
+    :return:
+    """
+    counter = 0
+    for im, ma in zip(images,mask):
+        if not os.path.exists(save_dir + '/images/{name}'.format(name=img_file_names[counter])):
+            os.makedirs(save_dir + '/images/{name}'.format(name=img_file_names[counter]))
+        for i in range(im.shape[0]):
+
+            plt.imshow(im[i, ...], cmap='gray')
+            plt.imshow(ma[i, ...], alpha=0.3, cmap='Blues')
+            plt.savefig(save_dir + '/images/{name}/{i}'.format(name=img_file_names[counter], i=i))
+            plt.close()
+        counter += 1
+
+
 
 
 def arrange_mask(img, mask, save_dir, visualisation = False):
