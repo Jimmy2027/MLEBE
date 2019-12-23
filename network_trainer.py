@@ -370,6 +370,14 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
         elif data_type == 'func':
             img_data = dl.load_func_img(image_dir_remote, blacklist)
 
+    elif remote == 'epfl':
+        image_dir_remote = '/home/klug/Hendrik/MLEBE/mlebe_scratch/'
+        data_dir = '/home/klug/Hendrik/MLEBE/mouse-brain-atlases/'
+        if data_type == 'anat':
+            img_data = dl.load_img_remote(image_dir_remote, blacklist)
+        elif data_type == 'func':
+            img_data = dl.load_func_img(image_dir_remote, blacklist)
+
     else:
         image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
         if data_type == 'anat':

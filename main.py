@@ -21,6 +21,8 @@ if os.path.exists('/usr/share/mouse-brain-atlases/'):
     remote = 'hongg'
 elif os.path.exists('/cluster/scratch/klugh/mouse-brain-atlases/'):
     remote = 'leonhard'
+elif os.path.exists('/home/klug/Hendrik/MLEBE/mouse-brain-atlases'):
+    remote = 'epfl'
 else: remote = 'local'
 
 file_name = 'coronal'
@@ -97,6 +99,8 @@ if remote == 'local':
     blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
 if remote == 'leonhard':
     blacklist = utils.write_blacklist('/cluster/scratch/klugh/Blacklist')
+if remote == 'epfl':
+    blacklist = utils.write_blacklist('/home/klug/Hendrik/MLEBE/Blacklist')
 
 
 if remote == False:

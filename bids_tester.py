@@ -35,7 +35,10 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
         path = '/cluster/scratch/klugh/resampled/'
         if not os.path.exists(path):
             utils.resample_bidsdata(path)
-
+    elif remote == 'epfl':
+        path ='/home/klug/Hendrik/MLEBE/resampled'
+        if not os.path.exists(path):
+            utils.resample_bidsdata(path)
     save_path = save_path + '/bids_ep{epoch}/'.format(epoch = epochs)
 
     if not os.path.exists(save_path):

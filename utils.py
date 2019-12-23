@@ -62,9 +62,9 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
         for file in blacklist:
             if file.filename ==  os.path.basename(i.file_map['image'].filename):
                 print('blacklisted found!!', file.filename, os.path.basename(i.file_map['image'].filename))
-                plt.imshow(np.squeeze(img_preprocessed[file.slice, ...]), cmap='gray')
-                plt.imshow(np.squeeze(mask_preprocessed[file.slice, ...]), alpha=0.3, cmap='Blues')
-                plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}'.format(a=file.filename, i=file.slice))
+                plt.imshow(img_preprocessed[int(file.slice), ...], cmap='gray')
+                plt.imshow(mask_preprocessed[int(file.slice), ...], alpha=0.3, cmap='Blues')
+                plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}'.format(a=file.filename, b=file.slice))
                 plt.close()
                 img_preprocessed = np.delete(img_preprocessed, file.slice, 0)
                 mask_preprocessed = np.delete(mask_preprocessed, file.slice, 0)
@@ -684,6 +684,7 @@ def write_slice_blacklist():
             self.filename = filename
             self.slice = slice
     if not os.path.isfile('mlebe_slice_blacklist.txt'):
+        print('\n\n Need to create blacklist file! \n\n')
         os.system('tag -f mlebe_blacklist > mlebe_slice_blacklist.txt')
     with open('mlebe_slice_blacklist.txt') as blacklist_file:
         for line in blacklist_file:

@@ -30,6 +30,8 @@ def load_bidsdata():
 def load_img_remote(image_dir_remote, blacklist, test = False):
     print('*** Loading images ***')
     im_data = []
+    setOfElems = set()
+
     for o in os.listdir(image_dir_remote):
         if o != 'irsabi':
             for x in os.listdir(os.path.join(image_dir_remote, o)):
@@ -44,6 +46,10 @@ def load_img_remote(image_dir_remote, blacklist, test = False):
                                         print('blacklisted found: {}'.format(file))
 
                                 if blacklisted == False:
+                                    if file in setOfElems:
+                                        print('duplicate found:', file)
+                                    else:
+                                        setOfElems.add(file)
                                     im_data.append(os.path.join(root, file))
 
 
@@ -51,9 +57,18 @@ def load_img_remote(image_dir_remote, blacklist, test = False):
     im_data = np.sort(im_data)
     print('*** Loading {} subjects ***'.format(len(im_data)))
 
+    something = list(im_data)
+    for elem in something:
+        if something.count(elem) > 1:
+            print('duplicate found:', something.count(elem), elem)
+
+
+
+    im_data = list(dict.fromkeys(im_data))
     data = []
     for i in im_data:
         img = nib.load(i)
+
         # img_data = img.get_data()
         # temp = np.moveaxis(img_data,2,0)
         # img_data = pad_img(temp, shape)
