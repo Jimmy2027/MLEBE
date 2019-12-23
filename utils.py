@@ -23,6 +23,7 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
     mask_headers = []
     img_file_names = []
     mask_file_names = []
+    blacklist = write_slice_blacklist()
     for i, m in zip(image, mask):
         img_affines.append(i.affine)
         mask_affines.append(m.affine)
@@ -30,6 +31,7 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
         mask_headers.append(m.header)
         img_file_names.append(os.path.basename(i.file_map['image'].filename))
         mask_file_names.append(os.path.basename(m.file_map['image'].filename))
+
         img = i.get_data()
         img_temp = img[:,:,:]
         mask = m.get_data()
@@ -51,21 +53,29 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
 
 
         img_temp, fitted_mask = remove_black_images(img_temp, fitted_mask, save_dir, visualisation= visualisation)
-            # if img_temp is None:
-            #     continue
-            # img_temp, id1, id2 = remove_black_columns(img_temp, save_dir, visualisation)
-            # mask_temp = mask_temp[:,:,id1:id2]
 
         img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation, switched_axis= True)
         mask_preprocessed = preprocess(fitted_mask, shape, save_dir, visualisation, switched_axis = True)
+
+        if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
+            os.makedirs(save_dir + 'visualisation/blacklisted_slices')
+        for file in blacklist:
+            if file.filename ==  os.path.basename(i.file_map['image'].filename):
+                print('blacklisted found!!', file.filename, os.path.basename(i.file_map['image'].filename))
+                plt.imshow(np.squeeze(img_preprocessed[file.slice, ...]), cmap='gray')
+                plt.imshow(np.squeeze(mask_preprocessed[file.slice, ...]), alpha=0.3, cmap='Blues')
+                plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}'.format(a=file.filename, i=file.slice))
+                plt.close()
+                img_preprocessed = np.delete(img_preprocessed, file.slice, 0)
+                mask_preprocessed = np.delete(mask_preprocessed, file.slice, 0)
+
+
+
         img_data.append(img_preprocessed)
         mask_data.append(mask_preprocessed)
 
     if visualisation:
         save_datavisualisation1(mask_data, save_dir + '/visualisation/after_rem_black_cloumns/', index_first= True, normalized= True)
-
-    # if remove_black_labels_and_columns:
-    #     img_data, mask_data = remove_black_masks(img_data, mask_data, save_dir= save_dir, visualisation=visualisation)
 
 
     if visualisation == True:
@@ -96,7 +106,10 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
         save_datavisualisation1(mask_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=mask_file_names, file_name_header= 'unpro_', normalized= True)
         save_datavisualisation1(mask_data, save_dir + '/visualisation/', index_first= True, normalized= True,file_names=mask_file_names, file_name_header= 'prepr_')
 
-    save_images(img_data, mask_data, img_file_names, save_dir) #with this line can save all the images with the mask to create a blacklist
+
+
+
+    # save_images(img_data, mask_data, img_file_names, save_dir) #with this line can save all the images with the mask to create a blacklist
 
     return img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers
 
@@ -663,6 +676,23 @@ def pad_img(img, shape, save_dir = None, visualisation = False):
         after.append(padded)
         save_datavisualisation2(before, after, save_dir + '/visualisation/pad_img/', index_first= True, normalized= True)
     return padded
+
+def write_slice_blacklist():
+    blacklist = []
+    class blacklist_elem:
+        def __init__(self, filename, slice):
+            self.filename = filename
+            self.slice = slice
+    if not os.path.isfile('mlebe_slice_blacklist.txt'):
+        os.system('tag -f mlebe_blacklist > mlebe_slice_blacklist.txt')
+    with open('mlebe_slice_blacklist.txt') as blacklist_file:
+        for line in blacklist_file:
+            line = line.replace('.png', '')
+            line = line.split('/')
+            line = line[-2:]
+            blacklist.append(blacklist_elem(line[0], line[1]))
+
+    return blacklist
 
 
 def write_blacklist(blacklist_dir):

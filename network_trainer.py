@@ -415,8 +415,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     for i in range(len(img_data)):
         mask_data.append(copy.deepcopy(temp[0]))
 
-    utils.get_image_and_mask(img_data,mask_data, shape,  save_dir, remove_black_labels_and_columns, slice_view) #with this line can save all the images with the mask to create a blacklist
-    sdfsddf
+    # utils.get_image_and_mask(img_data,mask_data, shape,  save_dir, remove_black_labels_and_columns, slice_view) #with this line can save all the images with the mask to create a blacklist
+
 
     print('*** Splitting data into Train, Validation and Test set ***')
     if test == True:
