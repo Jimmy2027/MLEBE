@@ -7,10 +7,10 @@ import os
 """
 :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
 :param remote: Bool: If remote is True, the paths are set for remote computer
-:param visualisation: Bool: if True, all images after preprocessing are saved
+:param visualisation: Bool: if True, all images in the preprocessing steps are saved
 :param loss: Array of strings: with which loss the network will be trained
 :param epochss: Array with epochs. Should have the same length than data_gen_argss
-:param min_epochs: int: The minimum amount of epochs the network should be trained on. If this number is not reached, the training will start again with a different seed and reduced augmentation values
+:param min_epochs: int: The minimum amount of epochs the network should be trained on. If this number is not reached, the training will start again with reduced augmentation values
 :param data_gen_argss: Array of dicts : arguments for the data augmentations, should have the same length than epochss
 :param max_tries: int: Integer indicating how many times the training should be started again with reduced augmentation values
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
@@ -34,7 +34,7 @@ file_name = '{filename}{i}'.format(filename = file_name, i=i)
 """
 Hyperparameters
 """
-test = False
+test = True
 pretrained = False
 slice_view = 'coronal'
 data_type = 'anat'
@@ -42,9 +42,8 @@ shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48),
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
 # losses = ['dice_bincross', 'dice', 'bincross']
 losses = ['dice']
-remove_black_labels_and_columns = False
 
-epochss = [300, 300, 300, 600]
+epochss = [600]
 min_epochs = 60
 if test == True:
     min_epochs = 0
@@ -82,18 +81,15 @@ data_gen_args1 = dict(rotation_range=0.2,
 data_gen_args0 = None
 
 
-data_gen_argss = [data_gen_args0, data_gen_args1, data_gen_args2, data_gen_args3]
+data_gen_argss = [data_gen_args3]
 max_tries = 3
 if test == True:
     max_tries = 2
     # data_gen_argss = data_gen_argss[:1]
     #     #     # epochss = epochss[:1]
 
-# if test == True:
-#     shape = (64, 64)
 
 if remote == 'hongg':
-
     blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
 if remote == 'local':
     blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
@@ -126,6 +122,6 @@ for i, loss in enumerate(losses):
             pretrained = True
         else: pretrained = False
 
-    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, data_type,slice_view = slice_view, remove_black_labels_and_columns = remove_black_labels_and_columns, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step, pretrained_seed = pretrained_seed)
+    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, data_type,slice_view = slice_view, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step, pretrained_seed = pretrained_seed)
 
 

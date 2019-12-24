@@ -333,7 +333,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     return False, history
 
-def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, data_type, remove_black_labels_and_columns,slice_view,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = 0, pretrained_seed = None):
+def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, data_type, slice_view,visualisation = False, pretrained = False, pretrained_model_path = None, pretrained_step = 0, pretrained_seed = None):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -380,6 +380,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     else:
         image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
+        image_dir = '/Volumes/something/mlebe_scratch'
         if data_type == 'anat':
             img_data = dl.load_img(image_dir, blacklist, test)
         elif data_type == 'func':
@@ -437,8 +438,9 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
                                                                                                   test_size=0.1, shuffle = True)
 
     print('*** Preprocessing ***')
-    x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)[:2]
-    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, remove_black_labels_and_columns=remove_black_labels_and_columns, visualisation=visualisation)
+
+    x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation)[:2]
+    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation)
 
     print('*** Saving Test data ***')
     x_test_struct = {
@@ -578,8 +580,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
             if not os.path.exists(new_save_dir):
                 os.makedirs(new_save_dir)
-            if data_gen_args == data_gen_argss[-1]:
-                callbacks = [bidstest_callback, reduce_lr]
+            # if data_gen_args == data_gen_argss[-1]:
+            #     callbacks = [bidstest_callback, reduce_lr]
             print('Step',counter,'of', len(epochss) + pretrained_step)
             early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view = slice_view, augmentation= augmentation, visualisation=visualisation)
             histories.append(temp_history)

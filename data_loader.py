@@ -30,7 +30,7 @@ def load_bidsdata():
 def load_img_remote(image_dir_remote, blacklist, test = False):
     print('*** Loading images ***')
     im_data = []
-    setOfElems = set()
+
 
     for o in os.listdir(image_dir_remote):
         if o != 'irsabi':
@@ -46,10 +46,6 @@ def load_img_remote(image_dir_remote, blacklist, test = False):
                                         print('blacklisted found: {}'.format(file))
 
                                 if blacklisted == False:
-                                    if file in setOfElems:
-                                        print('duplicate found:', file)
-                                    else:
-                                        setOfElems.add(file)
                                     im_data.append(os.path.join(root, file))
 
 

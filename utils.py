@@ -10,7 +10,7 @@ import scipy
 
 #todo if train add first and last slices additionaly ?
 
-def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_columns, slice_view, visualisation = False):
+def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation = False):
     if visualisation == True:
         img_unpreprocessed = []
         mask_unpreprocessed = []
@@ -59,15 +59,18 @@ def get_image_and_mask(image, mask, shape, save_dir, remove_black_labels_and_col
 
         if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
             os.makedirs(save_dir + 'visualisation/blacklisted_slices')
+        print(os.path.basename(i.file_map['image'].filename))
+        counter = 0
         for file in blacklist:
-            if file.filename ==  os.path.basename(i.file_map['image'].filename):
-                print('blacklisted found!!', file.filename, os.path.basename(i.file_map['image'].filename))
-                plt.imshow(img_preprocessed[int(file.slice), ...], cmap='gray')
-                plt.imshow(mask_preprocessed[int(file.slice), ...], alpha=0.3, cmap='Blues')
-                plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}'.format(a=file.filename, b=file.slice))
-                plt.close()
-                img_preprocessed = np.delete(img_preprocessed, file.slice, 0)
-                mask_preprocessed = np.delete(mask_preprocessed, file.slice, 0)
+            if file.filename == os.path.basename(i.file_map['image'].filename):
+                if visualisation == True:
+                    plt.imshow(img_preprocessed[int(file.slice)-counter, ...], cmap='gray')
+                    plt.imshow(mask_preprocessed[int(file.slice) - counter, ...], alpha=0.3, cmap='Blues')
+                    plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.png'.format(a=file.filename, b=int(file.slice)))
+                    plt.close()
+                img_preprocessed = np.delete(img_preprocessed, int(file.slice) - counter, 0)
+                mask_preprocessed = np.delete(mask_preprocessed, int(file.slice) - counter, 0)
+                counter += 1
 
 
 
