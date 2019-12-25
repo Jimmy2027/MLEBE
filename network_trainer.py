@@ -275,21 +275,31 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     plt.close()
 
     y_pred = []
+    dice_scores_string = []
     dice_scores = []
     for i in y_test:
-        i = np.expand_dims(i, -1)
-        temp = model.predict(i, verbose=0)
-        y_pred.append(temp)
-        dice_scores.append(su.dice(i, temp))
+        img_pred = np.empty((i.shape))
+        dice_score_img = []
+        for slice in range(i.shape[0]):
+            temp = np.expand_dims(i[slice],-1) #expand dims for channel
+            temp = np.expand_dims(temp, 0) #expand dims for batch
+            prediction = model.predict(temp, verbose=0)
+            prediction = np.squeeze(prediction)
+            img_pred[slice,...] = prediction
+            dice_scores.append(su.dice(i[slice], prediction))
+            dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], prediction),4)))
+        y_pred.append(img_pred)
+        dice_scores_string.append(dice_score_img)
 
     temp = np.concatenate(y_pred, 0)
+    dice_score = np.median(dice_scores)
     plt.figure()
     plt.hist(np.unique(temp))
     plt.title('Histogram of the pixel values from the predicted masks')
-    plt.savefig(os.path.join(save_dir, 'hist.png'))
+    plt.savefig(os.path.join(save_dir, 'hist'+str(np.round(dice_score, 4))+'.png'))
     plt.close()
 
-    dice_score = np.median(dice_scores)
+
     print('median Dice score: ', dice_score)
     file_names = []
     for i in range(len(y_pred)):
@@ -310,19 +320,23 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     thresholds = [0, 0.5, 0.7, 0.8, 0.9]
     outputs = []
+    row_titles = ['x_test', 'y_test', 'raw prediction', 'thr 0.5', 'thr 0.7', 'thr 0.8', 'thr 0.9']
+    slice_titles = [None, None, dice_scores_string, None, None, None, None]
     for thr in thresholds:
         if thr == 0:
             outputs.append([np.squeeze(img) for img in y_pred])
         else:
             outputs.append([np.where(np.squeeze(img) > thr, 1, 0) for img in y_pred])
+            # slice_titles.append([su.dice(np.where(np.squeeze(img) > thr, 1, 0), y_true) for img, y_true in zip(y_pred, y_test)])
     list = [x_test, y_test]
     for o in outputs:
         list.append(o)
-    utils.save_datavisualisation(list, save_dir,file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
+    # utils.save_datavisualisation(list, save_dir, file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
+    utils.save_datavisualisation_plt(list, save_dir, normalized=True, file_names=file_names, figure_title = 'Predictions with a median Dice score of {}'.format(np.round(dice_score,4)), slice_titles=slice_titles)
 
 
 
-    bids_tester.bids_tester(save_dir, model, remote, shape, slice_view, epochs)
+    # bids_tester.bids_tester(save_dir, model, remote, shape, slice_view, epochs) #todo comment this to remove cv2 dependency
 
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
@@ -363,7 +377,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
         elif data_type == 'func':
             img_data = dl.load_func_img(image_dir_remote, blacklist)
     elif remote == 'leonhard':
-        image_dir_remote = '/cluster/scratch/klugh/preprocessed'
+        image_dir_remote = '/cluster/scratch/klugh/mlebe_scratch/'
         data_dir = '/cluster/scratch/klugh/mouse-brain-atlases/'
         if data_type == 'anat':
             img_data = dl.load_img_remote(image_dir_remote, blacklist)
@@ -380,7 +394,9 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     else:
         image_dir = '/Users/Hendrik/Documents/mlebe_data/preprocessed'
-        image_dir = '/Volumes/something/mlebe_scratch'
+        if os.path.exists('/Volumes/something/mlebe_scratch'):
+
+            image_dir = '/Volumes/something/mlebe_scratch'
         if data_type == 'anat':
             img_data = dl.load_img(image_dir, blacklist, test)
         elif data_type == 'func':
@@ -424,7 +440,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     for i in range(len(img_data)):
         mask_data.append(copy.deepcopy(temp[0]))
 
-    # utils.get_image_and_mask(img_data,mask_data, shape,  save_dir, remove_black_labels_and_columns, slice_view) #with this line can save all the images with the mask to create a blacklist
+    # utils.get_image_and_mask(img_data,mask_data, shape,  save_dir, remove_black_labels_and_columns, slice_view)           #with this line can save all the images with the mask to create a blacklist
 
 
     print('*** Splitting data into Train, Validation and Test set ***')
@@ -455,7 +471,6 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
         'y_test_affines': y_test_affines,
         'y_test_headers': y_test_headers,
     }
-
 
 
     xfile = open(save_dir + 'x_test_struct.pkl', 'wb')
@@ -498,7 +513,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=True)
 
-    callbacks = [bidstest_callback, reduce_lr, earlystopper]
+    callbacks = [reduce_lr, earlystopper]
+    # callbacks = [bidstest_callback, reduce_lr, earlystopper]          #todo comment this to remove cv2 dependency
 
     if loss == 'bincross':
         loss = 'binary_crossentropy'

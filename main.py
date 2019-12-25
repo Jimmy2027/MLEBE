@@ -34,14 +34,14 @@ file_name = '{filename}{i}'.format(filename = file_name, i=i)
 """
 Hyperparameters
 """
-test = True
+test = False
 pretrained = False
 slice_view = 'coronal'
 data_type = 'anat'
 shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
-# losses = ['dice_bincross', 'dice', 'bincross']
-losses = ['dice']
+losses = ['dice_bincross', 'dice', 'bincross']
+#losses = ['dice']
 
 epochss = [600]
 min_epochs = 60
@@ -111,9 +111,6 @@ model_paths = [model_path1, '', ''] #needs to have the same lenght than epochss
 pretrained_loss = ['dice', '', '']  #needs to have the same lenght than epochss
 pretrained_step = 1
 pretrained_seed = ''
-
-
-
 
 
 for i, loss in enumerate(losses):

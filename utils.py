@@ -2,9 +2,10 @@ import os
 import imageio
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import gridspec
 import os
 import pickle
-import cv2
+# import cv2
 import data_loader as dl
 import scipy
 
@@ -59,7 +60,6 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
 
         if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
             os.makedirs(save_dir + 'visualisation/blacklisted_slices')
-        print(os.path.basename(i.file_map['image'].filename))
         counter = 0
         for file in blacklist:
             if file.filename == os.path.basename(i.file_map['image'].filename):
@@ -76,6 +76,7 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
 
         img_data.append(img_preprocessed)
         mask_data.append(mask_preprocessed)
+
 
     if visualisation:
         save_datavisualisation1(mask_data, save_dir + '/visualisation/after_rem_black_cloumns/', index_first= True, normalized= True)
@@ -108,6 +109,7 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
         save_datavisualisation1(img_data, save_dir + '/visualisation/', index_first= True, normalized= True  ,file_names=img_file_names, file_name_header= 'prepr_')
         save_datavisualisation1(mask_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=mask_file_names, file_name_header= 'unpro_', normalized= True)
         save_datavisualisation1(mask_data, save_dir + '/visualisation/', index_first= True, normalized= True,file_names=mask_file_names, file_name_header= 'prepr_')
+
 
 
 
@@ -329,7 +331,7 @@ def resample_bidsdata(path):
         resample_cmd = 'ResampleImage 3 {input} '.format(input=input_image) + path + '{output} 0.2x0.2x0.2'.format(output=file_name)
         os.system(resample_cmd)
         print(resample_cmd)
-        dimension_change_command = 'fslswapdim ' + path + '{input} LR PA IS '.format(input = file_name) + path+'{output}'.format(output = file_name)
+        dimension_change_command = 'fslswapdim ' + path + '{input} LR PA IS '.format(input = file_name) + path + '{output}'.format(output = file_name)
         os.system(dimension_change_command)
         print(dimension_change_command)
 
@@ -637,9 +639,175 @@ def save_datavisualisation(images, save_folder, file_name_header = False, normal
                 while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
                     i += 1
                 imageio.imwrite(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i), image)
-        counter = counter + 1
+            counter = counter + 1
 
 
+
+def save_datavisualisation_plt(images, save_folder, file_name_header = False, normalized = False, file_names = False, row_titles = False, figure_title = False,slice_titles = False):
+    """
+
+    :param images: a list of lists of sliced images, where the slice index is in the first dimension
+    :param row_titles:
+    :param save_folder:
+    :param file_name_header:
+    :param normalized:
+    :param file_names:
+    :return:
+    """
+    if normalized == False:
+        for l in range(len(images)):
+            for i in range(len(images[l])):
+                images[l][i] = data_normalization(images[l][i])
+
+            if not type(images[l]) is type(images):
+                temp = []
+                temp.append(images[l])
+                images[l] = temp
+
+
+
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+
+
+
+    for img in range(len(images[0])): #number of images that will be saved at the end
+        counter = 0
+
+        nrow = len(images)
+        ncol = images[0][img].shape[0]
+
+        plt.switch_backend('agg')
+        figure = plt.figure(figsize=(ncol + 1, nrow + 1))
+        if not figure_title == False:
+            figure.suptitle(figure_title, fontdict={'fontsize': 20})
+
+        gs = gridspec.GridSpec(nrow, ncol, wspace=1, hspace=0.2, top=1. - 0.5 / (nrow + 1), bottom=0.5 / (nrow + 1), left=0.5 / (ncol + 1), right=1 - 0.5 / (ncol + 1))
+
+        for list in range(len(images)):
+            for slice in range(images[list][img].shape[0]):
+                i_col = slice
+                i_row = list
+                ax = plt.subplot(gs[i_row, i_col])
+                if not slice_titles == False:
+                    if not slice_titles[list] is None:
+                        ax.set_title(slice_titles[list][img][slice], fontdict={'fontsize': 10})
+                plt.imshow(images[list][img][slice,:,:] * 255, cmap = 'gray')
+                plt.tight_layout()
+                plt.axis('off')
+
+        if file_names == False:
+            i = 0
+            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,)):
+                i += 1
+            plt.ioff()
+            plt.switch_backend('agg')
+            figure.savefig(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,))
+            plt.close(figure)
+        else:
+            if file_name_header == False:
+                i = 0
+                while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                plt.ioff()
+                plt.switch_backend('agg')
+                figure.savefig(save_folder + file_names[counter] + '{}.png'.format(i))
+                plt.close(figure)
+            else:
+                i = 0
+                while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                plt.ioff()
+                plt.switch_backend('agg')
+                plt.tight_layout()
+                figure.savefig(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i))
+
+                plt.close(figure)
+            counter = counter + 1
+
+
+def save_datavisualisation_plt_subsubplot(images, save_folder, file_name_header = False, normalized = False, file_names = False, row_titles = False, slice_titles = False):
+    """
+
+    :param images: a list of lists of sliced images, where the slice index is in the first dimension
+    :param row_titles:
+    :param save_folder:
+    :param file_name_header:
+    :param normalized:
+    :param file_names:
+    :return:
+    """
+    if normalized == False:
+        for l in range(len(images)):
+            for i in range(len(images[l])):
+                images[l][i] = data_normalization(images[l][i])
+
+            if not type(images[l]) is type(images):
+                temp = []
+                temp.append(images[l])
+                images[l] = temp
+
+
+
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+
+
+
+    for img in range(len(images[0])): #number of images that will be saved at the end
+        counter = 0
+
+        nrow_outer = len(images)
+        ncol_outer = 1
+        ncol_inner = images[0][img].shape[0]
+        nrow_inner = 1
+        plt.switch_backend('agg')
+        figure = plt.figure(figsize=(ncol_inner + 1, nrow_outer + 1))
+
+        outer_gs = gridspec.GridSpec(nrow_outer, ncol_outer, wspace=1, hspace=0.25, top=1. - 0.5 / (nrow_outer + 1), bottom=0.5 / (nrow_outer + 1),
+                               left=0.5 / (ncol_outer + 1), right=1 - 0.5 / (ncol_outer + 1))
+
+        for list in range(len(images)):
+            ax_outer = plt.subplot(outer_gs[list])
+            ax_outer.set_title('hihihi', fontdict= {'fontsize': 100})
+            inner_gs = gridspec.GridSpecFromSubplotSpec(nrow_inner, ncol_inner, subplot_spec=outer_gs[list], wspace=1, hspace=0.25)
+            for slice in range(images[list][img].shape[0]):
+                i_col = slice
+                i_row = list
+                ax = plt.subplot(inner_gs[i_col])
+                if not slice_titles == False:
+                    if not slice_titles[list] is None:
+                        plt.title(slice_titles[list][img][slice])
+                plt.imshow(images[list][img][slice,:,:] * 255, cmap = 'gray')
+                plt.axis('off')
+
+        if file_names == False:
+            i = 0
+            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,)):
+                i += 1
+            plt.ioff()
+            plt.switch_backend('agg')
+            figure.savefig(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,))
+            plt.close(figure)
+        else:
+            if file_name_header == False:
+                i = 0
+                while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                plt.ioff()
+                plt.switch_backend('agg')
+                figure.savefig(save_folder + file_names[counter] + '{}.png'.format(i))
+                plt.close(figure)
+            else:
+                i = 0
+                while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
+                    i += 1
+                plt.ioff()
+                plt.switch_backend('agg')
+                figure.savefig(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i))
+
+                plt.close(figure)
+            counter = counter + 1
 
 
 
@@ -660,17 +828,18 @@ def pad_img(img, shape, save_dir = None, visualisation = False):
     padd_y = shape[0] - img.shape[1]
     padd_x = shape[1] - img.shape[2]
     for i in range(img.shape[0]):
-        if padd_x < 0 and padd_y < 0:
-            temp = cv2.resize(img[i], (shape[1], shape[0]))
-            padded[i] = temp
-        elif padd_y < 0:
-            temp = cv2.resize(img[i], (img[i].shape[1], shape[0])) #cv2.resize takes shape in form (x,y)!!!
-            something = np.empty((img.shape[0], shape[0], img.shape[2]))
-            something[i] = temp
-            padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
-        elif padd_x < 0:
-            temp = cv2.resize(img[i], (shape[1], img[i].shape[0]))
-            padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
+        if padd_x < 0 and padd_y < 0:     #todo temporary commented to not depend on cv2
+            something = 0
+        #     temp = cv2.resize(img[i], (shape[1], shape[0]))
+        #     padded[i] = temp
+        # elif padd_y < 0:
+        #     temp = cv2.resize(img[i], (img[i].shape[1], shape[0])) #cv2.resize takes shape in form (x,y)!!!
+        #     something = np.empty((img.shape[0], shape[0], img.shape[2]))
+        #     something[i] = temp
+        #     padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
+        # elif padd_x < 0:
+        #     temp = cv2.resize(img[i], (shape[1], img[i].shape[0]))
+        #     padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
         else:
             padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
 
