@@ -8,6 +8,7 @@ import pickle
 # import cv2
 import data_loader as dl
 import scipy
+import pandas as pd
 
 #todo if train add first and last slices additionaly ?
 
@@ -61,6 +62,7 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
         if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
             os.makedirs(save_dir + 'visualisation/blacklisted_slices')
         counter = 0
+        blacklisted_counter = 0
         for file in blacklist:
             if file.filename == os.path.basename(i.file_map['image'].filename):
                 if visualisation == True:
@@ -71,7 +73,9 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
                 img_preprocessed = np.delete(img_preprocessed, int(file.slice) - counter, 0)
                 mask_preprocessed = np.delete(mask_preprocessed, int(file.slice) - counter, 0)
                 counter += 1
+                blacklisted_counter += 1
 
+        print('blacklisted {} slices'.format(blacklisted_counter))
 
 
         img_data.append(img_preprocessed)
@@ -679,22 +683,29 @@ def save_datavisualisation_plt(images, save_folder, file_name_header = False, no
 
         plt.switch_backend('agg')
         figure = plt.figure(figsize=(ncol + 1, nrow + 1))
+        anno_opts = dict(xy=(0.5, 0.5), xycoords='axes fraction',
+                         va='center', ha='center')
         if not figure_title == False:
-            figure.suptitle(figure_title, fontdict={'fontsize': 20})
+            figure.suptitle(figure_title, fontsize=  20)
 
-        gs = gridspec.GridSpec(nrow, ncol, wspace=1, hspace=0.2, top=1. - 0.5 / (nrow + 1), bottom=0.5 / (nrow + 1), left=0.5 / (ncol + 1), right=1 - 0.5 / (ncol + 1))
+        gs = gridspec.GridSpec(nrow+1, ncol+1, wspace=1, hspace=0.2, top=1. - 0.5 / (nrow + 1), bottom=0.5 / (nrow + 1), left=0.5 / (ncol + 1), right=1 - 0.5 / (ncol + 1))
 
         for list in range(len(images)):
-            for slice in range(images[list][img].shape[0]):
+            for slice in range(images[list][img].shape[0]+1):
                 i_col = slice
                 i_row = list
                 ax = plt.subplot(gs[i_row, i_col])
-                if not slice_titles == False:
-                    if not slice_titles[list] is None:
-                        ax.set_title(slice_titles[list][img][slice], fontdict={'fontsize': 10})
-                plt.imshow(images[list][img][slice,:,:] * 255, cmap = 'gray')
-                plt.tight_layout()
-                plt.axis('off')
+                if i_col == 0:
+                    if not row_titles == False:
+                        if not row_titles[i_row] is None:
+                            ax.annotate(row_titles[i_row], **anno_opts)
+                    plt.axis('off')
+                else:
+                    if not slice_titles == False:
+                        if not slice_titles[list] is None:
+                            ax.set_title(slice_titles[list][img][slice-1],  fontdict={'fontsize': 10})
+                    plt.imshow(images[list][img][slice-1,:,:] * 255, cmap = 'gray')
+                    plt.axis('off')
 
         if file_names == False:
             i = 0
@@ -832,12 +843,14 @@ def pad_img(img, shape, save_dir = None, visualisation = False):
             something = 0
         #     temp = cv2.resize(img[i], (shape[1], shape[0]))
         #     padded[i] = temp
-        # elif padd_y < 0:
+        elif padd_y < 0:
+            print('img shape:', img.shape)
         #     temp = cv2.resize(img[i], (img[i].shape[1], shape[0])) #cv2.resize takes shape in form (x,y)!!!
         #     something = np.empty((img.shape[0], shape[0], img.shape[2]))
         #     something[i] = temp
         #     padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
-        # elif padd_x < 0:
+        elif padd_x < 0:
+            print('img shape:', img.shape)
         #     temp = cv2.resize(img[i], (shape[1], img[i].shape[0]))
         #     padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
         else:
@@ -893,5 +906,35 @@ def check_path(path, filename = 'img', format = '.png'):
         i += 1
 
     return path + filename + '{}'.format(i)
+
+
+def corr(img1, img2):
+    d = {'img1': img1.reshape(-1), 'img2': img2.reshape(-1)}
+    data = pd.DataFrame(data=d)
+    corr = data.corr(method='pearson')
+
+    return corr.values[0][1]
+
+def compute_correlation(images1, images2, images3, save_dir):
+
+    d = {'x_test': images1.reshape(-1), 'y_test': images2.reshape(-1), 'y_pred': images3.reshape(-1)}
+    data = pd.DataFrame(data=d)
+    corr = data.corr(method='pearson')
+
+    fig, ax = plt.subplots()
+
+    # hide axes
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    ax.axis('tight')
+
+
+    ax.table(cellText=corr.values, rowLabels = corr.columns,colLabels=corr.columns, loc='center')
+
+    # fig.tight_layout()
+
+    plt.savefig(save_dir + 'parameter_correlation.png')
+    plt.close()
+
 
 

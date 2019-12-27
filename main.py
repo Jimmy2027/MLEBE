@@ -25,7 +25,7 @@ elif os.path.exists('/home/klug/Hendrik/MLEBE/mouse-brain-atlases'):
     remote = 'epfl'
 else: remote = 'local'
 
-file_name = 'coronal'
+file_name = 'coronal_with_slice_blacklist'
 i = 0
 while os.path.exists(file_name + '{}/'.format(i)):
     i += 1

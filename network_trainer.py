@@ -327,7 +327,6 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
             outputs.append([np.squeeze(img) for img in y_pred])
         else:
             outputs.append([np.where(np.squeeze(img) > thr, 1, 0) for img in y_pred])
-            # slice_titles.append([su.dice(np.where(np.squeeze(img) > thr, 1, 0), y_true) for img, y_true in zip(y_pred, y_test)])
     list = [x_test, y_test]
     for o in outputs:
         list.append(o)
