@@ -6,7 +6,7 @@ import nibabel as nib
 import data_loader as dl
 import pickle
 from matplotlib import pyplot as plt
-import Utils.load_blacklisted as bl
+import Utils_fd.load_blacklisted as bl
 import utils
 import unet
 import bids_tester
