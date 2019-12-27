@@ -25,9 +25,9 @@ if remote == False:
         model_dir = '/Users/Hendrik/Documents/mlebe_data/models/sixty_four/dice/unet_ep01_val_loss0.67.hdf5'
     print(model_dir)
 else:
-    path = '/Users/Hendrik/Desktop/new_new_hope3/dice_600_2019-12-18'
+    path = '/home/hendrik/src/mlebe/new_new_hope3/dice_600_2019-12-18'
     save_dir = '/home/hendrik/src/mlebe/tmp/'
-    model_dir = path + '/unet_ep70_val_loss0.01.hdf5'
+    model_dir = path + '/1_Step/unet_ep381_val_loss0.05.hdf5'
 
 if test == True:
     import shutil

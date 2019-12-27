@@ -35,7 +35,10 @@ def load_blacklisted(remote, slice_view, shape):
 
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
-    mask = utils.preprocess(dl.load_mask(data_dir), shape, slice_view)
+
+    temp = dl.load_mask(data_dir)
+    temp = temp[0].get_data()
+    mask = utils.preprocess(temp, shape, slice_view)
 
 
     im_data = []
@@ -50,8 +53,8 @@ def load_blacklisted(remote, slice_view, shape):
                                 for bfile in blacklist:
                                     if file == bfile.filename:
                                         img_temp = nib.load(os.path.join(root, file))
-                                        slices.append(bfile.slice)
-                                        im_data.append(img_temp)
+                                        slices.append(int(bfile.slice))
+                                        im_data.append(img_temp.get_data())
 
     if remote == False:
         for root, dirs, files in os.walk(image_dir):
@@ -59,8 +62,8 @@ def load_blacklisted(remote, slice_view, shape):
                 for bfile in blacklist:
                     if file == bfile.filename:
                         img_temp = nib.load(os.path.join(root, file))
-                        slices.append(bfile.slice)
-                        im_data.append(img_temp)
+                        slices.append(int(bfile.slice))
+                        im_data.append(img_temp.get_data())
 
     image_list = []
     mask_list = []
