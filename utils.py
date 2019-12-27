@@ -148,7 +148,7 @@ def save_images(images, mask, img_file_names,save_dir):
 
 
 
-def arrange_mask(img, mask, save_dir, visualisation = False):
+def arrange_mask(img, mask, save_dir = False, visualisation = False):
 
     new_mask = mask[:,:,:]
 
@@ -933,7 +933,7 @@ def compute_correlation(images1, images2, images3, save_dir):
 
     # fig.tight_layout()
 
-    plt.savefig(save_dir + 'parameter_correlation.png')
+    plt.savefig(save_dir + 'correlation.png')
     plt.close()
 
 

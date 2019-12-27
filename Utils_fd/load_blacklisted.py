@@ -69,8 +69,13 @@ def load_blacklisted(remote, slice_view, shape):
     mask_list = []
     for it, img in enumerate(im_data):
         temp = utils.preprocess(img,shape,slice_view=slice_view)
-        image_list.append(temp[slices[it]])
-        mask_list.append(mask[slices[it]])
+        mask_temp = mask
+        fitted_mask = utils.arrange_mask(temp, mask_temp)
+        img_temp, fitted_mask = utils.remove_black_images(temp, fitted_mask)
+
+
+        image_list.append(img_temp[slices[it]])
+        mask_list.append(fitted_mask[slices[it]])
 
 
     return image_list, mask_list

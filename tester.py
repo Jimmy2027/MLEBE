@@ -52,8 +52,14 @@ y_pred_bl = []   #predictions of the blacklisted slices
 
 for slice in blackl_images:
     temp = np.expand_dims(slice, -1)
+    temp = np.expand_dims(temp, 0)
     prediction = model.predict(temp, verbose = 0)
     y_pred_bl.append(np.squeeze(prediction))
+
+if not os.path.exists(save_dir + 'bl_images/'):
+    os.makedirs(save_dir+ 'bl_images/')
+
+utils.compute_correlation(np.concatenate(blackl_images),np.concatenate(blackl_masks), np.concatenate(y_pred_bl), save_dir + 'bl_images/bl_')
 
 for i, img in enumerate(blackl_images):
     plt.imshow(img, cmap='gray')

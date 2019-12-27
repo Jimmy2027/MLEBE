@@ -34,7 +34,7 @@ file_name = '{filename}{i}'.format(filename = file_name, i=i)
 """
 Hyperparameters
 """
-test = False
+test = True
 pretrained = False
 slice_view = 'coronal'
 data_type = 'anat'

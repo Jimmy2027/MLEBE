@@ -262,7 +262,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     plt.legend(['Train', 'Validation'], loc='upper left')
     plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
     plt.close()
-
+ 
     plt.figure()
     # Plot training & validation loss values
     plt.plot(history.history['loss'])
