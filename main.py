@@ -40,8 +40,8 @@ slice_view = 'coronal'
 data_type = 'anat'
 shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['dice_bincross', 'dice', 'bincross']
-#losses = ['dice']
+#losses = ['dice_bincross', 'dice', 'bincross']
+losses = ['dice']
 
 epochss = [600]
 min_epochs = 60
@@ -69,7 +69,7 @@ data_gen_args2 = dict(rotation_range=45,
                      fill_mode='nearest')
 
 data_gen_args1 = dict(rotation_range=0.2,
-                    # brightness_range=[0.9, 1.1], #if training step 1 doesn0t work anymore it's because I added this line
+                    # brightness_range=[0.9, 1.1]
                     width_shift_range=0.05,
                     height_shift_range=0.05,
                     shear_range=0.05,

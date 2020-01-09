@@ -597,7 +597,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
                 os.makedirs(new_save_dir)
             # if data_gen_args == data_gen_argss[-1]:
             #     callbacks = [bidstest_callback, reduce_lr]
-            print('Step',counter,'of', len(epochss) + pretrained_step)
+            print('Step', counter, 'of', len(epochss) + pretrained_step)
             early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view = slice_view, augmentation= augmentation, visualisation=visualisation)
             histories.append(temp_history)
 

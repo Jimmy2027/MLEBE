@@ -7,6 +7,7 @@ import utils
 import unet
 from tensorflow import keras
 from matplotlib import pyplot as plt
+from predict_mask import predict_mask
 
 import data_loader as dl
 
@@ -58,6 +59,7 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
         data = data[:5]
 
     for i in data:
+
         img_data = i.get_data()
         img_data = utils.preprocess(img_data, shape, slice_view=slice_view)
         i = np.expand_dims(img_data, -1)
@@ -124,15 +126,15 @@ if __name__ == '__main__':
     # resample_save_path = '/var/tmp/resampled/'
     # utils.resample_bidsdata(resample_save_path)
 
-    remote = False
+    remote = 'local'
     test = True
-    loss = 'bincross'
-    shape = (128, 128)
+    loss = 'dice'
+    shape = (64, 64)
     threshold = 0
 
-    if remote == False:
+    if remote == 'local':
         path = '/Users/Hendrik/Documents/mlebe_data/resampled/'
-        model_path = '/Users/Hendrik/Documents/Semester_project/results/unet_ep01_val_loss5.48.hdf5'
+        model_path = '/Users/Hendrik/Desktop/new_new_hope3/dice_600_2019-12-18/1_Step/unet_ep381_val_loss0.05.hdf5'
         save_path = '/Users/Hendrik/Documents/mlebe_data/temp_bids/'
     else:
         path = '/var/tmp/resampled/'
@@ -154,4 +156,4 @@ if __name__ == '__main__':
     else:
         print('wrong loss function defined')
 
-
+    bids_tester(save_path, model, remote, shape, 'coronal')

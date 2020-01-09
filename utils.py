@@ -5,12 +5,12 @@ from matplotlib import pyplot as plt
 from matplotlib import gridspec
 import os
 import pickle
-# import cv2
+import cv2
 import data_loader as dl
 import scipy
 import pandas as pd
 
-#todo if train add first and last slices additionaly ?
+
 
 def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation = False):
     if visualisation == True:
@@ -312,7 +312,7 @@ def preprocess(img, shape,slice_view, save_dir = None, visualisation = False, sw
         elif slice_view == 'axial':
             img = np.moveaxis(img, 2, 0)
 
-    img_data = pad_img(img, shape, save_dir ,visualisation)
+    img_data = pad_img(img, shape, save_dir, visualisation)
     img_data = data_normalization(img_data)
 
     return img_data
@@ -839,20 +839,20 @@ def pad_img(img, shape, save_dir = None, visualisation = False):
     padd_y = shape[0] - img.shape[1]
     padd_x = shape[1] - img.shape[2]
     for i in range(img.shape[0]):
-        if padd_x < 0 and padd_y < 0:     #todo temporary commented to not depend on cv2
-            something = 0
-        #     temp = cv2.resize(img[i], (shape[1], shape[0]))
-        #     padded[i] = temp
+        if padd_x < 0 and padd_y < 0:
+
+            temp = cv2.resize(img[i], (shape[1], shape[0]))
+            padded[i] = temp
         elif padd_y < 0:
-            print('img shape:', img.shape)
-        #     temp = cv2.resize(img[i], (img[i].shape[1], shape[0])) #cv2.resize takes shape in form (x,y)!!!
-        #     something = np.empty((img.shape[0], shape[0], img.shape[2]))
-        #     something[i] = temp
-        #     padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
+
+            temp = cv2.resize(img[i], (img[i].shape[1], shape[0])) #cv2.resize takes shape in form (x,y)!!!
+            something = np.empty((img.shape[0], shape[0], img.shape[2]))
+            something[i] = temp
+            padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
         elif padd_x < 0:
-            print('img shape:', img.shape)
-        #     temp = cv2.resize(img[i], (shape[1], img[i].shape[0]))
-        #     padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
+
+            temp = cv2.resize(img[i], (shape[1], img[i].shape[0]))
+            padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
         else:
             padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
 

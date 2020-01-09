@@ -21,8 +21,8 @@ if remote == False:
     path = '/Users/Hendrik/Desktop/new_new_hope3/dice_600_2019-12-18'
     save_dir = '/Users/Hendrik/Documents/mlebe_data/temp/'
     model_dir = path + '/1_Step/unet_ep381_val_loss0.05.hdf5'
-    if test == True:
-        model_dir = '/Users/Hendrik/Documents/mlebe_data/models/sixty_four/dice/unet_ep01_val_loss0.67.hdf5'
+    # if test == True:
+    #     model_dir = '/Users/Hendrik/Documents/mlebe_data/models/sixty_four/dice/unet_ep01_val_loss0.67.hdf5'
     print(model_dir)
 else:
     path = '/home/hendrik/src/mlebe/new_new_hope3/dice_600_2019-12-18'
@@ -46,7 +46,11 @@ else: print('wrong loss function defined')
 
 shape = (64, 64)
 
-blackl_images, blackl_masks = bl.load_blacklisted(remote, slice_view, shape)
+"""
+Predict on blacklisted
+"""
+
+blackl_images, blackl_masks = bl.load_blacklisted(remote, slice_view, shape, save_dir)
 print(len(blackl_images), len(blackl_masks))
 y_pred_bl = []   #predictions of the blacklisted slices
 
@@ -59,7 +63,7 @@ for slice in blackl_images:
 if not os.path.exists(save_dir + 'bl_images/'):
     os.makedirs(save_dir+ 'bl_images/')
 
-utils.compute_correlation(np.concatenate(blackl_images),np.concatenate(blackl_masks), np.concatenate(y_pred_bl), save_dir + 'bl_images/bl_')
+utils.compute_correlation(np.concatenate(blackl_images), np.concatenate(blackl_masks), np.concatenate(y_pred_bl), save_dir + 'bl_images/bl_')
 
 for i, img in enumerate(blackl_images):
     plt.imshow(img, cmap='gray')

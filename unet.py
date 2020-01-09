@@ -101,7 +101,7 @@ def thr_dice_coef_loss(y_true, y_pred):
 def dice_coef(y_true, y_pred, smooth=1):
     """
     Dice = (2*|X & Y|)/ (|X|+ |Y|)
-         =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
+         =  2*sum(|A*B|)/(sum(A)+sum(B))
     ref: https://arxiv.org/pdf/1606.04797v1.pdf
     """
     # y_pred = np.where(y_pred > 0.5, 1, 0)
