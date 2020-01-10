@@ -59,23 +59,35 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
         img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation, switched_axis= True)
         mask_preprocessed = preprocess(fitted_mask, shape, save_dir, visualisation, switched_axis = True)
 
-        if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
-            os.makedirs(save_dir + 'visualisation/blacklisted_slices')
         counter = 0
-        blacklisted_counter = 0
+
+        temp_img = {f'{idx}': img_preprocessed[idx, ...] for idx in range(img_preprocessed.shape[0])}
+        temp_mask = {f'{idx}': mask_preprocessed[idx, ...] for idx in range(mask_preprocessed.shape[0])}
+
+        blacklisted_slices = []
+
         for file in blacklist:
             if file.filename == os.path.basename(i.file_map['image'].filename):
+
+                blacklisted_slices.append(int(file.slice))
                 if visualisation == True:
-                    plt.imshow(img_preprocessed[int(file.slice)-counter, ...], cmap='gray')
-                    plt.imshow(mask_preprocessed[int(file.slice) - counter, ...], alpha=0.3, cmap='Blues')
+                    if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
+                        os.makedirs(save_dir + 'visualisation/blacklisted_slices')
+                    plt.imshow(temp_img['{}'.format(int(file.slice))], cmap='gray')
+                    plt.imshow(temp_mask['{}'.format(int(file.slice))], alpha=0.3, cmap='Blues')
                     plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.png'.format(a=file.filename, b=int(file.slice)))
                     plt.close()
-                img_preprocessed = np.delete(img_preprocessed, int(file.slice) - counter, 0)
-                mask_preprocessed = np.delete(mask_preprocessed, int(file.slice) - counter, 0)
+                del temp_img['{}'.format(int(file.slice))]
+                del temp_mask['{}'.format(int(file.slice))]
                 counter += 1
-                blacklisted_counter += 1
 
-        print('blacklisted {} slices'.format(blacklisted_counter))
+        img_preprocessed = np.stack(
+            [temp_img[f'{idx}'] for idx in range(img_preprocessed.shape[0]) if idx not in blacklisted_slices])
+        mask_preprocessed = np.stack(
+            [temp_mask[f'{idx}'] for idx in range(mask_preprocessed.shape[0]) if idx not in blacklisted_slices])
+
+
+        print('blacklisted {} slices'.format(counter))
 
 
         img_data.append(img_preprocessed)
