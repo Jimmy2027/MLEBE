@@ -8,6 +8,7 @@ import pickle
 import cv2
 import data_loader as dl
 import scipy
+import scipy.ndimage
 import pandas as pd
 
 
@@ -74,8 +75,8 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
                     if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
                         os.makedirs(save_dir + 'visualisation/blacklisted_slices')
                     plt.imshow(temp_img['{}'.format(int(file.slice))], cmap='gray')
-                    plt.imshow(temp_mask['{}'.format(int(file.slice))], alpha=0.3, cmap='Blues')
-                    plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.png'.format(a=file.filename, b=int(file.slice)))
+                    plt.imshow(temp_mask['{}'.format(int(file.slice))], alpha=0.6, cmap='Blues')
+                    plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.pdf'.format(a=file.filename, b=int(file.slice)), format = 'pdf')
                     plt.close()
                 del temp_img['{}'.format(int(file.slice))]
                 del temp_mask['{}'.format(int(file.slice))]
@@ -105,8 +106,8 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
         for im, ma in zip(img_data, mask_data):
             for i in range(im.shape[0]):
                 plt.imshow(np.squeeze(im[i, ...]), cmap='gray')
-                plt.imshow(np.squeeze(ma[i, ...]), alpha=0.3, cmap='Blues')
-                plt.savefig(save_dir + 'visualisation/preprocessed/img_{a}{i}'.format(a=counter,i=i))
+                plt.imshow(np.squeeze(ma[i, ...]), alpha=0.6, cmap='Blues')
+                plt.savefig(save_dir + 'visualisation/preprocessed/img_{a}{i}.pdf'.format(a=counter,i=i), format = 'pdf')
                 plt.close()
             counter += 1
 
@@ -116,8 +117,8 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
         for im, ma in zip(img_unpreprocessed, mask_unpreprocessed):
             for i in range(im.shape[0]):
                 plt.imshow(im[i, ...], cmap='gray')
-                plt.imshow(ma[i, ...], alpha=0.3, cmap='Blues')
-                plt.savefig(save_dir + 'visualisation/unpreprocessed/img_{a}{i}'.format(a=counter,i=i))
+                plt.imshow(ma[i, ...], alpha=0.6, cmap='Blues')
+                plt.savefig(save_dir + 'visualisation/unpreprocessed/img_{a}{i}.pdf'.format(a=counter,i=i), format = 'pdf')
                 plt.close()
             counter += 1
 
@@ -152,8 +153,8 @@ def save_images(images, mask, img_file_names,save_dir):
         for i in range(im.shape[0]):
 
             plt.imshow(im[i, ...], cmap='gray')
-            plt.imshow(ma[i, ...], alpha=0.3, cmap='Blues')
-            plt.savefig(save_dir + '/images/{name}/{i}'.format(name=img_file_names[counter], i=i))
+            plt.imshow(ma[i, ...], alpha=0.6, cmap='Blues')
+            plt.savefig(save_dir + '/images/{name}/{i}.pdf'.format(name=img_file_names[counter], i=i), format = 'pdf')
             plt.close()
         counter += 1
 
@@ -373,7 +374,7 @@ def save_img(img_data, path):
     for j in range(img_data.shape[0]):
         print(img_data[j, ...].shape)
         plt.imshow(img_data[j, ...], cmap='gray')
-        plt.savefig(os.path.join(path, 'img_{}.png'.format(j)))
+        plt.savefig(os.path.join(path, 'img_{}.pdf'.format(j)), format = 'pdf')
 
 def save_datavisualisation1(img_data, save_folder, index_first = True, normalized = False, file_names = False, file_name_header = False):
     """
@@ -721,29 +722,29 @@ def save_datavisualisation_plt(images, save_folder, file_name_header = False, no
 
         if file_names == False:
             i = 0
-            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,)):
+            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.pdf' % (counter,)):
                 i += 1
             plt.ioff()
             plt.switch_backend('agg')
-            figure.savefig(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,))
+            figure.savefig(save_folder + 'mds_{}_'.format(i) + '%d.pdf' % (counter,), format = 'pdf')
             plt.close(figure)
         else:
             if file_name_header == False:
                 i = 0
-                while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
+                while os.path.exists(save_folder + file_names[counter] + '{}.pdf'.format(i)):
                     i += 1
                 plt.ioff()
                 plt.switch_backend('agg')
-                figure.savefig(save_folder + file_names[counter] + '{}.png'.format(i))
+                figure.savefig(save_folder + file_names[counter] + '{}.pdf'.format(i), format = 'pdf')
                 plt.close(figure)
             else:
                 i = 0
-                while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
+                while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.pdf'.format(i)):
                     i += 1
                 plt.ioff()
                 plt.switch_backend('agg')
                 plt.tight_layout()
-                figure.savefig(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i))
+                figure.savefig(save_folder + file_name_header + file_names[counter] + '{}.pdf'.format(i), format = 'pdf')
 
                 plt.close(figure)
             counter = counter + 1
@@ -806,28 +807,28 @@ def save_datavisualisation_plt_subsubplot(images, save_folder, file_name_header 
 
         if file_names == False:
             i = 0
-            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,)):
+            while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.pdf' % (counter,)):
                 i += 1
             plt.ioff()
             plt.switch_backend('agg')
-            figure.savefig(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,))
+            figure.savefig(save_folder + 'mds_{}_'.format(i) + '%d.pdf' % (counter,), format = 'pdf')
             plt.close(figure)
         else:
             if file_name_header == False:
                 i = 0
-                while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
+                while os.path.exists(save_folder + file_names[counter] + '{}.pdf'.format(i)):
                     i += 1
                 plt.ioff()
                 plt.switch_backend('agg')
-                figure.savefig(save_folder + file_names[counter] + '{}.png'.format(i))
+                figure.savefig(save_folder + file_names[counter] + '{}.pdf'.format(i), format = 'pdf')
                 plt.close(figure)
             else:
                 i = 0
-                while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
+                while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.pdf'.format(i)):
                     i += 1
                 plt.ioff()
                 plt.switch_backend('agg')
-                figure.savefig(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i))
+                figure.savefig(save_folder + file_name_header + file_names[counter] + '{}.pdf'.format(i), format = 'pdf')
 
                 plt.close(figure)
             counter = counter + 1
@@ -945,7 +946,7 @@ def compute_correlation(images1, images2, images3, save_dir):
 
     # fig.tight_layout()
 
-    plt.savefig(save_dir + 'correlation.png')
+    plt.savefig(save_dir + 'correlation.pdf', format = 'pdf')
     plt.close()
 
 

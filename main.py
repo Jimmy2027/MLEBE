@@ -34,12 +34,12 @@ file_name = '{filename}{i}'.format(filename = file_name, i=i)
 """
 Hyperparameters
 """
-test = False
+test = True
 pretrained = False
 slice_view = 'coronal'
 data_type = 'anat'
 shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
-visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
+visualisation = True    #if visualisation true saves pre- and unpreprocessed images for visualisation
 #losses = ['dice_bincross', 'dice', 'bincross']
 losses = ['dice']
 

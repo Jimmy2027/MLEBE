@@ -67,13 +67,13 @@ utils.compute_correlation(np.concatenate(blackl_images), np.concatenate(blackl_m
 
 for i, img in enumerate(blackl_images):
     plt.imshow(img, cmap='gray')
-    plt.imshow(blackl_masks[i], alpha=0.3, cmap='Blues')
-    plt.savefig(save_dir + 'bl_images/bl_mask{}'.format(i))
+    plt.imshow(blackl_masks[i], alpha=0.6, cmap='Blues')
+    plt.savefig(save_dir + 'bl_images/bl_mask{}.pdf'.format(i), format = "pdf", dpi = 300)
     plt.close()
 
     plt.imshow(img, cmap='gray')
-    plt.imshow(y_pred_bl[i], alpha=0.3, cmap='Blues')
-    plt.savefig(save_dir + 'bl_images/bl_pred{}'.format(i))
+    plt.imshow(y_pred_bl[i], alpha=0.6, cmap='Blues')
+    plt.savefig(save_dir + 'bl_images/bl_pred{}.pdf'.format(i), format = "pdf", dpi = 300)
     plt.close()
 
 xfile = open(path + '/x_test_struct.pkl', 'rb')

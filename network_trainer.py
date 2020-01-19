@@ -153,9 +153,15 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     model_checkpoint = myModelCheckpoint(save_dir + 'unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, period=1)
 
     callbacks.append(model_checkpoint)
+    try :
+        import subprocess
+        git_commit_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+    except Exception as e:
+        print(e)
 
 
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
+    experiment_description.write('Git commit Version: {} \n\n'.format(git_commit_version))
     experiment_description.write(
         "This experiment was run on {date_time} \n\n".format(date_time=datetime.datetime.now()))
     if augmentation == True:
@@ -287,7 +293,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
             prediction = np.squeeze(prediction)
             img_pred[slice, ...] = prediction
             dice_scores.append(su.dice(i[slice], prediction))
-            dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], prediction),4)))
+            dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], np.where(prediction > 0.8, 0, 1)), 4)))
         y_pred.append(img_pred)
         dice_scores_string.append(dice_score_img)
 
@@ -296,7 +302,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     plt.figure()
     plt.hist(np.unique(temp))
     plt.title('Histogram of the pixel values from the predicted masks')
-    plt.savefig(os.path.join(save_dir, 'hist'+str(np.round(dice_score, 4))+'.png'))
+    plt.savefig(os.path.join(save_dir, 'hist'+str(np.round(dice_score, 4)) + '.png'))
     plt.close()
 
 
@@ -318,7 +324,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         mask = nib.Nifti1Image(mask_temp, x_test_affine, x_test_header)
         nib.save(mask, os.path.join(save_dir, 'mask_' + file_name))
 
-    thresholds = [0, 0.5, 0.7, 0.8, 0.9]
+    thresholds = [0, 0.8]
     outputs = []
     row_titles = ['x_test', 'y_test', 'raw prediction', 'thr 0.5', 'thr 0.7', 'thr 0.8', 'thr 0.9']
     slice_titles = [None, None, dice_scores_string, None, None, None, None]
@@ -365,11 +371,12 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     """
     if pretrained:
         seed = pretrained_seed
-    else: seed = random.randint(0, 1000)
+    else:
+        seed = random.randint(0, 1000)
 
     print('Training with seed: ', seed)
     if remote == 'hongg':
-        image_dir_remote = '/mnt/scratch/'
+        image_dir_remote = '/home/hendrik/Documents/mlebe_data/'
         data_dir = '/usr/share/mouse-brain-atlases/'
         if data_type == 'anat':
             img_data = dl.load_img_remote(image_dir_remote, blacklist)

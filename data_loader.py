@@ -148,6 +148,7 @@ def load_mask(data_dir):
 
 
 def load_func_img(image_dir_remote,test = False):
+    from nipype.interfaces import fsl
     print('*** Loading images ***')
     im_data = []
     for o in os.listdir(image_dir_remote):
@@ -158,6 +159,8 @@ def load_func_img(image_dir_remote,test = False):
                             if root.endswith('func'):
                                 for file in files:
                                     if file.endswith(".nii.gz"):
+                                        # test = fsl.MeanImage(os.path.join(root, file))
+
                                         im_data.append(os.path.join(root, file))
 
 
