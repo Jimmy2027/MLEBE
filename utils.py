@@ -50,6 +50,30 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
             img_unpreprocessed.append(img_temp)
             mask_unpreprocessed.append(mask_temp)
 
+            if not os.path.exists(save_dir + 'visualisation/preprocessed/'):
+                os.makedirs(save_dir + 'visualisation/preprocessed/')
+            counter = 0
+            for im, ma in zip(img_data, mask_data):
+                for i in range(im.shape[0]):
+                    plt.imshow(np.squeeze(im[i, ...]), cmap='gray')
+                    plt.imshow(np.squeeze(ma[i, ...]), alpha=0.6, cmap='Blues')
+                    plt.savefig(save_dir + 'visualisation/preprocessed/img_{a}{i}.pdf'.format(a=counter, i=i),
+                                format='pdf')
+                    plt.close()
+                counter += 1
+
+            if not os.path.exists(save_dir + 'visualisation/unpreprocessed/'):
+                os.makedirs(save_dir + 'visualisation/unpreprocessed/')
+            counter = 0
+            for im, ma in zip(img_unpreprocessed, mask_unpreprocessed):
+                for i in range(im.shape[0]):
+                    plt.imshow(im[i, ...], cmap='gray')
+                    plt.imshow(ma[i, ...], alpha=0.6, cmap='Blues')
+                    plt.savefig(save_dir + 'visualisation/unpreprocessed/img_{a}{i}.pdf'.format(a=counter, i=i),
+                                format='pdf')
+                    plt.close()
+                counter += 1
+
 
 
         fitted_mask = arrange_mask(img_temp, mask_temp, save_dir, visualisation)
@@ -97,30 +121,6 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
 
     if visualisation:
         save_datavisualisation1(mask_data, save_dir + '/visualisation/after_rem_black_cloumns/', index_first= True, normalized= True)
-
-
-    if visualisation == True:
-        if not os.path.exists(save_dir + 'visualisation/preprocessed/'):
-            os.makedirs(save_dir + 'visualisation/preprocessed/')
-        counter = 0
-        for im, ma in zip(img_data, mask_data):
-            for i in range(im.shape[0]):
-                plt.imshow(np.squeeze(im[i, ...]), cmap='gray')
-                plt.imshow(np.squeeze(ma[i, ...]), alpha=0.6, cmap='Blues')
-                plt.savefig(save_dir + 'visualisation/preprocessed/img_{a}{i}.pdf'.format(a=counter,i=i), format = 'pdf')
-                plt.close()
-            counter += 1
-
-        if not os.path.exists(save_dir + 'visualisation/unpreprocessed/'):
-            os.makedirs(save_dir + 'visualisation/unpreprocessed/')
-        counter = 0
-        for im, ma in zip(img_unpreprocessed, mask_unpreprocessed):
-            for i in range(im.shape[0]):
-                plt.imshow(im[i, ...], cmap='gray')
-                plt.imshow(ma[i, ...], alpha=0.6, cmap='Blues')
-                plt.savefig(save_dir + 'visualisation/unpreprocessed/img_{a}{i}.pdf'.format(a=counter,i=i), format = 'pdf')
-                plt.close()
-            counter += 1
 
         save_datavisualisation1(img_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=img_file_names, file_name_header= 'unpro_')
         save_datavisualisation1(img_data, save_dir + '/visualisation/', index_first= True, normalized= True  ,file_names=img_file_names, file_name_header= 'prepr_')
