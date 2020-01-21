@@ -429,7 +429,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
 
     else:
-        save_dir = file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        save_dir = '/home/hendrik/.scratch/mlebe_data/results' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
         if remote == 'leonhard':
             save_dir = '/cluster/scratch/klugh/'+file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
 

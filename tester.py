@@ -10,6 +10,7 @@ import Utils_fd.load_blacklisted as bl
 import utils
 import unet
 import bids_tester
+import cv2
 
 
 test = True
@@ -25,7 +26,7 @@ if remote == False:
     #     model_dir = '/Users/Hendrik/Documents/mlebe_data/models/sixty_four/dice/unet_ep01_val_loss0.67.hdf5'
     print(model_dir)
 else:
-    path = '/home/hendrik/src/mlebe/new_new_hope3/dice_600_2019-12-18'
+    path = '/home/hendrik/src/mlebe/old_results/new_new_hope3/dice_600_2019-12-18'
     save_dir = '/home/hendrik/src/mlebe/tmp/'
     model_dir = path + '/1_Step/unet_ep381_val_loss0.05.hdf5'
 
@@ -46,35 +47,37 @@ else: print('wrong loss function defined')
 
 shape = (64, 64)
 
-"""
-Predict on blacklisted
-"""
-
-blackl_images, blackl_masks = bl.load_blacklisted(remote, slice_view, shape, save_dir)
-print(len(blackl_images), len(blackl_masks))
-y_pred_bl = []   #predictions of the blacklisted slices
-
-for slice in blackl_images:
-    temp = np.expand_dims(slice, -1)
-    temp = np.expand_dims(temp, 0)
-    prediction = model.predict(temp, verbose = 0)
-    y_pred_bl.append(np.squeeze(prediction))
-
-if not os.path.exists(save_dir + 'bl_images/'):
-    os.makedirs(save_dir+ 'bl_images/')
-
-utils.compute_correlation(np.concatenate(blackl_images), np.concatenate(blackl_masks), np.concatenate(y_pred_bl), save_dir + 'bl_images/bl_')
-
-for i, img in enumerate(blackl_images):
-    plt.imshow(img, cmap='gray')
-    plt.imshow(blackl_masks[i], alpha=0.6, cmap='Blues')
-    plt.savefig(save_dir + 'bl_images/bl_mask{}.pdf'.format(i), format = "pdf", dpi = 300)
-    plt.close()
-
-    plt.imshow(img, cmap='gray')
-    plt.imshow(y_pred_bl[i], alpha=0.6, cmap='Blues')
-    plt.savefig(save_dir + 'bl_images/bl_pred{}.pdf'.format(i), format = "pdf", dpi = 300)
-    plt.close()
+# """
+# Predict on blacklisted
+# """
+#
+# blackl_images, blackl_masks = bl.load_blacklisted(remote, slice_view, shape, save_dir)
+# blackl_images = blackl_images[:10]
+# blackl_masks = blackl_masks[:10]
+#
+# y_pred_bl = []   #predictions of the blacklisted slices
+#
+# for slice in blackl_images:
+#     temp = np.expand_dims(slice, -1)
+#     temp = np.expand_dims(temp, 0)
+#     prediction = model.predict(temp, verbose = 0)
+#     y_pred_bl.append(np.squeeze(prediction))
+#
+# if not os.path.exists(save_dir + 'bl_images/'):
+#     os.makedirs(save_dir+ 'bl_images/')
+#
+# utils.compute_correlation(np.concatenate(blackl_images), np.concatenate(blackl_masks), np.concatenate(y_pred_bl), save_dir + 'bl_images/bl_')
+#
+# for i, img in enumerate(blackl_images):
+#     plt.imshow(img, cmap='gray')
+#     plt.imshow(blackl_masks[i], alpha=0.6, cmap='Blues')
+#     plt.savefig(save_dir + 'bl_images/bl_mask{}.pdf'.format(i), format = "pdf", dpi = 300)
+#     plt.close()
+#
+#     plt.imshow(img, cmap='gray')
+#     plt.imshow(y_pred_bl[i], alpha=0.6, cmap='Blues')
+#     plt.savefig(save_dir + 'bl_images/bl_pred{}.pdf'.format(i), format = "pdf", dpi = 300)
+#     plt.close()
 
 xfile = open(path + '/x_test_struct.pkl', 'rb')
 x_test_struct = pickle.load(xfile)
@@ -89,19 +92,22 @@ y_test, y_test_affines, y_test_headers = y_test_struct['y_test'], y_test_struct[
 
 # y_pred = np.load(path +'/y_pred.npy', allow_pickle= True)
 
+x_test = [i[0::10] for i in x_test]
+y_test = [i[0::10] for i in y_test]
+
 if test == True:
     x_test = x_test[:10]
     y_test = y_test[:10]
 
 
-
-
 y_pred = []   #predictions of the test set
 dice_scores_string = []
 dice_scores = []
+dice_scores_thr = []
 for i in y_test:
     img_pred = np.empty((i.shape))
     dice_score_img = []
+    dice_score_img_thr = []
     for slice in range(i.shape[0]):
         temp = np.expand_dims(i[slice], -1)  # expand dims for channel
         temp = np.expand_dims(temp, 0)  # expand dims for batch
@@ -109,9 +115,12 @@ for i in y_test:
         prediction = np.squeeze(prediction)
         img_pred[slice, ...] = prediction
         dice_scores.append(su.dice(i[slice], prediction))
-        dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], prediction), 4)))
+        dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], prediction), 3)))
+        dice_score_img_thr.append('dice: ' + str(np.round(su.dice(np.where(np.squeeze(i[slice]) > 0.9, 1, 0), prediction), 3)))
+
     y_pred.append(img_pred)
     dice_scores_string.append(dice_score_img)
+    dice_scores_thr.append(dice_score_img_thr)
 
 temp = np.concatenate(y_pred, 0)
 dice_score = np.median(dice_scores)
@@ -128,37 +137,52 @@ plt.close()
 
 
 
-thresholds = [0, 0.5, 0.9]
+thresholds = [0]
 outputs = []
-slice_titles = [None, None, dice_scores_string, None, None]
+slice_titles = [None, None, dice_scores_string, None]
 row_titles = ['x_test']
 
 corr_temp = [utils.corr(y, x) for x, y in zip(x_test, y_test)]
 
-row_titles.append('y_test' + '\n corr: ' + str(np.round(np.median(corr_temp),4)))
+row_titles.append('y_test' + '\n corr: ' + str(np.round(np.median(corr_temp),3)))
 correlations_thr = []
-dice_score_thr = []
+
 for thr in thresholds:
     if thr == 0:
         outputs.append([np.squeeze(img) for img in y_pred])
         dice_temp = [su.dice(np.squeeze(img), y_true) for img, y_true in zip(y_pred,y_test)]
         # corr_temp = [np.correlate(np.squeeze(img), x) for img, x in zip(y_pred, x_test)]
         corr_temp = [utils.corr(img, x) for img, x in zip(y_pred, x_test)]
-        row_titles.append('raw prediction \n' + str(np.round(np.median(dice_temp), 4)) + '\n corr: ' + str(np.round(np.median(corr_temp),4)))
+        row_titles.append('Prediction \n' + 'Dice: ' + str(np.round(np.median(dice_temp), 3)) + '\n corr: ' + str(np.round(np.median(corr_temp),3)))
     else:
         outputs.append([np.where(np.squeeze(img) > thr, 1, 0) for img in y_pred])
         dice_temp = [su.dice(np.where(np.squeeze(img) > thr, 1, 0), y_true) for img, y_true in zip(y_pred, y_test)]
         # corr_temp = [np.correlate(np.where(np.squeeze(img) > thr, 1, 0), x) for img, x in zip(y_pred, x_test)]
         corr_temp = [utils.corr(np.where(img > thr, 1, 0), x) for img, x in zip(y_pred, x_test)]
-        dice_score_thr.append(dice_temp)
-        row_titles.append('thr: ' + str(thr) + '\n ' + str(np.round(np.median(dice_temp), 4)) + '\n corr: ' + str(np.round(np.median(corr_temp),4)))
+
+        row_titles.append('thr: ' + str(thr) + '\n ' + 'Dice: ' + str(np.round(np.median(dice_temp), 3)) + '\n corr: ' + str(np.round(np.median(corr_temp),3)))
 
 utils.compute_correlation(np.concatenate(x_test), np.concatenate(y_test),np.concatenate(outputs[0]), save_dir)
 list = [x_test, y_test]
 for o in outputs:
     list.append(o)
-utils.save_datavisualisation(list, save_dir, file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
-utils.save_datavisualisation_plt(list, save_dir, normalized=True, file_names=file_names, figure_title='Predictions with a median Dice score of {}'.format(np.round(dice_score, 4)), slice_titles=slice_titles, row_titles=row_titles)
+slice_titles[-1] = dice_scores_thr
+
+
+list_new = []
+for l in list:
+    new_elem = []
+    for elem in l:
+        new_i = np.empty((elem.shape[0],elem.shape[1]*8,elem.shape[2] *8))
+        for j,i in enumerate(elem):
+            try:
+                new_i[j] = cv2.resize(elem[j], (elem[j].shape[0]*8, elem[j].shape[1]*8))
+            except Exception as e:
+                print(e)
+        new_elem.append(new_i)
+    list_new.append(new_elem)
+#         # elem = elem[i = cv2.resize(i, (i.shape[0]*2, i.shape[1]*2)) for i in elem]
+utils.save_datavisualisation_plt(list_new, save_dir, normalized=True, file_names=file_names, slice_titles=slice_titles, row_titles=row_titles)
 
 dice_score = np.median(dice_scores)
 print('median Dice score: ', dice_score)

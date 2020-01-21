@@ -118,7 +118,7 @@ def load_img(image_dir, blacklist, test = False):
 
 def load_mask(data_dir):
     print('*** Loading mask ***')
-    mask = []
+
     im_data = []
     for o in os.listdir(data_dir):
         if o == 'dsurqec_200micron_mask.nii':

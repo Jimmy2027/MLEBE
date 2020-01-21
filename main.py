@@ -25,7 +25,7 @@ elif os.path.exists('/home/klug/Hendrik/MLEBE/mouse-brain-atlases'):
     remote = 'epfl'
 else: remote = 'local'
 
-file_name = 'test'
+file_name = 'final'
 i = 0
 while os.path.exists(file_name + '{}/'.format(i)):
     i += 1
@@ -34,16 +34,16 @@ file_name = '{filename}{i}'.format(filename = file_name, i=i)
 """
 Hyperparameters
 """
-test = True
+test = False
 pretrained = False
 slice_view = 'coronal'
 data_type = 'anat'
 shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = True    #if visualisation true saves pre- and unpreprocessed images for visualisation
-#losses = ['dice_bincross', 'dice', 'bincross']
-losses = ['dice']
+losses = ['dice_bincross', 'dice', 'bincross']
+# losses = ['dice']
 
-epochss = [600]
+epochss = [300, 600]
 min_epochs = 60
 if test == True:
     min_epochs = 0
@@ -81,7 +81,7 @@ data_gen_args1 = dict(rotation_range=0.2,
 data_gen_args0 = None
 
 
-data_gen_argss = [data_gen_args3]
+data_gen_argss = [data_gen_args0, data_gen_args3]
 max_tries = 3
 if test == True:
     max_tries = 2

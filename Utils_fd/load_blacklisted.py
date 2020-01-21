@@ -86,9 +86,12 @@ def load_blacklisted(remote, slice_view, shape, save_dir):
 
 
 
+        try:
+            image_list.append(img_preprocessed[slices[it]])
+            mask_list.append(mask_preprocessed[slices[it]])
+        except Exception as e:
+            print(e)
 
-        image_list.append(img_preprocessed[slices[it]])
-        mask_list.append(mask_preprocessed[slices[it]])
-
-    utils.save_datavisualisation([image_list_temp,mask_list_temp], save_dir + 'test/')
+    # # utils.save_datavisualisation([image_list_temp,mask_list_temp], save_dir + 'test/')
+    # utils.save_datavisualisation_plt([image_list_temp, mask_list_temp], save_dir + 'test/')
     return image_list, mask_list

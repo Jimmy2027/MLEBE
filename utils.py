@@ -50,27 +50,27 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
             img_unpreprocessed.append(img_temp)
             mask_unpreprocessed.append(mask_temp)
 
-            if not os.path.exists(save_dir + 'visualisation/preprocessed/'):
-                os.makedirs(save_dir + 'visualisation/preprocessed/')
+            if not os.path.exists(save_dir + 'visualisation/preprocessed/' + os.path.basename(m.file_map['image'].filename)):
+                os.makedirs(save_dir + 'visualisation/preprocessed/' + os.path.basename(m.file_map['image'].filename))
             counter = 0
             for im, ma in zip(img_data, mask_data):
-                for i in range(im.shape[0]):
-                    plt.imshow(np.squeeze(im[i, ...]), cmap='gray')
-                    plt.imshow(np.squeeze(ma[i, ...]), alpha=0.6, cmap='Blues')
-                    plt.savefig(save_dir + 'visualisation/preprocessed/img_{a}{i}.pdf'.format(a=counter, i=i),
-                                format='pdf')
+                for it in range(im.shape[0]):
+                    plt.imshow(np.squeeze(im[it, ...]), cmap='gray')
+                    plt.imshow(np.squeeze(ma[it, ...]), alpha=0.6, cmap='Blues')
+                    plt.axis('off')
+                    plt.savefig(save_dir + 'visualisation/preprocessed/' + os.path.basename(m.file_map['image'].filename)+ '/img_{a}{it}.pdf'.format(a=counter, it=it),format='pdf')
                     plt.close()
                 counter += 1
 
-            if not os.path.exists(save_dir + 'visualisation/unpreprocessed/'):
-                os.makedirs(save_dir + 'visualisation/unpreprocessed/')
+            if not os.path.exists(save_dir + 'visualisation/unpreprocessed/' + os.path.basename(m.file_map['image'].filename)):
+                os.makedirs(save_dir + 'visualisation/unpreprocessed/' + os.path.basename(m.file_map['image'].filename))
             counter = 0
             for im, ma in zip(img_unpreprocessed, mask_unpreprocessed):
-                for i in range(im.shape[0]):
-                    plt.imshow(im[i, ...], cmap='gray')
-                    plt.imshow(ma[i, ...], alpha=0.6, cmap='Blues')
-                    plt.savefig(save_dir + 'visualisation/unpreprocessed/img_{a}{i}.pdf'.format(a=counter, i=i),
-                                format='pdf')
+                for it in range(im.shape[0]):
+                    plt.imshow(im[it, ...], cmap='gray')
+                    plt.imshow(ma[it, ...], alpha=0.6, cmap='Blues')
+                    plt.axis('off')
+                    plt.savefig(save_dir + 'visualisation/unpreprocessed/' + os.path.basename(m.file_map['image'].filename)+'/img_{a}{it}.pdf'.format(a=counter, it=it), format='pdf')
                     plt.close()
                 counter += 1
 
@@ -102,8 +102,14 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
                     plt.imshow(temp_mask['{}'.format(int(file.slice))], alpha=0.6, cmap='Blues')
                     plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.pdf'.format(a=file.filename, b=int(file.slice)), format = 'pdf')
                     plt.close()
-                del temp_img['{}'.format(int(file.slice))]
-                del temp_mask['{}'.format(int(file.slice))]
+
+                try:
+                    del temp_img['{}'.format(int(file.slice))]
+                    del temp_mask['{}'.format(int(file.slice))]
+                except Exception as e:
+
+                    print('Error for {} at: '.format(file.filename), e)
+                    print('len(file): ', temp_img.shape)
                 counter += 1
 
         img_preprocessed = np.stack(
@@ -686,25 +692,27 @@ def save_datavisualisation_plt(images, save_folder, file_name_header = False, no
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
-
-
+    counter = 0
     for img in range(len(images[0])): #number of images that will be saved at the end
-        counter = 0
+
 
         nrow = len(images)
         ncol = images[0][img].shape[0]
 
         plt.switch_backend('agg')
-        figure = plt.figure(figsize=(ncol + 1, nrow + 1))
+        figure = plt.figure(figsize=(ncol +1 , nrow +1))
+
         anno_opts = dict(xy=(0.5, 0.5), xycoords='axes fraction',
                          va='center', ha='center')
         if not figure_title == False:
             figure.suptitle(figure_title, fontsize=  20)
 
-        gs = gridspec.GridSpec(nrow+1, ncol+1, wspace=1, hspace=0.2, top=1. - 0.5 / (nrow + 1), bottom=0.5 / (nrow + 1), left=0.5 / (ncol + 1), right=1 - 0.5 / (ncol + 1))
+        gs = gridspec.GridSpec(nrow+1, ncol+1, wspace=0.6, hspace=0.2, top=1. - 0.5 / (nrow + 1), bottom= 0.5 / (nrow + 1), left=0.5 / (ncol + 1), right=1 - 0.5 / (ncol + 1))
+
 
         for list in range(len(images)):
             for slice in range(images[list][img].shape[0]+1):
+
                 i_col = slice
                 i_row = list
                 ax = plt.subplot(gs[i_row, i_col])
@@ -716,7 +724,7 @@ def save_datavisualisation_plt(images, save_folder, file_name_header = False, no
                 else:
                     if not slice_titles == False:
                         if not slice_titles[list] is None:
-                            ax.set_title(slice_titles[list][img][slice-1],  fontdict={'fontsize': 10})
+                            ax.set_title(slice_titles[list][img][slice-1],  fontdict={'fontsize': 8})
                     plt.imshow(images[list][img][slice-1,:,:] * 255, cmap = 'gray')
                     plt.axis('off')
 
@@ -747,7 +755,7 @@ def save_datavisualisation_plt(images, save_folder, file_name_header = False, no
                 figure.savefig(save_folder + file_name_header + file_names[counter] + '{}.pdf'.format(i), format = 'pdf')
 
                 plt.close(figure)
-            counter = counter + 1
+        counter = counter + 1
 
 
 def save_datavisualisation_plt_subsubplot(images, save_folder, file_name_header = False, normalized = False, file_names = False, row_titles = False, slice_titles = False):
