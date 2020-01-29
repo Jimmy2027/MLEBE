@@ -295,10 +295,10 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
             temp = np.expand_dims(temp, 0) #expand dims for batch
             prediction = model.predict(temp, verbose=0)
             prediction = np.squeeze(prediction)
-            prediction_bin = np.where(prediction > 0.9, 0, 1)
+            prediction_bin = np.where(prediction > 0.9, 1, 0)
             img_pred[slice, ...] = prediction_bin
             dice_scores.append(su.dice(i[slice], prediction_bin))
-            dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], np.where(prediction > 0.6, 0, 1)), 4)))
+            dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], np.where(prediction > 0.6, 1, 0)), 4)))
         y_pred.append(img_pred)
         dice_scores_string.append(dice_score_img)
 
