@@ -149,11 +149,33 @@ if __name__ == '__main__':
             img = nib.load(os.path.join(path, o))
             data.append(img)
 
-    if loss == 'dice':
-        model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': unet.dice_coef_loss})
-    elif loss == 'bincross':
-        model = keras.models.load_model(model_path)
-    else:
-        print('wrong loss function defined')
+    import shutil
+    save_dir = 'temp_s/'
+    if os.path.exists(save_dir):
+        shutil.rmtree(save_dir)
 
-    bids_tester(save_path, model, remote, shape, 'coronal')
+    os.mkdir(save_dir)
+
+    something = nib.load('/Users/Hendrik/Desktop/sub-4011_ses-ofMcF2_acq-TurboRARElowcov_T2w_corrected.nii.gz')
+    predict_mask(something, save_dir)
+
+
+    save_dir = 'temp_bids/'
+    if os.path.exists(save_dir):
+        shutil.rmtree(save_dir)
+    os.mkdir(save_dir)
+
+    predict_mask(data[0], save_dir)
+
+
+
+    #
+    #
+    # if loss == 'dice':
+    #     model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': unet.dice_coef_loss})
+    # elif loss == 'bincross':
+    #     model = keras.models.load_model(model_path)
+    # else:
+    #     print('wrong loss function defined')
+    #
+    # bids_tester(save_path, model, remote, shape, 'coronal')

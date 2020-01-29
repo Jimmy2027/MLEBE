@@ -725,7 +725,8 @@ def save_datavisualisation_plt(images, save_folder, file_name_header = False, no
                     if not slice_titles == False:
                         if not slice_titles[list] is None:
                             ax.set_title(slice_titles[list][img][slice-1],  fontdict={'fontsize': 8})
-                    plt.imshow(images[list][img][slice-1,:,:] * 255, cmap = 'gray')
+                    image = images[list][img][slice-1,:,:] * 255
+                    plt.imshow(image.repeat(2, axis = 0).repeat(2, axis = 1), cmap = 'gray')
                     plt.axis('off')
 
         if file_names == False:
@@ -941,6 +942,9 @@ def compute_correlation(images1, images2, images3, save_dir):
     d = {'x_test': images1.reshape(-1), 'y_test': images2.reshape(-1), 'y_pred': images3.reshape(-1)}
     data = pd.DataFrame(data=d)
     corr = data.corr(method='pearson')
+
+
+
 
     fig, ax = plt.subplots()
 

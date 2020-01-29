@@ -84,7 +84,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
         def __init__(self, filepath, monitor='val_loss', verbose=0,
                      save_best_only=False, save_weights_only=False,
-                     mode='auto', period=1):
+                     mode='auto', period=20):
             super(myModelCheckpoint, self).__init__()
             self.monitor = monitor
             self.verbose = verbose
@@ -150,9 +150,9 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
                         self.model.save(filepath, overwrite=True)
 
 
-    model_checkpoint = myModelCheckpoint(save_dir + 'unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, period=1)
+    model_checkpoint = myModelCheckpoint(save_dir + 'unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, period=20)
 
-    callbacks.append(model_checkpoint)
+    # callbacks.append(model_checkpoint)
     try :
         import subprocess
         git_commit_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
@@ -219,12 +219,14 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
         for i in range(30):
             plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
-            plt.imshow(np.squeeze(masks[i,...]), alpha = 0.3, cmap = 'Blues')
-            plt.savefig(augment_save_dir+'/img_{}'.format(i))
+            plt.imshow(np.squeeze(masks[i,...]), alpha = 0.6, cmap = 'Blues')
+            # plt.axes('off')
+            plt.savefig(augment_save_dir+'/img_{}.pdf'.format(i), format = 'pdf')
             plt.close()
             plt.imshow(np.squeeze(imgs_val[i,...]), cmap = 'gray')
-            plt.imshow(np.squeeze(masks_val[i,...]), alpha = 0.3, cmap = 'Blues')
-            plt.savefig(augment_save_dir+'/val_{}'.format(i))
+            plt.imshow(np.squeeze(masks_val[i,...]), alpha = 0.6, cmap = 'Blues')
+            # plt.axes('off')
+            plt.savefig(augment_save_dir+'/val_{}.pdf'.format(i), format = 'pdf')
             plt.close()
 
         train_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs), tf.data.Dataset.from_tensor_slices(masks)))
@@ -243,13 +245,13 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
             for i in range(x_train.shape[0]):
                 plt.imshow(np.squeeze(x_train[i, ...]), cmap='gray')
-                plt.imshow(np.squeeze(y_train[i, ...]), alpha=0.3, cmap='Blues')
-                plt.savefig(save_dir + 'train/img_{}'.format(i))
+                plt.imshow(np.squeeze(y_train[i, ...]), alpha=0.6, cmap='Blues')
+                plt.savefig(save_dir + 'train/img_{}.pdf'.format(i), format= 'pdf')
                 plt.close()
             for i in range(x_val.shape[0]):
                 plt.imshow(np.squeeze(x_val[i, ...]), cmap='gray')
-                plt.imshow(np.squeeze(y_val[i, ...]), alpha=0.3, cmap='Blues')
-                plt.savefig(save_dir + 'val/val_{}'.format(i))
+                plt.imshow(np.squeeze(y_val[i, ...]), alpha=0.6, cmap='Blues')
+                plt.savefig(save_dir + 'val/val_{}.pdf'.format(i), format = 'pdf')
                 plt.close()
         history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
                             epochs=epochs, validation_steps=int(len(x_train) / 32), verbose=1,
@@ -280,6 +282,8 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     plt.savefig(os.path.join(save_dir, 'loss_values.png'))
     plt.close()
 
+    model.save(save_dir + 'model_ep{}.h5'.format(len(history.epoch)), overwrite=True)
+
     y_pred = []
     dice_scores_string = []
     dice_scores = []
@@ -291,9 +295,10 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
             temp = np.expand_dims(temp, 0) #expand dims for batch
             prediction = model.predict(temp, verbose=0)
             prediction = np.squeeze(prediction)
-            img_pred[slice, ...] = prediction
-            dice_scores.append(su.dice(i[slice], prediction))
-            dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], np.where(prediction > 0.8, 0, 1)), 4)))
+            prediction_bin = np.where(prediction > 0.9, 0, 1)
+            img_pred[slice, ...] = prediction_bin
+            dice_scores.append(su.dice(i[slice], prediction_bin))
+            dice_score_img.append('dice: ' + str(np.round(su.dice(i[slice], np.where(prediction > 0.6, 0, 1)), 4)))
         y_pred.append(img_pred)
         dice_scores_string.append(dice_score_img)
 
@@ -324,7 +329,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         mask = nib.Nifti1Image(mask_temp, x_test_affine, x_test_header)
         nib.save(mask, os.path.join(save_dir, 'mask_' + file_name))
 
-    thresholds = [0, 0.8]
+    thresholds = [0, 0.6]
     outputs = []
     row_titles = ['x_test', 'y_test', 'raw prediction', 'thr 0.5', 'thr 0.7', 'thr 0.8', 'thr 0.9']
     slice_titles = [None, None, dice_scores_string, None, None, None, None]
@@ -411,7 +416,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
         data_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases/'  # local
 
     if test == True:
-        epochss = np.ones(len(data_gen_argss), dtype=int)
+        epochss = np.ones(len(data_gen_argss), dtype=int)*10
 
         if remote =='local':
             save_dir = '/Users/Hendrik/Documents/mlebe_data/results/test/{loss}_{epochs}_{date}/'.format(
@@ -429,7 +434,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
 
     else:
-        save_dir = '/home/hendrik/.scratch/mlebe_data/results' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        save_dir = '/home/hendrik/.scratch/mlebe_data/results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
         if remote == 'leonhard':
             save_dir = '/cluster/scratch/klugh/'+file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
 
