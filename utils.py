@@ -844,45 +844,72 @@ def save_datavisualisation_plt_subsubplot(images, save_folder, file_name_header 
 
 
 
+# def pad_img(img, shape, save_dir = None, visualisation = False):
+#     """
+#     Reshapes input image to shape. If input shape is bigger -> resize, if it is smaller -> zero-padd
+#     :param img:
+#     :param shape: shape in (y,x)
+#     :return:
+#     """
+#     if visualisation == True:
+#         before = []
+#         before.append(img)
+#
+#
+#
+#     padded = np.empty((img.shape[0], shape[0], shape[1]))
+#     padd_y = shape[0] - img.shape[1]
+#     padd_x = shape[1] - img.shape[2]
+#     for i in range(img.shape[0]):
+#         if padd_x < 0 and padd_y < 0:
+#
+#             temp = cv2.resize(img[i], (shape[1], shape[0]))
+#             padded[i] = temp
+#         elif padd_y < 0:
+#
+#             temp = cv2.resize(img[i], (img[i].shape[1], shape[0])) #cv2.resize takes shape in form (x,y)!!!
+#             something = np.empty((img.shape[0], shape[0], img.shape[2]))
+#             something[i] = temp
+#             padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
+#         elif padd_x < 0:
+#
+#             temp = cv2.resize(img[i], (shape[1], img[i].shape[0]))
+#             padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
+#         else:
+#             padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
+#
+#     if visualisation == True:
+#         after = []
+#         after.append(padded)
+#         save_datavisualisation2(before, after, save_dir + '/visualisation/pad_img/', index_first= True, normalized= True)
+#     return padded
+
+
 def pad_img(img, shape, save_dir = None, visualisation = False):
-    """
-    Reshapes input image to shape. If input shape is bigger -> resize, if it is smaller -> zero-padd
-    :param img:
-    :param shape: shape in (y,x)
-    :return:
-    """
-    if visualisation == True:
-        before = []
-        before.append(img)
-
-
-
-    padded = np.empty((img.shape[0], shape[0], shape[1]))
     padd_y = shape[0] - img.shape[1]
     padd_x = shape[1] - img.shape[2]
-    for i in range(img.shape[0]):
-        if padd_x < 0 and padd_y < 0:
+    padded = np.empty((img.shape[0], shape[0], shape[1]))
 
-            temp = cv2.resize(img[i], (shape[1], shape[0]))
-            padded[i] = temp
-        elif padd_y < 0:
-
-            temp = cv2.resize(img[i], (img[i].shape[1], shape[0])) #cv2.resize takes shape in form (x,y)!!!
-            something = np.empty((img.shape[0], shape[0], img.shape[2]))
-            something[i] = temp
-            padded[i, ...] = np.pad(something[i, ...], ((0,0), (padd_x // 2, shape[1] - padd_x // 2 - img.shape[2])), 'constant')
-        elif padd_x < 0:
-
-            temp = cv2.resize(img[i], (shape[1], img[i].shape[0]))
-            padded[i] = np.pad(temp, ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (0,0)), 'constant')
-        else:
+    if img.shape[1] < shape[0] and img.shape[2] < shape[1]:
+        for i in range(img.shape[0]):
             padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
 
-    if visualisation == True:
-        after = []
-        after.append(padded)
-        save_datavisualisation2(before, after, save_dir + '/visualisation/pad_img/', index_first= True, normalized= True)
+    elif img.shape[1] > img.shape[2]:
+        for i in range(img.shape[0]):
+            padd = img.shape[1] - img.shape[2]
+            temp_padded = np.pad(img[i, ...], ((0,0), (padd // 2, img.shape[1] - padd // 2 - img.shape[2])), 'constant')
+            padded[i] = cv2.resize(temp_padded, (shape[1], shape[0]))
+
+    elif img.shape[1] < img.shape[2]:
+        for i in range(img.shape[0]):
+            padd = img.shape[2] - img.shape[1]
+            temp_padded = np.pad(img[i, ...], ((padd // 2, img.shape[2] - padd // 2 - img.shape[1]),(0,0)), 'constant')
+            padded[i] = cv2.resize(temp_padded, (shape[1], shape[0]))
+    else:
+        temp = cv2.resize(img[i], (shape[1], shape[0]))
+        padded[i] = temp
     return padded
+
 
 def write_slice_blacklist():
     blacklist = []

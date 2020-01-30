@@ -13,8 +13,8 @@ import bids_tester
 import cv2
 
 
-test = True
-remote = False
+test = False
+remote = True
 loss = 'dice'
 slice_view = 'coronal'
 
@@ -91,9 +91,9 @@ x_test, x_test_affines, x_test_headers, file_names = x_test_struct['x_test'], x_
 y_test, y_test_affines, y_test_headers = y_test_struct['y_test'], y_test_struct['y_test_affines'], y_test_struct['y_test_headers']
 
 # y_pred = np.load(path +'/y_pred.npy', allow_pickle= True)
-
-x_test = [i[0::10] for i in x_test]
-y_test = [i[0::10] for i in y_test]
+#
+# x_test = [i[0::10] for i in x_test]
+# y_test = [i[0::10] for i in y_test]
 
 if test == True:
     x_test = x_test[:10]
@@ -123,7 +123,8 @@ for i in y_test:
     dice_scores_thr.append(dice_score_img_thr)
 
 temp = np.concatenate(y_pred, 0)
-dice_score = np.median(dice_scores)
+median_dice_score = np.median(dice_scores)
+dice_score = np.average(dice_scores)
 
 plt.figure()
 plt.hist(np.squeeze(temp).flatten(), bins = 'auto')
@@ -188,7 +189,8 @@ dice_score = np.median(dice_scores)
 textfile = open(save_dir + 'dice_score.txt', 'w+')
 textfile.write(str(dice_score))
 textfile.close()
-print('median Dice score: ', dice_score)
+print('mean Dice score: ', mean_dice_score)
+print('average Dice score: ', dice_score)
 file_namess = []
 for i in range(len(y_pred)):
     y_test_affine = y_test_affines[i]
