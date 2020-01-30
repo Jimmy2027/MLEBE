@@ -23,41 +23,38 @@ elif os.path.exists('/home/klug/Hendrik/MLEBE/mouse-brain-atlases'):
     remote = 'epfl'
 else: remote = 'local'
 
-file_name = 'final'
-i = 0
-while os.path.exists(file_name + '{}/'.format(i)):
-    i += 1
-file_name = '{filename}{i}'.format(filename = file_name, i=i)
+file_name = 'no_tf_lr_128'
+
 
 """
 Hyperparameters
 """
-test = True
+test = False
 pretrained = False
 slice_view = 'coronal'
 data_type = 'anat'
-shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
+shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['dice','dice_bincross', 'bincross']
+losses = ['dice', 'dice_bincross', 'bincross']
 # losses = ['dice']
 
-epochss = [10, 20, 100, 600]
+epochss = [600]
 min_epochs = 0
 if test == True:
     min_epochs = 0
 
 data_gen_args3 = dict(rotation_range=90,
-                     # brightness_range=[0.9, 1.1],
+                     brightness_range=[0.9, 1.1],
                      width_shift_range=30,
                      height_shift_range=30,
                      shear_range=5,
-                     zoom_range=0.2,
+                     zoom_range=0.3,
                      horizontal_flip=True,
                      vertical_flip=True,
                      fill_mode='nearest')
 
 data_gen_args2 = dict(rotation_range=45,
-                     # brightness_range=[0.9, 1.1],
+                     brightness_range=[0.9, 1.1],
                      width_shift_range=15,
                      height_shift_range=15,
                      shear_range=5,
@@ -67,7 +64,7 @@ data_gen_args2 = dict(rotation_range=45,
                      fill_mode='nearest')
 
 data_gen_args1 = dict(rotation_range=0.2,
-                    # brightness_range=[0.9, 1.1]
+                    brightness_range=[0.9, 1.1],
                     width_shift_range=0.05,
                     height_shift_range=0.05,
                     shear_range=0.05,
@@ -79,7 +76,7 @@ data_gen_args1 = dict(rotation_range=0.2,
 data_gen_args0 = None
 
 
-data_gen_argss = [data_gen_args1, data_gen_args2, data_gen_args3]
+data_gen_argss = [data_gen_args3]
 max_tries = 3
 if test == True:
     max_tries = 2

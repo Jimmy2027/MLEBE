@@ -26,7 +26,7 @@ import warnings
 #todo write README
 #todo write scratches with useful functions
 
-def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False):
+def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False, pretrained = False):
     """
     Trains the model
 
@@ -53,6 +53,7 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     :param earlystopper:
     :return: Bool: (False if early stopped before min_epochs, False else), history
     """
+
     class myModelCheckpoint(keras.callbacks.Callback):
         """Save the model after every epoch.
         `filepath` can contain named formatting options,
@@ -171,6 +172,8 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
     experiment_description.write('Callbacks: {callback}'.format(callback=str(callbacks)) + '\n\n')
     experiment_description.write('Seed: {seed}'.format(seed=seed) + '\n\n')
     experiment_description.write('Shape: {shape}'.format(shape=shape) + '\n\n')
+    experiment_description.write('Epochs: {epochs}'.format(epochs=epochs) + '\n\n')
+    experiment_description.write('Pretrained: {}'.format(pretrained) + '\n\n')
 
     experiment_description.close()
 
@@ -382,7 +385,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     print('Training with seed: ', seed)
     if remote == 'hongg':
-        image_dir_remote = '/home/hendrik/Documents/mlebe_data/'
+        image_dir_remote = '.scratch/mlebe_data/'
         data_dir = '/usr/share/mouse-brain-atlases/'
         if data_type == 'anat':
             img_data = dl.load_img_remote(image_dir_remote, blacklist)
@@ -441,6 +444,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+        print('creating dir: ', save_dir)
 
 
     """shape = (z,y,x)"""
@@ -614,7 +618,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
             else: last_step = False
 
             print('Step', counter, 'of', len(epochss))
-            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view = slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
+            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view = slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step, pretrained = pretrained)
             histories.append(temp_history)
 
         history_epochs = []
