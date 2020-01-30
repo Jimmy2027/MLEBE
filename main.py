@@ -79,7 +79,7 @@ data_gen_args1 = dict(rotation_range=0.2,
 data_gen_args0 = None
 
 
-data_gen_argss = [data_gen_args0, data_gen_args1, data_gen_args2, data_gen_args3]
+data_gen_argss = [data_gen_args1, data_gen_args2, data_gen_args3]
 max_tries = 3
 if test == True:
     max_tries = 2

@@ -26,7 +26,7 @@ import warnings
 #todo write README
 #todo write scratches with useful functions
 
-def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False):
+def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False):
     """
     Trains the model
 
@@ -152,7 +152,8 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
 
     model_checkpoint = myModelCheckpoint(save_dir + 'unet_ep{epoch:02d}_val_loss{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, period=20)
 
-    # callbacks.append(model_checkpoint)
+    if last_step == True:
+        callbacks.append(model_checkpoint)
     try :
         import subprocess
         git_commit_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
@@ -607,10 +608,13 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
             if not os.path.exists(new_save_dir):
                 os.makedirs(new_save_dir)
-            # if data_gen_args == data_gen_argss[-1]:
-            #     callbacks = [bidstest_callback, reduce_lr]
-            print('Step', counter, 'of', len(epochss) + pretrained_step)
-            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view = slice_view, augmentation= augmentation, visualisation=visualisation)
+            if data_gen_args == data_gen_argss[-1]:
+                last_step = True
+                callbacks[-1] = EarlyStopping(monitor='val_loss', patience=80, verbose=1)
+            else: last_step = False
+
+            print('Step', counter, 'of', len(epochss))
+            early_stopped, temp_history = training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, min_epochs, model, seed, Adam, callbacks, slice_view = slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
             histories.append(temp_history)
 
         history_epochs = []
