@@ -13,7 +13,7 @@ import data_loader as dl
 
 
 
-def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =True, threshold = 0.5):
+def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =True, threshold = 0.9):
     """
     Preprocesses the unpreprocessed bidsdata and predicts a mask for it
 
@@ -40,7 +40,7 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
         path ='/home/klug/Hendrik/MLEBE/resampled'
         if not os.path.exists(path):
             utils.resample_bidsdata(path)
-    save_path = save_path + '/bids_ep{epoch}/'.format(epoch = epochs)
+    save_path = save_path + 'bids_ep{epoch}/'.format(epoch = epochs)
 
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -59,16 +59,23 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
         data = data[:5]
 
     for i in data:
-
         img_data = i.get_data()
         img_data = utils.preprocess(img_data, shape, slice_view=slice_view)
-        i = np.expand_dims(img_data, -1)
-        temp = model.predict(i, verbose=0)
-        if threshold != 0:
-            temp_thr = np.where(temp > threshold, 1, 0)
+        input = np.expand_dims(img_data, -1)
+        temp = model.predict(input, verbose=0)
+        temp_thr = np.where(np.squeeze(temp) > threshold, 1, 0)
         y_pred.append(temp)
         y_pred_thr.append(temp_thr)
         img_datas.append(img_data)
+        # if not os.path.exists(save_path + '{a}/'.format(a = os.path.basename(i.file_map['image'].filename))):
+        #     os.makedirs(save_path + '{a}/'.format(a = os.path.basename(i.file_map['image'].filename)))
+        # for j, slice in enumerate(img_data):
+        #     plt.imshow(slice, cmap='gray')
+        #     plt.imshow(temp_thr[j], alpha=0.6, cmap='Blues')
+        #     if not os.path.exists(save_path):
+        #         os.makedirs(save_path)
+        #     plt.savefig(save_path + '{a}/slice{b}.pdf'.format(a = os.path.basename(i.file_map['image'].filename), b=j), format="pdf", dpi=300)
+        #     plt.close()
     print('\nMax y_pred: ', np.max(np.concatenate(y_pred)))
     if np.max(np.concatenate(y_pred)) == 0:
         print('Predictions are zero! Max y_pred: ', np.max(np.concatenate(y_pred)))
@@ -104,7 +111,7 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
         img = nib.Nifti1Image(img_temp, x_test_affine)
         nib.save(img, os.path.join(save_path, 'resized_thr{}'.format(threshold) + file_name))
 
-    thresholds = [0, 0.5, 0.7, 0.8, 0.9]
+    thresholds = [0, 0.9]
     outputs = []
     for thr in thresholds:
         if thr == 0:
@@ -115,7 +122,7 @@ def bids_tester(save_path, model, remote, shape, slice_view, epochs = 0, test =T
     for o in outputs:
         list.append(o)
 
-    utils.save_datavisualisation(list, save_path,file_name_header='thr[0,0.5,0.7,0.8,0.9]', normalized=True, file_names=file_names)
+    utils.save_datavisualisation(list, save_path,file_name_header='thr[0,0.9]', normalized=True, file_names=file_names)
 
 
     return True

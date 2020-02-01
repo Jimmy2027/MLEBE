@@ -23,7 +23,7 @@ elif os.path.exists('/home/klug/Hendrik/MLEBE/mouse-brain-atlases'):
     remote = 'epfl'
 else: remote = 'local'
 
-file_name = 'no_tf_lr_64'
+file_name = 'no_blacklist'
 
 
 """
@@ -31,11 +31,12 @@ Hyperparameters
 """
 test = False
 pretrained = False
+blacklist = False
 slice_view = 'coronal'
 data_type = 'anat'
 shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
-losses = ['dice', 'dice_bincross', 'bincross']
+losses = ['dice']
 # losses = ['dice']
 
 epochss = [600]
@@ -83,15 +84,15 @@ if test == True:
     # data_gen_argss = data_gen_argss[:1]
     #     #     # epochss = epochss[:1]
 
-
-if remote == 'hongg':
-    blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
-if remote == 'local':
-    blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
-if remote == 'leonhard':
-    blacklist = utils.write_blacklist('/cluster/scratch/klugh/Blacklist')
-if remote == 'epfl':
-    blacklist = utils.write_blacklist('/home/klug/Hendrik/MLEBE/Blacklist')
+if blacklist == True:
+    if remote == 'hongg':
+        blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
+    if remote == 'local':
+        blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
+    if remote == 'leonhard':
+        blacklist = utils.write_blacklist('/cluster/scratch/klugh/Blacklist')
+    if remote == 'epfl':
+        blacklist = utils.write_blacklist('/home/klug/Hendrik/MLEBE/Blacklist')
 
 
 if remote == False:
@@ -102,13 +103,13 @@ else:
 
 model_path2 = ''
 model_path3 = ''
-model_paths = [model_path1, '', ''] #needs to have the same lenght than epochss
-pretrained_loss = ['dice', '', '']  #needs to have the same lenght than epochss
-pretrained_step = 1
+model_paths = ['', '', ''] #needs to have the same lenght than epochss
+pretrained_loss = ['', '', '']  #needs to have the same lenght than epochss
+pretrained_step = 0
 pretrained_seed = ''
 
 
 for i, loss in enumerate(losses):
-    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, data_type,slice_view = slice_view, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step, pretrained_seed = pretrained_seed)
+    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step, pretrained_seed = pretrained_seed)
 
 

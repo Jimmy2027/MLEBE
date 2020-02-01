@@ -10,10 +10,10 @@ import data_loader as dl
 import scipy
 import scipy.ndimage
 import pandas as pd
+# from samri.masking.utils import pad_img
 
 
-
-def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation = False):
+def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation = False, blacklist_bool = True):
     if visualisation == True:
         img_unpreprocessed = []
         mask_unpreprocessed = []
@@ -26,7 +26,8 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
     mask_headers = []
     img_file_names = []
     mask_file_names = []
-    blacklist = write_slice_blacklist()
+    if blacklist_bool == True:
+        blacklist = write_slice_blacklist()
     for i, m in zip(image, mask):
         img_affines.append(i.affine)
         mask_affines.append(m.affine)
@@ -74,8 +75,6 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
                     plt.close()
                 counter += 1
 
-
-
         fitted_mask = arrange_mask(img_temp, mask_temp, save_dir, visualisation)
 
 
@@ -84,41 +83,42 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
         img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation, switched_axis= True)
         mask_preprocessed = preprocess(fitted_mask, shape, save_dir, visualisation, switched_axis = True)
 
-        counter = 0
+        if blacklist_bool == True:
+            counter = 0
 
-        temp_img = {f'{idx}': img_preprocessed[idx, ...] for idx in range(img_preprocessed.shape[0])}
-        temp_mask = {f'{idx}': mask_preprocessed[idx, ...] for idx in range(mask_preprocessed.shape[0])}
+            temp_img = {f'{idx}': img_preprocessed[idx, ...] for idx in range(img_preprocessed.shape[0])}
+            temp_mask = {f'{idx}': mask_preprocessed[idx, ...] for idx in range(mask_preprocessed.shape[0])}
 
-        blacklisted_slices = []
+            blacklisted_slices = []
 
-        for file in blacklist:
-            if file.filename == os.path.basename(i.file_map['image'].filename):
+            for file in blacklist:
+                if file.filename == os.path.basename(i.file_map['image'].filename):
 
-                blacklisted_slices.append(int(file.slice))
-                if visualisation == True:
-                    if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
-                        os.makedirs(save_dir + 'visualisation/blacklisted_slices')
-                    plt.imshow(temp_img['{}'.format(int(file.slice))], cmap='gray')
-                    plt.imshow(temp_mask['{}'.format(int(file.slice))], alpha=0.6, cmap='Blues')
-                    plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.pdf'.format(a=file.filename, b=int(file.slice)), format = 'pdf')
-                    plt.close()
+                    blacklisted_slices.append(int(file.slice))
+                    if visualisation == True:
+                        if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
+                            os.makedirs(save_dir + 'visualisation/blacklisted_slices')
+                        plt.imshow(temp_img['{}'.format(int(file.slice))], cmap='gray')
+                        plt.imshow(temp_mask['{}'.format(int(file.slice))], alpha=0.6, cmap='Blues')
+                        plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.pdf'.format(a=file.filename, b=int(file.slice)), format = 'pdf')
+                        plt.close()
 
-                try:
-                    del temp_img['{}'.format(int(file.slice))]
-                    del temp_mask['{}'.format(int(file.slice))]
-                except Exception as e:
+                    try:
+                        del temp_img['{}'.format(int(file.slice))]
+                        del temp_mask['{}'.format(int(file.slice))]
+                    except Exception as e:
 
-                    print('Error for {} at: '.format(file.filename), e)
-                    print('len(file): ', temp_img.shape)
-                counter += 1
+                        print('Error for {} at: '.format(file.filename), e)
+                        print('len(file): ', temp_img.shape)
+                    counter += 1
 
-        img_preprocessed = np.stack(
-            [temp_img[f'{idx}'] for idx in range(img_preprocessed.shape[0]) if idx not in blacklisted_slices])
-        mask_preprocessed = np.stack(
-            [temp_mask[f'{idx}'] for idx in range(mask_preprocessed.shape[0]) if idx not in blacklisted_slices])
+            img_preprocessed = np.stack(
+                [temp_img[f'{idx}'] for idx in range(img_preprocessed.shape[0]) if idx not in blacklisted_slices])
+            mask_preprocessed = np.stack(
+                [temp_mask[f'{idx}'] for idx in range(mask_preprocessed.shape[0]) if idx not in blacklisted_slices])
 
 
-        print('blacklisted {} slices'.format(counter))
+            print('blacklisted {} slices'.format(counter))
 
 
         img_data.append(img_preprocessed)
@@ -626,9 +626,9 @@ def save_datavisualisation(images, save_folder, file_name_header = False, normal
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
-
+    counter = 0
     for img in range(len(images[0])): #number of images that will be saved at the end
-        counter = 0
+
         patches = []
         for list in range(len(images)):
             patch = images[list][img][0, :, :] * 255
@@ -650,19 +650,35 @@ def save_datavisualisation(images, save_folder, file_name_header = False, normal
             i = 0
             while os.path.exists(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,)):
                 i += 1
-            imageio.imwrite(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,), image)
+            plt.figure(figsize=(len(images[0][0]), len(images[0])))
+            plt.imshow(image, cmap='gray')
+            plt.axis('off')
+            plt.savefig(save_folder + 'mds_{}_'.format(i) + '{}.pdf'.format(counter), format="pdf", dpi=300,
+                        bbox_inches='tight', pad_inches=0)
+            plt.close()
+            # imageio.imwrite(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,), image)
         else:
             if file_name_header == False:
                 i = 0
                 while os.path.exists(save_folder + file_names[counter] + '{}.png'.format(i)):
                     i += 1
-                imageio.imwrite(save_folder + file_names[counter] + '{}.png'.format(i), image)
+                plt.figure(figsize=(len(images[0][0]), len(images[0])))
+                plt.imshow(image, cmap='gray')
+                plt.axis('off')
+                plt.savefig(save_folder + file_names[counter]  + '{}.pdf'.format(i), format="pdf", dpi=300, bbox_inches = 'tight', pad_inches = 0)
+                plt.close()
+                # imageio.imwrite(save_folder + file_names[counter] + '{}.png'.format(i), image)
             else:
                 i = 0
                 while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
                     i += 1
-                imageio.imwrite(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i), image)
-            counter = counter + 1
+                plt.figure(figsize=(len(images[0][0]), len(images[0])))
+                plt.imshow(image, cmap='gray')
+                plt.axis('off')
+                plt.savefig(save_folder + file_name_header + file_names[counter] + '{}.pdf'.format(i), format="pdf", dpi=300, bbox_inches = 'tight', pad_inches = 0)
+                plt.close()
+                # imageio.imwrite(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i), image)
+        counter += 1
 
 
 

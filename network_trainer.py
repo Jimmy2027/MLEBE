@@ -385,7 +385,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     print('Training with seed: ', seed)
     if remote == 'hongg':
-        image_dir_remote = '.scratch/mlebe_data/'
+        image_dir_remote = '/mnt/data/mlebe_data/'
         data_dir = '/usr/share/mouse-brain-atlases/'
         if data_type == 'anat':
             img_data = dl.load_img_remote(image_dir_remote, blacklist)
@@ -438,7 +438,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
 
     else:
-        save_dir = '/home/hendrik/.scratch/mlebe_data/results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        save_dir = image_dir_remote + 'results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
         if remote == 'leonhard':
             save_dir = '/cluster/scratch/klugh/'+file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
 
@@ -471,8 +471,8 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     print('*** Preprocessing ***')
 
-    x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation)[:2]
-    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation)
+    x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:2]
+    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
 
     print('*** Saving Test data ***')
     x_test_struct = {
@@ -614,7 +614,7 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
                 os.makedirs(new_save_dir)
             if data_gen_args == data_gen_argss[-1]:
                 last_step = True
-                callbacks[-1] = EarlyStopping(monitor='val_loss', patience=80, verbose=1)
+                # callbacks[-1] = EarlyStopping(monitor='val_loss', patience=80, verbose=1)
             else: last_step = False
 
             print('Step', counter, 'of', len(epochss))

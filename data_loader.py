@@ -39,15 +39,17 @@ def load_img_remote(image_dir_remote, blacklist, test = False):
                     for root, dirs, files in os.walk(os.path.join(image_dir_remote, o, x)):
                         for file in files:
                             if file.endswith("_T2w.nii.gz"):
-                                blacklisted = False
-                                for i in blacklist:
-                                    if file.startswith('sub-' + i.subj + '_ses-' + i.sess + '_'):
-                                        blacklisted = True
-                                        print('blacklisted found: {}'.format(file))
+                                if not blacklist == False:
+                                    blacklisted = False
+                                    for i in blacklist:
+                                        if file.startswith('sub-' + i.subj + '_ses-' + i.sess + '_'):
+                                            blacklisted = True
+                                            print('blacklisted found: {}'.format(file))
 
-                                if blacklisted == False:
+                                    if blacklisted == False:
+                                        im_data.append(os.path.join(root, file))
+                                else:
                                     im_data.append(os.path.join(root, file))
-
 
 
     im_data = np.sort(im_data)
