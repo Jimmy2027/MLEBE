@@ -23,7 +23,7 @@ elif os.path.exists('/home/klug/Hendrik/MLEBE/mouse-brain-atlases'):
     remote = 'epfl'
 else: remote = 'local'
 
-file_name = 'no_blacklist'
+file_name = 'new_blacklist'
 
 
 """
@@ -31,7 +31,7 @@ Hyperparameters
 """
 test = False
 pretrained = False
-blacklist = False
+blacklist = True
 slice_view = 'coronal'
 data_type = 'anat'
 shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)

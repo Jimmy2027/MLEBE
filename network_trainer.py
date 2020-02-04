@@ -471,10 +471,22 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
     print('*** Preprocessing ***')
 
-    x_train1, y_train1 = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:2]
+    x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:5]
     x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
 
-    print('*** Saving Test data ***')
+
+    x_train_struct = {
+        'x_train': x_train1,
+        'x_train_affines': x_train1_affines,
+        'x_train_headers': x_train1_headers,
+        'file_names': x_train1_file_names,
+
+    }
+
+    y_train_struct = {
+        'y_train': y_train1
+    }
+
     x_test_struct = {
         'x_test': x_test,
         'x_test_affines': x_test_affines,
@@ -495,6 +507,12 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
     yfile = open(save_dir + 'y_test_struct.pkl', 'wb')
     pickle.dump(y_test_struct, yfile)
     yfile.close()
+    xfile = open(save_dir + 'y_train_struct.pkl', 'wb')
+    pickle.dump(y_train_struct, xfile)
+    xfile.close()
+    xfile = open(save_dir + 'x_train_struct.pkl', 'wb')
+    pickle.dump(x_train_struct, xfile)
+    xfile.close()
 
     x_train1 = np.concatenate(x_train1, axis=0)
     y_train1 = np.concatenate(y_train1, axis=0)

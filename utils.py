@@ -906,11 +906,11 @@ def pad_img(img, shape, save_dir = None, visualisation = False):
     padd_x = shape[1] - img.shape[2]
     padded = np.empty((img.shape[0], shape[0], shape[1]))
 
-    if img.shape[1] < shape[0] and img.shape[2] < shape[1]:
-        for i in range(img.shape[0]):
-            padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
+    # if img.shape[1] < shape[0] and img.shape[2] < shape[1]:
+    #     for i in range(img.shape[0]):
+    #         padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
 
-    elif img.shape[1] > img.shape[2]:
+    if img.shape[1] > img.shape[2]:
         for i in range(img.shape[0]):
             padd = img.shape[1] - img.shape[2]
             temp_padded = np.pad(img[i, ...], ((0,0), (padd // 2, img.shape[1] - padd // 2 - img.shape[2])), 'constant')
@@ -924,6 +924,11 @@ def pad_img(img, shape, save_dir = None, visualisation = False):
     else:
         temp = cv2.resize(img[i], (shape[1], shape[0]))
         padded[i] = temp
+
+    if visualisation == True:
+        after = []
+        after.append(padded)
+        save_datavisualisation2(before, after, save_dir + '/visualisation/pad_img/', index_first= True, normalized= True)
     return padded
 
 

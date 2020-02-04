@@ -26,11 +26,12 @@ if remote == False:
     #     model_dir = '/Users/Hendrik/Documents/mlebe_data/models/sixty_four/dice/unet_ep01_val_loss0.67.hdf5'
 
 else:
-    path = '/mnt/data/mlebe_data/results/no_blacklist/dice_600_2020-01-31'
-    save_dir = '/home/hendrik/src/mlebe/tmp/no_bl/'
-    model_dir = path + '/1_Step/model_ep87.h5'
+    path = '/mnt/data/mlebe_data/results/new_blacklist/dice_600_2020-02-02'
+    save_dir = '/home/hendrik/src/mlebe/tmp/new_bl_ep400/'
+    model_dir = path + '/1_Step/unet_ep400_val_loss0.05.hdf5'
 # /home/hendrik/src/mlebe/.scratch/mlebe_data/results/no_tf_lr_64/dice_600_2020-01-30/1_Step/model_ep230.h5
 # /mnt/data/mlebe_data/results/no_blacklist/dice_600_2020-01-31/1_Step/model_ep87.h5
+# /mnt/data/mlebe_data/results/new_blacklist/dice_600_2020-02-02/1_Step/model_ep434.h5
 
 if test == True:
     import shutil
