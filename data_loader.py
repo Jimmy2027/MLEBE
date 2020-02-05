@@ -86,13 +86,16 @@ def load_img(image_dir, blacklist, test = False):
     for root, dirs, files in os.walk(image_dir):
         for file in files:
             if file.endswith("TurboRARE_T2w.nii.gz"):
-                blacklisted = False
-                for i in blacklist:
-                    if file.startswith('sub-' + i.subj + '_ses-' + i.sess + '_'):
-                        blacklisted = True
-                        print('blacklisted found: {}'.format(file))
+                if not blacklist == False:
+                    blacklisted = False
+                    for i in blacklist:
+                        if file.startswith('sub-' + i.subj + '_ses-' + i.sess + '_'):
+                            blacklisted = True
+                            print('blacklisted found: {}'.format(file))
 
-                if blacklisted == False:
+                    if blacklisted == False:
+                        im_data.append(os.path.join(root, file))
+                else:
                     im_data.append(os.path.join(root, file))
 
     im_data = np.sort(im_data)
