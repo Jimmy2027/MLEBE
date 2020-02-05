@@ -438,9 +438,12 @@ def network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_args
 
 
     else:
-        save_dir = image_dir_remote + 'results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        if remote == 'honng':
+            save_dir = image_dir_remote + 'results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
         if remote == 'leonhard':
             save_dir = '/cluster/scratch/klugh/'+file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
+        if remote == 'local':
+            save_dir = image_dir +'results/test/'+ file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

@@ -922,13 +922,14 @@ def pad_img(img, shape, save_dir = None, visualisation = False):
             temp_padded = np.pad(img[i, ...], ((padd // 2, img.shape[2] - padd // 2 - img.shape[1]),(0,0)), 'constant')
             padded[i] = cv2.resize(temp_padded, (shape[1], shape[0]))
     else:
-        temp = cv2.resize(img[i], (shape[1], shape[0]))
-        padded[i] = temp
+        for i in range(img.shape[0]):
+            temp = cv2.resize(img[i], (shape[1], shape[0]))
+            padded[i] = temp
 
-    if visualisation == True:
-        after = []
-        after.append(padded)
-        save_datavisualisation2(before, after, save_dir + '/visualisation/pad_img/', index_first= True, normalized= True)
+    # if visualisation == True:
+    #     after = []
+    #     after.append(padded)
+    #     save_datavisualisation2(before, after, save_dir + '/visualisation/pad_img/', index_first= True, normalized= True)
     return padded
 
 
