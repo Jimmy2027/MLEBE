@@ -220,6 +220,8 @@ def training(data_gen_args, epochs, loss, remote, shape, x_train, y_train, x_val
         masks = np.concatenate(masks)
         imgs_val = np.concatenate(imgs_val)
         masks_val = np.concatenate(masks_val)
+        np.save(save_dir + 'x_train_augmented', imgs)
+        np.save(save_dir + 'y_train_augmented', masks)
 
         for i in range(30):
             plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')

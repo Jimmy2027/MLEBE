@@ -29,7 +29,7 @@ file_name = 'new_blacklist'
 """
 Hyperparameters
 """
-test = False
+test = True
 pretrained = False
 blacklist = True
 slice_view = 'coronal'
