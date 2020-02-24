@@ -26,6 +26,8 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
     mask_headers = []
     img_file_names = []
     mask_file_names = []
+    blacklisted_images = []
+    blacklisted_masks = []
     if not blacklist_bool == False:
         blacklist = write_slice_blacklist()
         bl_slice_counter = 0
@@ -78,7 +80,6 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
 
         fitted_mask = arrange_mask(img_temp, mask_temp, save_dir, visualisation)
 
-
         img_temp, fitted_mask = remove_black_images(img_temp, fitted_mask, save_dir, visualisation= visualisation)
 
         img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation, switched_axis= True)
@@ -96,18 +97,18 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
             #     plt.close()
             temp_img = {f'{idx}': img_preprocessed[idx, ...] for idx in range(img_preprocessed.shape[0])}
             temp_mask = {f'{idx}': mask_preprocessed[idx, ...] for idx in range(mask_preprocessed.shape[0])}
-
             blacklisted_slices = []
-
             for file in blacklist:
                 if file.filename == os.path.basename(i.file_map['image'].filename):
-
+                    blacklisted_images.append(img_preprocessed[int(file.slice) ,...])
+                    blacklisted_masks.append(mask_preprocessed[int(file.slice), ...])
                     blacklisted_slices.append(int(file.slice))
                     if visualisation == True:
                         if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
                             os.makedirs(save_dir + 'visualisation/blacklisted_slices')
                         plt.imshow(temp_img['{}'.format(int(file.slice))], cmap='gray')
                         plt.imshow(temp_mask['{}'.format(int(file.slice))], alpha=0.6, cmap='Blues')
+                        plt.axi('off')
                         plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.pdf'.format(a=file.filename, b=int(file.slice)), format = 'pdf')
                         plt.close()
 
@@ -124,6 +125,7 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
                 [temp_img[f'{idx}'] for idx in range(img_preprocessed.shape[0]) if idx not in blacklisted_slices])
             mask_preprocessed = np.stack(
                 [temp_mask[f'{idx}'] for idx in range(mask_preprocessed.shape[0]) if idx not in blacklisted_slices])
+
             # if not os.path.exists('temp/after/'):
             #     os.makedirs('temp/after/')
             # for hah in range(img_preprocessed.shape[0]):
@@ -134,13 +136,16 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
             #         format='pdf')
             #     plt.close()
 
-
-
-
         img_data.append(img_preprocessed)
         mask_data.append(mask_preprocessed)
-
-    print('blacklisted {} slices'.format(bl_slice_counter))
+    if not blacklist_bool == False:
+        print('blacklisted {} slices'.format(bl_slice_counter))
+        xfile = open(save_dir + 'blacklisted_images.p   kl', 'wb')
+        pickle.dump(blacklisted_images, xfile)
+        xfile.close()
+        yfile = open(save_dir + 'blacklisted_masks.pkl', 'wb')
+        pickle.dump(blacklisted_masks, yfile)
+        yfile.close()
 
     if visualisation:
         save_datavisualisation1(mask_data, save_dir + '/visualisation/after_rem_black_cloumns/', index_first= True, normalized= True)
@@ -158,7 +163,32 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
 
     return img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers
 
-
+def remove_outliers(image, visualisation = False, save_dir = ''):
+    from scipy import ndimage
+    from skimage.morphology import watershed
+    markers = ndimage.label(image)[0]
+    if len(np.unique(markers)) > 2:
+        l, counts = np.unique(markers, return_counts=True)
+        brain_label = l[np.argsort(-counts)[1]]
+        new = np.where(markers == brain_label, 1, 0)
+        if visualisation == True:
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            for slice in range(image.shape[0]):
+                if len(np.unique(markers[slice])) > 2:
+                    plt.figure()
+                    plt.axis('off')
+                    plt.subplot(1, 3, 1)
+                    plt.imshow(image[slice])
+                    plt.subplot(1, 3, 2)
+                    plt.imshow(markers[slice])
+                    plt.subplot(1, 3, 3)
+                    plt.imshow(new[slice])
+                    plt.savefig(save_dir + '{}.pdf'.format(slice), format = 'pdf')
+                    plt.close()
+        return new
+    else:
+        return image
 
 def save_images(images, mask, img_file_names,save_dir):
     """
@@ -187,8 +217,6 @@ def save_images(images, mask, img_file_names,save_dir):
 def arrange_mask(img, mask, save_dir = False, visualisation = False):
 
     new_mask = mask[:,:,:]
-
-
 
     new_mask[img == 0] = 0
 
@@ -673,7 +701,6 @@ def save_datavisualisation(images, save_folder, file_name_header = False, normal
             plt.savefig(save_folder + 'mds_{}_'.format(i) + '{}.pdf'.format(counter), format="pdf", dpi=300,
                         bbox_inches='tight', pad_inches=0)
             plt.close()
-            # imageio.imwrite(save_folder + 'mds_{}_'.format(i) + '%d.png' % (counter,), image)
         else:
             if file_name_header == False:
                 i = 0
@@ -684,7 +711,6 @@ def save_datavisualisation(images, save_folder, file_name_header = False, normal
                 plt.axis('off')
                 plt.savefig(save_folder + file_names[counter]  + '{}.pdf'.format(i), format="pdf", dpi=300, bbox_inches = 'tight', pad_inches = 0)
                 plt.close()
-                # imageio.imwrite(save_folder + file_names[counter] + '{}.png'.format(i), image)
             else:
                 i = 0
                 while os.path.exists(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i)):
@@ -694,7 +720,6 @@ def save_datavisualisation(images, save_folder, file_name_header = False, normal
                 plt.axis('off')
                 plt.savefig(save_folder + file_name_header + file_names[counter] + '{}.pdf'.format(i), format="pdf", dpi=300, bbox_inches = 'tight', pad_inches = 0)
                 plt.close()
-                # imageio.imwrite(save_folder + file_name_header + file_names[counter] + '{}.png'.format(i), image)
         counter += 1
 
 
@@ -965,7 +990,6 @@ def write_slice_blacklist():
             line = line.split('/')
             line = line[-2:]
             blacklist.append(blacklist_elem(line[0], line[1]))
-
     return blacklist
 
 

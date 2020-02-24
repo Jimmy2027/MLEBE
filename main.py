@@ -15,37 +15,27 @@ import os
 
 
 """
-if os.path.exists('/usr/share/mouse-brain-atlases/'):
-    remote = 'hongg'
-elif os.path.exists('/cluster/scratch/klugh/mouse-brain-atlases/'):
-    remote = 'leonhard'
-elif os.path.exists('/home/klug/Hendrik/MLEBE/mouse-brain-atlases'):
-    remote = 'epfl'
-else: remote = 'local'
-
-file_name = 'new_blacklist'
-
+file_name = 'func_w_pretrained'
+pretrained_model = '/mnt/data/mlebe_data/results/new_bl128/dice_600_2020-02-07/1_Step/model_ep483.h5'
 
 """
 Hyperparameters
 """
 test = False
-pretrained = False
 blacklist = True
 slice_view = 'coronal'
-data_type = 'anat'
-shape = (64, 64)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
+data_type = 'func'
+shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
 losses = ['dice']
-# losses = ['dice']
 
 epochss = [600]
-min_epochs = 0
 if test == True:
     min_epochs = 0
+if data_type == 'func':
+    blacklist = False
 
 data_gen_args3 = dict(rotation_range=90,
-                     # brightness_range=[0.9, 1.1],
                      width_shift_range=30,
                      height_shift_range=30,
                      shear_range=5,
@@ -55,7 +45,6 @@ data_gen_args3 = dict(rotation_range=90,
                      fill_mode='nearest')
 
 data_gen_args2 = dict(rotation_range=45,
-                     # brightness_range=[0.9, 1.1],
                      width_shift_range=15,
                      height_shift_range=15,
                      shear_range=5,
@@ -65,7 +54,6 @@ data_gen_args2 = dict(rotation_range=45,
                      fill_mode='nearest')
 
 data_gen_args1 = dict(rotation_range=0.2,
-                    # brightness_range=[0.9, 1.1],
                     width_shift_range=0.05,
                     height_shift_range=0.05,
                     shear_range=0.05,
@@ -78,38 +66,15 @@ data_gen_args0 = None
 
 
 data_gen_argss = [data_gen_args3]
-max_tries = 3
-if test == True:
-    max_tries = 2
+# if test == True:
     # data_gen_argss = data_gen_argss[:1]
-    #     #     # epochss = epochss[:1]
+    #epochss = epochss[:1]
 
 if blacklist == True:
-    if remote == 'hongg':
-        blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
-    if remote == 'local':
-        blacklist = utils.write_blacklist('/Users/Hendrik/Documents/Semester_project/Blacklist')
-    if remote == 'leonhard':
-        blacklist = utils.write_blacklist('/cluster/scratch/klugh/Blacklist')
-    if remote == 'epfl':
-        blacklist = utils.write_blacklist('/home/klug/Hendrik/MLEBE/Blacklist')
-
-
-if remote == False:
-    model_path1 = '/Users/Hendrik/Documents/mlebe_data/models/unet_ep300_val_loss0.10.hdf5'
-else:
-    model_path1 = '/Users/Hendrik/Desktop/new_hope0/training_results/dice_1200_2019-12-09/1_Step/unet_ep70_val_loss0.01.hdf5'
-
-
-model_path2 = ''
-model_path3 = ''
-model_paths = ['', '', ''] #needs to have the same lenght than epochss
-pretrained_loss = ['', '', '']  #needs to have the same lenght than epochss
-pretrained_step = 0
-pretrained_seed = ''
+    blacklist = utils.write_blacklist('/home/hendrik/src/mlebe/Blacklist')
 
 
 for i, loss in enumerate(losses):
-    network_trainer.network_trainer(file_name, test, remote, loss, epochss, shape, data_gen_argss, min_epochs, max_tries, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained = pretrained, pretrained_model_path= model_paths[i], pretrained_step = pretrained_step, pretrained_seed = pretrained_seed)
+    network_trainer.network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained_model = pretrained_model)
 
 

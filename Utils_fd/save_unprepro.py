@@ -2,8 +2,15 @@ import os
 import nibabel as nib
 import numpy as np
 from matplotlib import pyplot as plt
+from os import path
 
-dir = '/home/hendrik/Documents/mlebe_data/'
+"""
+This script plot all the images from the dataset for visualisation. 
+This can be used to create a blacklist.
+
+"""
+
+dir = path.abspath(path.expanduser('/mnt/data/mlebe_data/'))
 
 mask_dir = '/usr/share/mouse-brain-atlases/'
 
