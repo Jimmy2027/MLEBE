@@ -21,7 +21,8 @@ pretrained_model = '/mnt/data/mlebe_data/results/new_bl128/dice_600_2020-02-07/1
 """
 Hyperparameters
 """
-test = False
+
+pretrained = False
 blacklist = True
 slice_view = 'coronal'
 data_type = 'func'

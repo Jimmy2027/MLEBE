@@ -200,8 +200,10 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
         masks = np.concatenate(masks)
         imgs_val = np.concatenate(imgs_val)
         masks_val = np.concatenate(masks_val)
+
         np.save(save_dir + 'x_train_augmented', imgs[:50])
         np.save(save_dir + 'y_train_augmented', masks[:50])
+
         for i in range(30):
             plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
             plt.imshow(np.squeeze(masks[i,...]), alpha = 0.6, cmap = 'Blues')
