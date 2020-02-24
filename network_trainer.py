@@ -1,6 +1,5 @@
 import data_loader as dl
 import utils
-# import bids_tester
 import unet
 import pickle
 import tensorflow as tf
@@ -463,24 +462,11 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
     Callbacks
     """
 
-
-    class bidstest(keras.callbacks.Callback):
-        def on_epoch_end(self, epoch, log={}):
-            if epoch % 10 == 0:
-                if bids_tester.bids_tester(new_save_dir, self.model, remote, shape, slice_view = slice_view, epochs= epoch):  # Test should be True (default) to only predict 5 bids_images instead of all of them
-                    print('No faulty predictions!')
-                    return
-                else:  # if predictions are zero, training stops
-                    self.model.stop_training = True
-
-    # bidstest_callback = bidstest()
-
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=5)
     earlystopper = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
     Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=True)
 
     callbacks = [reduce_lr, earlystopper]
-    # callbacks = [bidstest_callback, reduce_lr, earlystopper]          #todo comment this to remove cv2 dependency
 
     if loss == 'bincross':
         loss = 'binary_crossentropy'

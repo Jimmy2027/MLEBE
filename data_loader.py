@@ -64,47 +64,6 @@ def load_img_remote(image_dir_remote, blacklist, test = False):
         data = data[:10]
     return data
 
-def load_img(image_dir, blacklist, test = False):
-    print('*** Loading images ***')
-
-    im_data = []
-    for root, dirs, files in os.walk(image_dir):
-        for file in files:
-            if file.endswith("TurboRARE_T2w.nii.gz"):
-                if not blacklist == False:
-                    blacklisted = False
-                    for i in blacklist:
-                        if file.startswith('sub-' + i.subj + '_ses-' + i.sess + '_'):
-                            blacklisted = True
-                            print('blacklisted found: {}'.format(file))
-
-                    if blacklisted == False:
-                        im_data.append(os.path.join(root, file))
-                else:
-                    im_data.append(os.path.join(root, file))
-
-    im_data = np.sort(im_data)
-    print('*** Loading {} subjects ***'.format(len(im_data)))
-
-    if test == True:
-        im_data = im_data[:10]
-
-    data = []
-
-    for i in im_data:
-        img = nib.load(i)
-        # img_data = img.get_data()   #shape = (63, 96, 48)
-        # temp = np.moveaxis(img_data,2,0)    #shape = (48, 63, 96)
-        # img_data = pad_img(temp, shape)
-        # img_data = data_normalization(img_data)
-        # path = os.path.join('visualisation', os.path.basename(i), 'padded_data')
-        # if visualisation == True:
-        #     save_img(img_data, path)
-        #     visualisation = False
-
-        data.append(img)
-    return data
-
 
 def load_mask(data_dir):
     print('*** Loading mask ***')
