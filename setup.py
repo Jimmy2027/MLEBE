@@ -14,7 +14,7 @@ setup(
 	keywords = ["fMRI", "data analysis", "deep learning"],
 	classifiers = [],
 	install_requires = [],
-	provides = ["MLEBE"],
+	provides = ["mlebe"],
 	packages = packages,
 	include_package_data=True,
 	extras_require = {},
