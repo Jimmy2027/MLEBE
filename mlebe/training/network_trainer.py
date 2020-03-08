@@ -334,7 +334,7 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
 
     return history
 
-def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view,visualisation = False, pretrained_model = False):
+def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view,visualisation = False, pretrained_model = False, data_sets = []):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -359,7 +359,7 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
     image_dir_remote = '/mnt/data/mlebe_data/'
     data_dir = '/usr/share/mouse-brain-atlases/'
     if data_type == 'anat':
-        img_data = dl.load_img_remote(image_dir_remote, blacklist)
+        img_data = dl.load_img(image_dir_remote, blacklist, studies = data_sets)
     elif data_type == 'func':
         img_data = dl.load_func_img(image_dir_remote, blacklist)
 

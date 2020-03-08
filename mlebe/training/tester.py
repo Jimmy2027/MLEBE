@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 import Utils_fd.load_blacklisted as bl
 import utils
 import unet
-# import bids_tester
 import cv2
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -102,7 +101,6 @@ for hah, i in enumerate(x_test):
     dice_scores_string.append(dice_score_img)
     dice_scores_thr.append(dice_score_img_thr)
 print('done predicting on test set')
-# temp = np.concatenate(y_pred, 0)
 median_dice_score = np.median(dice_scores)
 dice_score = np.average(dice_scores)
 
@@ -121,15 +119,13 @@ for thr in thresholds:
     if thr == 0:
         outputs.append([np.squeeze(img) for img in y_pred])
         dice_temp = [su.dice(np.squeeze(img), y_true) for img, y_true in zip(y_pred, y_test)]
-        corr_temp = [utils.corr(img, x) for img, x in zip(y_pred, x_test)]
-        row_titles.append('Prediction \n' + 'Dice: ' + str(np.round(np.average(dice_temp), 3)) + '\n corr: ' + str(np.round(np.average(corr_temp),3)))
+        row_titles.append('Prediction \n' + 'Dice: ' + str(np.round(np.average(dice_temp), 3)))
     else:
         outputs.append([np.where(np.squeeze(img) > thr, 1, 0) for img in y_pred])
         dice_temp = [su.dice(np.where(np.squeeze(img) > thr, 1, 0), y_true) for img, y_true in zip(y_pred, y_test)]
-        corr_temp = [utils.corr(np.where(img > thr, 1, 0), x) for img, x in zip(y_pred, x_test)]
-        row_titles.append('thr: ' + str(thr) + '\n ' + 'Dice: ' + str(np.round(np.average(dice_temp), 3)) + '\n corr: ' + str(np.round(np.average(corr_temp),3)))
+        row_titles.append('thr: ' + str(thr) + '\n ' + 'Dice: ' + str(np.round(np.average(dice_temp), 3)))
 
-utils.compute_correlation(np.concatenate(x_test), np.concatenate(y_test), np.concatenate(outputs[0]), save_dir)
+
 list = [x_test, y_test]
 for o in outputs:
     list.append(o)
@@ -150,13 +146,14 @@ print('average Dice score: ', dice_score)
 print('std: ', np.std(dice_scores))
 file_namess = []
 for i in range(len(y_pred)):
-    y_test_affine = y_test_affines[i]
-    y_test_header = y_test_headers[i]
+    x_test_affine = x_test_affines[i]
+    x_test_header = x_test_headers[i]
     file_name = os.path.basename(os.path.basename(file_names[i]))
     file_namess.append(file_name)
     temp = np.moveaxis(y_pred[i], 0, 2)
-    img = nib.Nifti1Image(y_pred[i], y_test_affine, y_test_header)
-    nib.save(img, os.path.join(save_dir, 'mask_' + file_name))
+    masked = np.multiply(temp, x_test[i])
+    img = nib.Nifti1Image(temp, x_test_affine, x_test_header)
+    nib.save(img, os.path.join(save_dir, 'masked_' + file_name))
 
 np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
 

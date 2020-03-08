@@ -5,32 +5,36 @@ import numpy as np
 
 from utils import *
 
-not_preprocessed_dir = '/usr/share/'
-
-
-def load_bidsdata():
+def load_bidsdata(dir, studies = [], input_type = 'anat'):
     """
     :return: list of paths of all the bids files
     """
     paths = []
-    filess = []
     print('*** Loading bidsdata ***')
-    for o in os.listdir(not_preprocessed_dir):
-        if not o.startswith('irsabi') and o.endswith('bidsdata'):
-            for root, dirs, files in os.walk(os.path.join(not_preprocessed_dir, o)):
-                for file in files:
-                    if file.endswith("_T2w.nii.gz"):
-                        print(os.path.join(not_preprocessed_dir, o, root, file))
-                        paths.append(os.path.join(not_preprocessed_dir, o, root, file))
-                        filess.append(file)
-    return paths, filess
+    if input_type == 'anat':
+        for o in os.listdir(dir):
+            if o in studies:
+                for root, dirs, files in os.walk(os.path.join(dir, o)):
+                    for file in files:
+                        if file.endswith("_T2w.nii.gz"):
+                            paths.append(os.path.join(dir, o, root, file))
+    if input_type == 'func':
+        for o in os.listdir(dir):
+            if o in studies:
+                for root, dirs, files in os.walk(os.path.join(dir, o)):
+                    if root.endswith('func'):
+                        for file in files:
+                            if file.endswith(".nii.gz"):
+                                paths.append(os.path.join(dir, o, root, file))
+
+    return paths
 
 
-def load_img_remote(image_dir_remote, blacklist, test = False):
+def load_img(image_dir_remote,blacklist, test = False, studies = []):
     print('*** Loading images ***')
     im_data = []
     for o in os.listdir(image_dir_remote):
-        if o != 'irsabi' and o != 'results' and not o.startswith('mlebe'):
+        if o in studies:
             print(o)
             for x in os.listdir(os.path.join(image_dir_remote, o)):
                 if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):

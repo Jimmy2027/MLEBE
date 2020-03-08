@@ -958,10 +958,10 @@ def write_slice_blacklist():
         def __init__(self, filename, slice):
             self.filename = filename
             self.slice = slice
-    slice_blacklist_path = os.path.expanduser('~/src/MLEBE/Blacklist/mlebe_slice_blacklist.txt')
+    slice_blacklist_path = os.path.expanduser('~/src/MLEBE/mlebe/Blacklist/mlebe_slice_blacklist.txt')
     if not os.path.isfile(slice_blacklist_path):
         print('\n\n Need to create blacklist file! \n\n')
-        os.system('tag -f mlebe_blacklist > ' + os.path.expanduser('~/src/MLEBE/Blacklist/mlebe_slice_blacklist.txt'))
+        os.system('tag -f mlebe_blacklist > ' + os.path.expanduser('~/src/MLEBE/mlebe/Blacklist/mlebe_slice_blacklist.txt'))
     with open(slice_blacklist_path) as blacklist_file:
         for line in blacklist_file:
             line = line.replace('.png', '')

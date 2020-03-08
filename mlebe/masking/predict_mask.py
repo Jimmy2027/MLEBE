@@ -1,4 +1,21 @@
-def predict_mask(in_file, input_type = 'anat'):
+def predict_mask(
+        in_file,
+        input_type = 'anat',
+        visualisation = {
+            'bool': False,
+            'path': '',
+        },
+        ):
+    """
+
+    :param in_file: path to the file that is to be masked
+    :param input_type: either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
+    :param visualisation: dictionary with
+        'bool': indicates if the predictions will be saved for visualisation
+        'path': path where the visualisations will be saved
+    :return:
+    """
+
     import os
     from os import path
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -41,16 +58,17 @@ def predict_mask(in_file, input_type = 'anat'):
         else:
             return image
     prediction_shape = (128, 128)
+    input = in_file
     if input_type == 'func':
         tMean_path = 'tMean.nii.gz'
-        command = 'fslmaths {a} -Tmean {b}'.format(a=in_file, b=tMean_path)
+        command = 'fslmaths {a} -Tmean {b}'.format(a=input, b=tMean_path)
         print(command)
         os.system(command)
-        in_file = tMean_path
+        input = tMean_path
 
     resampled_path = 'resampled_input.nii.gz'
     resampled_nii_path = path.abspath(path.expanduser(resampled_path))
-    resample_cmd = 'ResampleImage 3 {input} '.format(input=in_file) + resampled_nii_path + ' 0.2x0.2x0.2'
+    resample_cmd = 'ResampleImage 3 {input} '.format(input=input) + resampled_nii_path + ' 0.2x0.2x0.2'
     os.system(resample_cmd)
     print(resample_cmd)
 
@@ -60,9 +78,9 @@ def predict_mask(in_file, input_type = 'anat'):
     ori_shape = in_file_data.shape
 
     if input_type == 'anat':
-        model_path = '/mnt/data/mlebe_data/results/new_bl128/dice_600_2020-02-07/1_Step/model_ep483.h5'
+        model_path = '/mnt/data/mlebe_data/results/anat_br_augment/dice_600_2020-03-06/1_Step/model_ep282.h5'
     if input_type == 'func':
-        model_path = '/mnt/data/mlebe_data/results/func_training/dice_600_2020-02-21/1_Step/model_ep86.h5'
+        model_path = '/mnt/data/mlebe_data/results/func_br_augment/dice_600_2020-03-07/1_Step/model_ep104.h5'
 
     model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss})
     in_file_data = utils.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis= True)
@@ -76,6 +94,25 @@ def predict_mask(in_file, input_type = 'anat'):
         mask_pred[slice, ...] = np.where(prediction > 0.9, 1, 0)
 
     mask_pred = remove_outliers(mask_pred)
+    if visualisation['bool'] == True:
+        from matplotlib import pyplot as plt
+        save_dir = os.path.join(visualisation['path'], os.path.basename(in_file))
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        for slice in range(in_file_data.shape[0]):
+            plt.figure()
+            plt.subplot(1,3,1)
+            plt.imshow(in_file_data[slice], cmap = 'gray')
+            plt.axis('off')
+            plt.subplot(1,3,2)
+            plt.imshow(mask_pred[slice])
+            plt.axis('off')
+            plt.subplot(1,3,3)
+            plt.imshow(in_file_data[slice], cmap = 'gray')
+            plt.imshow(mask_pred[slice], cmap = 'Blues', alpha= 0.6)
+            plt.axis('off')
+            plt.savefig(save_dir + '/{}.pdf'.format(slice), format = 'pdf')
+            plt.close()
 
     """
     Reconstruct to original image size
@@ -105,7 +142,7 @@ def predict_mask(in_file, input_type = 'anat'):
     resized_mask = nib.Nifti1Image(resized, image.affine, image.header)
     nib.save(resized_mask, resized_path)
 
-    input_image = nib.load(in_file)
+    input_image = nib.load(input)
     input_img_affine = input_image.affine
     voxel_sizes = nib.affines.voxel_sizes(input_img_affine)
 
@@ -115,18 +152,23 @@ def predict_mask(in_file, input_type = 'anat'):
     print(resample_cmd)
     os.system(resample_cmd)
 
-    if input_type == 'anat':
-        resampled_mask = nib.load(resampled_mask_path)
-        resampled_mask_data = resampled_mask.get_data()
-        input_image_data = input_image.get_data()
-        masked_image = np.multiply(resampled_mask_data, input_image_data)
 
-        nii_path_masked = 'masked_output.nii.gz'
-        nii_path_masked = path.abspath(path.expanduser(nii_path_masked))
-        masked_image = nib.Nifti1Image(masked_image, input_image.affine, input_image.header)
-        nib.save(masked_image, nii_path_masked)
+    resampled_mask = nib.load(resampled_mask_path)
+    resampled_mask_data = resampled_mask.get_data()
+    input_image_data = input_image.get_data()
+    if not resampled_mask_data.shape == input_image_data.shape:
+        # it can happen that after forward and backward resampling the shape is not the same
+        temp = np.empty(input_image_data.shape)
+        temp[:resampled_mask_data.shape[0], :resampled_mask_data.shape[1], :resampled_mask_data.shape[2]] = resampled_mask_data
+        resampled_mask_data = temp
+
+    masked_image = np.multiply(resampled_mask_data, input_image_data).astype('float32')  #nibabel gives a non-helpful error if trying to save data that has dtype float64
+    nii_path_masked = 'masked_output.nii.gz'
+    nii_path_masked = path.abspath(path.expanduser(nii_path_masked))
+    masked_image = nib.Nifti1Image(masked_image, input_image.affine, input_image.header)
+    nib.save(masked_image, nii_path_masked)
 
     if input_type == 'func':
-        return resampled_mask_path
+        return nii_path_masked,[resampled_mask_path], resampled_mask_path
     else:
         return nii_path_masked, [resampled_mask_path], resampled_mask_path  #f/s_biascorrect takes a list as input for the mask while biascorrect takes dierectly the path

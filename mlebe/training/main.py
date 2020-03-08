@@ -15,21 +15,22 @@ import os
 
 
 """
-file_name = 'func_br_augment'
+file_name = 'anat_w_irsabi'
 pretrained_model = '/mnt/data/mlebe_data/results/anat_br_augment/dice_600_2020-03-06/1_Step/model_ep282.h5'
 
 """
 Hyperparameters
 """
 
-# pretrained_model = False
+pretrained_model = False
 blacklist = True
 slice_view = 'coronal'
-data_type = 'func'
+data_type = 'anat'
 shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
 test = False
 losses = ['dice']
+data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau', 'irsabi']
 
 epochss = [600]
 if test == True:
@@ -46,7 +47,7 @@ data_gen_args3 = dict(
     horizontal_flip=True,
     vertical_flip=True,
     fill_mode='nearest',
-    brightness_range = (0.7, 1.1),
+    brightness_range = (0.7, 1.3),
     noise_var_range = (0, 0.01),    #variance range of the gaussian noise that is added to the image
     )
 
@@ -77,9 +78,9 @@ data_gen_argss = [data_gen_args3]
     #epochss = epochss[:1]
 
 if blacklist == True:
-    blacklist = utils.write_blacklist(os.path.expanduser('~/src/MLEBE/Blacklist'))
+    blacklist = utils.write_blacklist(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist'))
 
 for i, loss in enumerate(losses):
-    network_trainer.network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained_model = pretrained_model)
+    network_trainer.network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained_model = pretrained_model, data_sets  = data_sets)
 
 
