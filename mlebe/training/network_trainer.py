@@ -177,7 +177,7 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
         if not os.path.exists(augment_save_dir):
             os.makedirs(augment_save_dir)
 
-        data_gen_args_ = {key: data_gen_args[key] for key in data_gen_args.keys() if not (key == 'brightness_range' or key == 'noise_var_range')}
+        data_gen_args_ = {key: data_gen_args[key] for key in data_gen_args.keys() if not key in ['brightness_range', 'noise_var_range', 'bias_var_range']}
 
         image_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
         mask_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
@@ -200,9 +200,9 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
         masks_val = np.concatenate(masks_val)
 
         for i in range(imgs.shape[0]):
-            imgs[i] = augment(imgs[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'])
+            imgs[i] = augment(imgs[i], masks[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range'])
         for i in range(imgs_val.shape[0]):
-            imgs_val[i] = augment(imgs_val[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'])
+            imgs_val[i] = augment(imgs_val[i], masks_val[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range'])
 
         np.save(save_dir + 'x_train_augmented', imgs[:50])
         np.save(save_dir + 'y_train_augmented', masks[:50])
@@ -299,7 +299,7 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
         y_pred.append(img_pred)
         dice_scores_string.append(dice_score_img)
 
-    print('mean Dice score: ', dice_score)
+    print('mean Dice score: ', np.mean(dice_scores))
     if not os.path.exists(os.path.join(save_dir,'testset_vis')):
         os.makedirs(os.path.join(save_dir, 'testset_vis'))
     file_names = []
@@ -406,9 +406,8 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
 
     print('*** Preprocessing ***')
 
-    x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:5]
     x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
-
+    x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:5]
 
     x_train_struct = {
         'x_train': x_train1,

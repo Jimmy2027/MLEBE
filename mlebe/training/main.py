@@ -15,8 +15,8 @@ import os
 
 
 """
-file_name = 'anat_w_irsabi'
-pretrained_model = '/mnt/data/mlebe_data/results/anat_br_augment/dice_600_2020-03-06/1_Step/model_ep282.h5'
+file_name = 'anat_w_bias'
+pretrained_model = '/mnt/data/mlebe_data/results/anat_w_bias/dice_600_2020-03-11/1_Step/model_ep376.h5'
 
 """
 Hyperparameters
@@ -30,7 +30,7 @@ shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
 test = False
 losses = ['dice']
-data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau', 'irsabi']
+data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau']
 
 epochss = [600]
 if test == True:
@@ -42,13 +42,14 @@ data_gen_args3 = dict(
     rotation_range=90,
     width_shift_range=30,
     height_shift_range=30,
-    shear_range=4,
+    shear_range=0.5,
     zoom_range=0.3,
     horizontal_flip=True,
     vertical_flip=True,
     fill_mode='nearest',
     brightness_range = (0.7, 1.3),
-    noise_var_range = (0, 0.01),    #variance range of the gaussian noise that is added to the image
+    noise_var_range = (0, 0.001),    #variance range of the gaussian noise that is added to the image
+    bias_var_range = (5, 10),   #width of the bias added on top of the images
     )
 
 data_gen_args2 = dict(rotation_range=45,

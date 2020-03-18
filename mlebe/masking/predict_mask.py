@@ -1,11 +1,17 @@
 def predict_mask(
         in_file,
         input_type = 'anat',
-        visualisation = {
-            'bool': False,
-            'path': '',
-        },
-        ):
+        visualisation_path = '',
+        visualisation_bool = False,
+        model_path = False,
+        bias_correct_bool = False,
+        bias_correct_anat_convergence = '[ 150x100x50x30, 1e-16 ]',
+        bias_correct_func_convergence = '[ 150x100x50x30, 1e-11 ]',
+        bias_correct_anat_bspline_fitting  = '[ 10, 4 ]',
+        bias_correct_func_bspline_fitting  = '[ 10, 4 ]',
+        bias_correct_anat_shrink_factor  = '2',
+        bias_correct_func_shrink_factor  = '2',
+):
     """
 
     :param in_file: path to the file that is to be masked
@@ -25,6 +31,8 @@ def predict_mask(
     import cv2
     from tensorflow import keras
     import tensorflow.keras.backend as K
+    import pandas as pd
+    from utils import pred_volume_stats
 
     def dice_coef(y_true, y_pred, smooth=1):
         """
@@ -72,15 +80,30 @@ def predict_mask(
     os.system(resample_cmd)
     print(resample_cmd)
 
-    image = nib.load(resampled_nii_path)
+    """
+    Bias correction
+    """
+    if bias_correct_bool == True:
+        bias_corrected_path = path.abspath(path.expanduser('corrected_input.nii.gz'))
+        if input_type == 'anat':
+            command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(bias_correct_anat_bspline_fitting, resampled_nii_path,bias_correct_anat_convergence , bias_corrected_path, bias_correct_anat_shrink_factor)
+        if input_type == 'func':
+            command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(bias_correct_func_bspline_fitting, resampled_nii_path, bias_correct_func_convergence, bias_corrected_path, bias_correct_func_shrink_factor)
+        os.system(command)
+        print(command)
+    else: bias_corrected_path = resampled_nii_path
+
+    image = nib.load(bias_corrected_path)
     in_file_data = image.get_data()
     in_file_data = np.moveaxis(in_file_data, 2, 0)
     ori_shape = in_file_data.shape
 
-    if input_type == 'anat':
-        model_path = '/mnt/data/mlebe_data/results/anat_br_augment/dice_600_2020-03-06/1_Step/model_ep282.h5'
-    if input_type == 'func':
-        model_path = '/mnt/data/mlebe_data/results/func_br_augment/dice_600_2020-03-07/1_Step/model_ep104.h5'
+    if model_path == False:
+        if input_type == 'anat':
+            model_path = '/mnt/data/mlebe_data/results/anat_br_augment/dice_600_2020-03-06/1_Step/model_ep282.h5'
+
+        if input_type == 'func':
+            model_path = '/mnt/data/mlebe_data/results/func_br_augment/dice_600_2020-03-07/1_Step/model_ep104.h5'
 
     model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss})
     in_file_data = utils.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis= True)
@@ -94,11 +117,12 @@ def predict_mask(
         mask_pred[slice, ...] = np.where(prediction > 0.9, 1, 0)
 
     mask_pred = remove_outliers(mask_pred)
-    if visualisation['bool'] == True:
+    if visualisation_bool == True:
         from matplotlib import pyplot as plt
-        save_dir = os.path.join(visualisation['path'], os.path.basename(in_file))
+        save_dir = os.path.join(visualisation_path, os.path.basename(in_file))
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
+        pred_volume_stats(mask_pred, os.path.dirname(os.path.dirname(visualisation_path)), os.path.basename(in_file), model_path)
         for slice in range(in_file_data.shape[0]):
             plt.figure()
             plt.subplot(1,3,1)

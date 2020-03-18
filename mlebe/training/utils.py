@@ -6,12 +6,11 @@ from matplotlib import gridspec
 import os
 import pickle
 import cv2
-import data_loader as dl
+import mlebe.training.data_loader as dl
 import scipy
 import scipy.ndimage
 import pandas as pd
 # from samri.masking.utils import pad_img
-
 
 def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation = False, blacklist_bool = True):
     if visualisation == True:

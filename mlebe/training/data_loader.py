@@ -2,8 +2,7 @@ import os
 import nibabel as nib
 from matplotlib import pyplot as plt
 import numpy as np
-
-from utils import *
+# from mlebe.training.utils import *
 
 def load_bidsdata(dir, studies = [], input_type = 'anat'):
     """

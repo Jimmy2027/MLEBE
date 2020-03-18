@@ -3,6 +3,7 @@ from PIL import Image as pil_image
 import numpy as np
 import random
 from skimage.util import random_noise
+from mlebe.training.utils import data_normalization
 
 def img_to_array(img, data_format='channels_last', dtype='float32'):
     """Converts a PIL Image instance to a Numpy array.
@@ -136,8 +137,42 @@ def random_brightness(x, brightness_range):
     u = np.random.uniform(brightness_range[0], brightness_range[1])
     return apply_brightness_shift(x, u)
 
-def augment(x, brightness_range, noise_var_range):
+def gauss(x, a, m, s):
+    return np.sqrt(a) * np.exp(-(x - m) ** 2 / (2 * s ** 2))
+
+def bias(x):
+
+    return np.exp(np.multiply(a, np.multiply(x, y)))
+
+def gaussian_bias(img, mask, var_range):
+    x, y = np.meshgrid(np.arange(img.shape[0]), np.arange(img.shape[1]))
+    a = np.where(mask == 0)
+    listofCoord = list(zip(a[0], a[1]))
+    coord = listofCoord[random.randint(0, len(listofCoord)-1)]
+    varx = random.randint(var_range[0], var_range[1] + 1)
+    meanx = coord[0]
+    vary = random.randint(var_range[0], var_range[1] + 1)
+    meany = coord[1]
+    maxx = float(random.randint(255, 500))/255
+    maxy= float(random.randint(255, 500))/255
+    gaus2d = gauss(x, maxx, meanx, varx)*gauss(y, maxy, meany, vary)
+    if np.max(gaus2d) == 0:
+        augmented = img
+    elif np.max(img) == 0:
+        augmented = gaus2d
+    else:
+        # augmented = np.multiply(img, gaus2d)
+        augmented = img + gaus2d
+        augmented = augmented / np.max(augmented)
+    return augmented
+
+def augment(x, mask, brightness_range, noise_var_range, bias_var_range):
     x = random_brightness(x, brightness_range)*(1./255)
+    x = np.squeeze(x)
+    mask = np.squeeze(mask)
+    if random.random() < 0.01:
+        x = gaussian_bias(x, mask , bias_var_range)
     var = random.uniform(noise_var_range[0], noise_var_range[1])
     x = random_noise(x, mode = 'gaussian', var = var)
-    return x
+    x = np.expand_dims(data_normalization(x), -1)
+    return x/np.max(x)
