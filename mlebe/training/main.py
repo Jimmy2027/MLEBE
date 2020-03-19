@@ -73,7 +73,7 @@ data_gen_args1 = dict(rotation_range=0.2,
 data_gen_args0 = None
 
 
-data_gen_argss = [data_gen_args3]
+data_gen_argss = [data_gen_args0]
 # if test == True:
     # data_gen_argss = data_gen_argss[:1]
     #epochss = epochss[:1]

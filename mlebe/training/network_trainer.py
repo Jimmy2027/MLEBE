@@ -20,6 +20,8 @@ import random
 import copy
 import warnings
 
+from threedunet import isensee2017_model
+from unet3d_metrics import dice_coef_loss
 
 def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False):
     """
@@ -447,17 +449,9 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
     pickle.dump(x_train_struct, xfile)
     xfile.close()
 
-    x_train1 = np.concatenate(x_train1, axis=0)
-    y_train1 = np.concatenate(y_train1, axis=0)
-    x_train1 = np.expand_dims(x_train1, -1)
-    y_train1 = np.expand_dims(y_train1, -1)
     x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25, shuffle= True, random_state= seed)
 
-    print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
-    print('*** Training with {} slices ***'.format(x_train.shape[0]))
-    print('*** Validating with {} slices ***'.format(x_val.shape[0]))
-    input_shape = (x_train.shape[1:4])
-
+    input_shape = (x_train[0].shape)
     """
     Callbacks
     """
@@ -473,7 +467,7 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
 
     elif loss == 'dice':
         print('\n*********\n\nTraining with loss: dice-loss\n\n*********\n')
-        loss = unet.dice_coef_loss
+        loss = dice_coef_loss
 
     elif loss == 'dice_bincross':
         print('\n*********\n\nTraining with loss: dice_bincross\n\n*********\n')
@@ -491,7 +485,7 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
             model = unet.twolayernetwork(input_shape, 3, 0.5)
 
         else:
-            model = unet.unet(input_shape)
+            model = isensee2017_model(input_shape = (1, 67, 128, 128))
     else:
         print(pretrained_model)
         model = keras.models.load_model(pretrained_model, custom_objects = {'dice_coef_loss': unet.dice_coef_loss})

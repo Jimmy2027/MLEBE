@@ -48,33 +48,6 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
             img_temp = np.moveaxis(img_temp, 2, 0)
             mask_temp = np.moveaxis(mask_temp, 2, 0)
 
-        if visualisation == True:
-            img_unpreprocessed.append(img_temp)
-            mask_unpreprocessed.append(mask_temp)
-
-            if not os.path.exists(save_dir + 'visualisation/preprocessed/' + os.path.basename(m.file_map['image'].filename)):
-                os.makedirs(save_dir + 'visualisation/preprocessed/' + os.path.basename(m.file_map['image'].filename))
-            counter = 0
-            for im, ma in zip(img_data, mask_data):
-                for it in range(im.shape[0]):
-                    plt.imshow(np.squeeze(im[it, ...]), cmap='gray')
-                    plt.imshow(np.squeeze(ma[it, ...]), alpha=0.6, cmap='Blues')
-                    plt.axis('off')
-                    plt.savefig(save_dir + 'visualisation/preprocessed/' + os.path.basename(m.file_map['image'].filename)+ '/img_{a}{it}.pdf'.format(a=counter, it=it),format='pdf')
-                    plt.close()
-                counter += 1
-
-            if not os.path.exists(save_dir + 'visualisation/unpreprocessed/' + os.path.basename(m.file_map['image'].filename)):
-                os.makedirs(save_dir + 'visualisation/unpreprocessed/' + os.path.basename(m.file_map['image'].filename))
-            counter = 0
-            for im, ma in zip(img_unpreprocessed, mask_unpreprocessed):
-                for it in range(im.shape[0]):
-                    plt.imshow(im[it, ...], cmap='gray')
-                    plt.imshow(ma[it, ...], alpha=0.6, cmap='Blues')
-                    plt.axis('off')
-                    plt.savefig(save_dir + 'visualisation/unpreprocessed/' + os.path.basename(m.file_map['image'].filename)+'/img_{a}{it}.pdf'.format(a=counter, it=it), format='pdf')
-                    plt.close()
-                counter += 1
 
         fitted_mask = arrange_mask(img_temp, mask_temp, save_dir, visualisation)
 
@@ -83,59 +56,9 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation =
         img_preprocessed = preprocess(img_temp, shape, save_dir, visualisation, switched_axis= True)
         mask_preprocessed = preprocess(fitted_mask, shape, save_dir, visualisation, switched_axis = True)
 
-        if not blacklist_bool == False:
-            temp_img = {f'{idx}': img_preprocessed[idx, ...] for idx in range(img_preprocessed.shape[0])}
-            temp_mask = {f'{idx}': mask_preprocessed[idx, ...] for idx in range(mask_preprocessed.shape[0])}
-            blacklisted_slices = []
-            for file in blacklist:
-                if file.filename == os.path.basename(i.file_map['image'].filename):
-                    blacklisted_images.append(img_preprocessed[int(file.slice) ,...])
-                    blacklisted_masks.append(mask_preprocessed[int(file.slice), ...])
-                    blacklisted_slices.append(int(file.slice))
-                    if visualisation == True:
-                        if not os.path.exists(save_dir + 'visualisation/blacklisted_slices'):
-                            os.makedirs(save_dir + 'visualisation/blacklisted_slices')
-                        plt.imshow(temp_img['{}'.format(int(file.slice))], cmap='gray')
-                        plt.imshow(temp_mask['{}'.format(int(file.slice))], alpha=0.6, cmap='Blues')
-                        plt.axis('off')
-                        plt.savefig(save_dir + 'visualisation/blacklisted_slices/{a}{b}.pdf'.format(a=file.filename, b=int(file.slice)), format = 'pdf')
-                        plt.close()
-
-                    try:
-                        del temp_img['{}'.format(int(file.slice))]
-                        del temp_mask['{}'.format(int(file.slice))]
-                    except Exception as e:
-
-                        print('Error for {} at: '.format(file.filename), e)
-                        print('len(file): ', temp_img.shape)
-                    bl_slice_counter += 1
-
-            img_preprocessed = np.stack(
-                [temp_img[f'{idx}'] for idx in range(img_preprocessed.shape[0]) if idx not in blacklisted_slices])
-            mask_preprocessed = np.stack(
-                [temp_mask[f'{idx}'] for idx in range(mask_preprocessed.shape[0]) if idx not in blacklisted_slices])
 
         img_data.append(img_preprocessed)
         mask_data.append(mask_preprocessed)
-    if not blacklist_bool == False:
-        print('blacklisted {} slices'.format(bl_slice_counter))
-        xfile = open(save_dir + 'blacklisted_images.pkl', 'wb')
-        pickle.dump(blacklisted_images, xfile)
-        xfile.close()
-        yfile = open(save_dir + 'blacklisted_masks.pkl', 'wb')
-        pickle.dump(blacklisted_masks, yfile)
-        yfile.close()
-
-    if visualisation:
-        save_datavisualisation1(mask_data, save_dir + '/visualisation/after_rem_black_cloumns/', index_first= True, normalized= True)
-
-        save_datavisualisation1(img_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=img_file_names, file_name_header= 'unpro_')
-        save_datavisualisation1(img_data, save_dir + '/visualisation/', index_first= True, normalized= True  ,file_names=img_file_names, file_name_header= 'prepr_')
-        save_datavisualisation1(mask_unpreprocessed, save_dir + '/visualisation/', index_first= True, file_names=mask_file_names, file_name_header= 'unpro_', normalized= True)
-        save_datavisualisation1(mask_data, save_dir + '/visualisation/', index_first= True, normalized= True,file_names=mask_file_names, file_name_header= 'prepr_')
-
-
-    # save_images(img_data, mask_data, img_file_names, save_dir) #with this line can save all the images with the mask to create a blacklist
 
     return img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers
 

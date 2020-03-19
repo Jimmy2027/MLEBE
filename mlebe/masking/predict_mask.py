@@ -100,10 +100,10 @@ def predict_mask(
 
     if model_path == False:
         if input_type == 'anat':
-            model_path = '/mnt/data/mlebe_data/results/anat_br_augment/dice_600_2020-03-06/1_Step/model_ep282.h5'
+            model_path = '/mnt/data/mlebe_data/results/anat_w_bias/dice_600_2020-03-11/1_Step/model_ep376.h5'
 
         if input_type == 'func':
-            model_path = '/mnt/data/mlebe_data/results/func_br_augment/dice_600_2020-03-07/1_Step/model_ep104.h5'
+            model_path = '/mnt/data/mlebe_data/results/func_w_bias/dice_600_2020-03-12/1_Step/model_ep109.h5'
 
     model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss})
     in_file_data = utils.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis= True)
