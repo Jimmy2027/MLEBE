@@ -32,7 +32,7 @@ def predict_mask(
     from tensorflow import keras
     import tensorflow.keras.backend as K
     import pandas as pd
-    from utils import pred_volume_stats
+    from mlebe.masking.utils import pred_volume_stats
 
     def dice_coef(y_true, y_pred, smooth=1):
         """
