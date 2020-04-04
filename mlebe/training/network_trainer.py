@@ -304,7 +304,7 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
         os.makedirs(os.path.join(save_dir, 'testset_vis'))
     file_names = []
     for i in range(len(y_pred)):
-        masked = np.multiply(np.moveaxis(y_pred[i], 0, 2), x_test_data[i])
+        masked = np.multiply(y_pred[i], x_test[i])
         x_test_affine = x_test_data[i].affine
         x_test_header = x_test_data[i].header
         file_name = os.path.basename(x_test_data[i].file_map['image'].filename)
@@ -328,13 +328,13 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
     list = [x_test, y_test]
     for o in outputs:
         list.append(o)
-    utils.save_datavisualisation_plt(list, save_dir, normalized=True, file_names=file_names, figure_title = 'Predictions with a median Dice score of {}'.format(np.round(dice_score,4)), slice_titles=slice_titles)
+    utils.save_datavisualisation_plt(list, os.path.join(save_dir,'testset_vis/'), normalized=True, file_names=file_names, figure_title = 'Predictions with a mean Dice score of {}'.format(np.round(np.mean(dice_scores),4)), slice_titles=slice_titles)
 
-    np.save(save_dir + 'y_pred_{}dice'.format(np.round(dice_score, 4)), y_pred)
+    np.save(save_dir + 'y_pred_{}dice'.format(np.round(np.mean(dice_scores), 4)), y_pred)
 
     return history
 
-def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view,visualisation = False, pretrained_model = False, data_sets = []):
+def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = []):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -356,13 +356,10 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
 
     print('Training with seed: ', seed)
 
-    image_dir_remote = '/mnt/data/mlebe_data/'
-    data_dir = '/usr/share/mouse-brain-atlases/'
     if data_type == 'anat':
-        img_data = dl.load_img(image_dir_remote, blacklist, studies = data_sets)
+        img_data = dl.load_img(data_dir, blacklist, studies = data_sets)
     elif data_type == 'func':
-        img_data = dl.load_func_img(image_dir_remote, blacklist)
-
+        img_data = dl.load_func_img(data_dir, blacklist)
 
     if test == True:
         epochss = np.ones(len(data_gen_argss), dtype=int)
@@ -374,7 +371,7 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
 
 
     else:
-        save_dir = image_dir_remote + 'results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
+        save_dir = data_dir + 'results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
 
 
     if not os.path.exists(save_dir):
@@ -384,7 +381,7 @@ def network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, black
 
     """shape = (z,y,x)"""
 
-    temp = dl.load_mask(data_dir)
+    temp = dl.load_mask(template_dir)
     mask_data = []
 
 

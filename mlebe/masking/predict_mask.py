@@ -13,7 +13,6 @@ def predict_mask(
         bias_correct_func_shrink_factor  = '2',
 ):
     """
-
     :param in_file: path to the file that is to be masked
     :param input_type: either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
     :param visualisation: dictionary with
@@ -32,7 +31,7 @@ def predict_mask(
     from tensorflow import keras
     import tensorflow.keras.backend as K
     import pandas as pd
-    from utils import pred_volume_stats
+    from mlebe.masking.utils import pred_volume_stats
 
     def dice_coef(y_true, y_pred, smooth=1):
         """
@@ -57,8 +56,6 @@ def predict_mask(
         from matplotlib import pyplot as plt
         markers = ndimage.label(image)[0]
         if len(np.unique(markers)) > 2:
-            if not os.path.exists(path.abspath(path.expanduser('classifier/'))):
-                os.makedirs(path.abspath(path.expanduser('classifier/')))
             l, counts = np.unique(markers, return_counts=True)
             brain_label = l[np.argsort(-counts)[1]]
             new = np.where(markers == brain_label, 1, 0)
@@ -181,9 +178,13 @@ def predict_mask(
     resampled_mask_data = resampled_mask.get_data()
     input_image_data = input_image.get_data()
     if not resampled_mask_data.shape == input_image_data.shape:
-        # it can happen that after forward and backward resampling the shape is not the same
-        temp = np.empty(input_image_data.shape)
-        temp[:resampled_mask_data.shape[0], :resampled_mask_data.shape[1], :resampled_mask_data.shape[2]] = resampled_mask_data
+        # it can happen that after forward and backward resampling the shape is not the same, this fixes that:
+        print(temp.shape, resampled_mask_data.shape)
+        if resampled_mask_data.shape[0] < temp.shape[0]:
+            temp = np.empty(input_image_data.shape)
+            temp[:resampled_mask_data.shape[0], :resampled_mask_data.shape[1], :resampled_mask_data.shape[2]] = resampled_mask_data
+        elif resampled_mask_data.shape[0] > temp.shape[0]:
+            temp = resampled_mask_data[:input_image_data.shape[0],:,:]
         resampled_mask_data = temp
 
     masked_image = np.multiply(resampled_mask_data, input_image_data).astype('float32')  #nibabel gives a non-helpful error if trying to save data that has dtype float64

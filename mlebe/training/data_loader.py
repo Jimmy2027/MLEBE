@@ -29,15 +29,15 @@ def load_bidsdata(dir, studies = [], input_type = 'anat'):
     return paths
 
 
-def load_img(image_dir_remote,blacklist, test = False, studies = []):
+def load_img(data_dir,blacklist, test = False, studies = []):
     print('*** Loading images ***')
     im_data = []
-    for o in os.listdir(image_dir_remote):
+    for o in os.listdir(data_dir):
         if o in studies:
             print(o)
-            for x in os.listdir(os.path.join(image_dir_remote, o)):
+            for x in os.listdir(os.path.join(data_dir, o)):
                 if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):
-                    for root, dirs, files in os.walk(os.path.join(image_dir_remote, o, x)):
+                    for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                         for file in files:
                             if file.endswith("_T2w.nii.gz"):
                                 if not blacklist == False:
@@ -83,7 +83,7 @@ def load_mask(data_dir):
         data.append(img)
     return data
 
-def load_func_img(image_dir_remote, test = False):
+def load_func_img(data_dir, test = False):
     from nipype.interfaces import fsl
     print('*** Loading images ***')
     func_training_dir = os.path.abspath(os.path.expanduser('/var/tmp/func_training'))
@@ -92,11 +92,11 @@ def load_func_img(image_dir_remote, test = False):
         print('creating dir: ', func_training_dir)
         os.makedirs(func_training_dir)
     im_data = []
-    for o in os.listdir(image_dir_remote):
+    for o in os.listdir(data_dir):
         if o != 'irsabi' and not o.startswith('.'):
-            for x in os.listdir(os.path.join(image_dir_remote, o)):
+            for x in os.listdir(os.path.join(data_dir, o)):
                 if x.endswith('preprocessing'):
-                    for root, dirs, files in os.walk(os.path.join(image_dir_remote, o, x)):
+                    for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                             if root.endswith('func'):
                                 for file in files:
                                     if file.endswith(".nii.gz"):

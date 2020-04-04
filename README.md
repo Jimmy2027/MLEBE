@@ -1,22 +1,45 @@
 # MLEBE
 Machine Learning Enabled Brain Extraction
 
-### main.py
+##training
+Contains the scripts to train a classifier for image segmentation. 
 
-:param **test**: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
+##masking
+Contains the masking function that extends the [SAMRI](https://github.com/IBT-FMI/SAMRI) workflow.
 
-:param **remote**: Bool: If remote is True, the paths are set for remote computer
 
-:param **visualisation**: Bool: if True, all images after preprocessing are saved
+##Installation
+#### Python Package Manager (Users):
+Python's `setuptools` allows you to install Python packages independently of your distribution (or operating system, even).
+This approach cannot manage any of our numerous non-Python dependencies (by design) and at the moment will not even manage Python dependencies;
+as such, given any other alternative, **we do not recommend this approach**:
 
-:param **loss**: Array of strings: with which loss the network will be trained
+````
+git clone https://github.com/IBT-FMI/SAMRI.git
+cd SAMRI
+python setup.py install --user
+````
 
-:param **epochss**: Array with epochs. Should have the same length than data_gen_argss
+If you are getting a `Permission denied (publickey)` error upon trying to clone, you can either:
 
-:param **min_epochs**: int: The minimum amount of epochs the network should be trained on. If this number is not reached, the training will start again with a different seed and reduced augmentation values
+* [Add an SSH key](https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/) to your GitHub account.
+* Pull via the HTTPS link `git clone https://github.com/IBT-FMI/SAMRI.git`.
 
-:param **data_gen_argss**: Array of dicts : arguments for the data augmentations, should have the same length than epochss
+#### Python Package Manager (Developers):
+Python's `setuptools` allows you to install Python packages independently of your distribution (or operating system, even);
+it also allows you to install a "live" version of the package - dynamically linking back to the source code.
+This permits you to test code (with real module functionality) as you develop it.
+This method is sub-par for dependency management (see above notice), but - as a developer - you should be able to manually ensure that your package manager provides the needed packages.
 
-:param **max_tries**: int: Integer indicating how many times the training should be started again with reduced augmentation values
+````
+git clone git@github.com:IBT-FMI/SAMRI.git
+cd SAMRI
+echo "export PATH=\$HOME/.local/bin/:\$PATH" >> ~/.bashrc
+source ~/.bashrc
+python setup.py develop --user
+````
 
-:param **shape**: Tuple (y,x): Shape of the images that should come out of the preprocessing
+If you are getting a `Permission denied (publickey)` error upon trying to clone, you can either:
+
+* [Add an SSH key](https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/) to your GitHub account.
+* Pull via the HTTPS link `git clone https://github.com/IBT-FMI/SAMRI.git`.

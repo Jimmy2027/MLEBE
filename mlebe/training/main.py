@@ -12,14 +12,15 @@ import os
 :param data_gen_argss: Array of dicts : arguments for the data augmentations, should have the same length than epochss
 :param max_tries: int: Integer indicating how many times the training should be started again with reduced augmentation values
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
-
-
 """
+
 file_name = 'anat_w_bias'
 pretrained_model = '/mnt/data/mlebe_data/results/anat_w_bias/dice_600_2020-03-11/1_Step/model_ep376.h5'
+data_dir = '/mnt/data/mlebe_data/' #directory of the training data
+template_dir = '/usr/share/mouse-brain-atlases/' #directory of the template
 
 """
-Hyperparameters
+Parameters
 """
 
 pretrained_model = False
@@ -28,9 +29,11 @@ slice_view = 'coronal'
 data_type = 'anat'
 shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
-test = False
+test = True
 losses = ['dice']
-data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau']
+# data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau']
+data_sets = ['ztau']
+
 
 epochss = [600]
 if test == True:
@@ -72,16 +75,15 @@ data_gen_args1 = dict(rotation_range=0.2,
 
 data_gen_args0 = None
 
-
-data_gen_argss = [data_gen_args3]
-# if test == True:
-    # data_gen_argss = data_gen_argss[:1]
-    #epochss = epochss[:1]
+data_gen_argss = [data_gen_args0]
 
 if blacklist == True:
-    blacklist = utils.write_blacklist(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist'))
+    if os.path.isdir(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist')):
+        blacklist = utils.write_blacklist(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist'))
+    else:
+        print('No Blacklist dir found')
 
 for i, loss in enumerate(losses):
-    network_trainer.network_trainer(file_name, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained_model = pretrained_model, data_sets  = data_sets)
+    network_trainer.network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained_model = pretrained_model, data_sets  = data_sets)
 
 
