@@ -14,8 +14,10 @@ import os
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
 """
 
-file_name = 'anat_w_bias'
-pretrained_model = '/mnt/data/mlebe_data/results/anat_w_bias/dice_600_2020-03-11/1_Step/model_ep376.h5'
+file_name = 'func_w_bias_+nvcz_'
+# file_name = 'test'
+
+pretrained_model = '/mnt/data/mlebe_data/results/anat_w_bias_+nvcz_/dice_600_2020-04-13/1_Step/model_ep388.h5'
 data_dir = '/mnt/data/mlebe_data/' #directory of the training data
 template_dir = '/usr/share/mouse-brain-atlases/' #directory of the template
 
@@ -23,16 +25,17 @@ template_dir = '/usr/share/mouse-brain-atlases/' #directory of the template
 Parameters
 """
 
-pretrained_model = False
-blacklist = True
+pretrained_model = True
+blacklist = False
 slice_view = 'coronal'
-data_type = 'anat'
+data_type = 'func'
 shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
-test = True
+test = False
 losses = ['dice']
-# data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau']
-data_sets = ['ztau']
+data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau', 'hendrik_nvcz']
+excluded_from_training = ['irsabi']
+# data_sets = ['ztau']
 
 
 epochss = [600]
@@ -41,7 +44,7 @@ if test == True:
 if data_type == 'func':
     blacklist = False
 
-data_gen_args3 = dict(
+data_gen_args = dict(
     rotation_range=90,
     width_shift_range=30,
     height_shift_range=30,
@@ -55,27 +58,7 @@ data_gen_args3 = dict(
     bias_var_range = (5, 10),   #width of the bias added on top of the images
     )
 
-data_gen_args2 = dict(rotation_range=45,
-                     width_shift_range=15,
-                     height_shift_range=15,
-                     shear_range=5,
-                     zoom_range=0.2,
-                     horizontal_flip=True,
-                     vertical_flip=True,
-                     fill_mode='nearest')
-
-data_gen_args1 = dict(rotation_range=0.2,
-                    width_shift_range=0.05,
-                    height_shift_range=0.05,
-                    shear_range=0.05,
-                    zoom_range=0.05,
-                    horizontal_flip=True,
-                    vertical_flip=True,
-                    fill_mode='nearest')
-
-data_gen_args0 = None
-
-data_gen_argss = [data_gen_args0]
+data_gen_argss = [data_gen_args]
 
 if blacklist == True:
     if os.path.isdir(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist')):
@@ -84,6 +67,6 @@ if blacklist == True:
         print('No Blacklist dir found')
 
 for i, loss in enumerate(losses):
-    network_trainer.network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained_model = pretrained_model, data_sets  = data_sets)
+    network_trainer.network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view = slice_view, visualisation=visualisation, pretrained_model = pretrained_model, data_sets = data_sets, excluded_from_training=excluded_from_training)
 
 

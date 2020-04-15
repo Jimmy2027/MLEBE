@@ -173,19 +173,18 @@ def predict_mask(
     print(resample_cmd)
     os.system(resample_cmd)
 
-
     resampled_mask = nib.load(resampled_mask_path)
     resampled_mask_data = resampled_mask.get_data()
     input_image_data = input_image.get_data()
     if not resampled_mask_data.shape == input_image_data.shape:
         # it can happen that after forward and backward resampling the shape is not the same, this fixes that:
-        print(temp.shape, resampled_mask_data.shape)
         if resampled_mask_data.shape[0] < temp.shape[0]:
             temp = np.empty(input_image_data.shape)
             temp[:resampled_mask_data.shape[0], :resampled_mask_data.shape[1], :resampled_mask_data.shape[2]] = resampled_mask_data
         elif resampled_mask_data.shape[0] > temp.shape[0]:
             temp = resampled_mask_data[:input_image_data.shape[0],:,:]
         resampled_mask_data = temp
+        nib.save(nib.Nifti1Image(resampled_mask_data, input_image.affine, input_image.header), resampled_mask_path)
 
     masked_image = np.multiply(resampled_mask_data, input_image_data).astype('float32')  #nibabel gives a non-helpful error if trying to save data that has dtype float64
     nii_path_masked = 'masked_output.nii.gz'
@@ -193,7 +192,4 @@ def predict_mask(
     masked_image = nib.Nifti1Image(masked_image, input_image.affine, input_image.header)
     nib.save(masked_image, nii_path_masked)
 
-    if input_type == 'func':
-        return nii_path_masked,[resampled_mask_path], resampled_mask_path
-    else:
-        return nii_path_masked, [resampled_mask_path], resampled_mask_path  #f/s_biascorrect takes a list as input for the mask while biascorrect takes dierectly the path
+    return nii_path_masked, [resampled_mask_path], resampled_mask_path  #f/s_biascorrect takes a list as input for the mask while biascorrect takes dierectly the path

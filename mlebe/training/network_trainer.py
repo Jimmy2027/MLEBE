@@ -165,7 +165,7 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
     experiment_description.write('Epochs: {epochs}'.format(epochs=epochs) + '\n\n')
     experiment_description.close()
 
-    model.compile(loss=loss, optimizer=Adam, metrics=['accuracy'])
+    model.compile(loss=loss, optimizer=Adam, metrics=['accuracy', unet.dice_coef])
 
     if augmentation == True:
 
@@ -334,7 +334,7 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
 
     return history
 
-def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = []):
+def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = [''], excluded_from_training = ['']):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -358,8 +358,10 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
 
     if data_type == 'anat':
         img_data = dl.load_img(data_dir, blacklist, studies = data_sets)
+        excluded_img_data = dl.load_img(data_dir, studies = excluded_from_training)
     elif data_type == 'func':
-        img_data = dl.load_func_img(data_dir, blacklist)
+        img_data = dl.load_func_img(data_dir, blacklist, studies = data_sets)
+        excluded_img_data = dl.load_func_img(data_dir, studies = excluded_from_training)
 
     if test == True:
         epochss = np.ones(len(data_gen_argss), dtype=int)
@@ -383,13 +385,15 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
 
     temp = dl.load_mask(template_dir)
     mask_data = []
-
+    excluded_mask_data = []
 
     for i in range(len(img_data)):
         mask_data.append(copy.deepcopy(temp[0]))
 
-    # utils.get_image_and_mask(img_data,mask_data, shape,  save_dir, remove_black_labels_and_columns, slice_view)           #with this line all the images with the mask can be saved to create a blacklist
+    for i in range(len(excluded_img_data)):
+        excluded_mask_data.append(copy.deepcopy(temp[0]))
 
+    # utils.get_image_and_mask(img_data,mask_data, shape,  save_dir, remove_black_labels_and_columns, slice_view)           #with this line all the images with the mask can be saved to create a blacklist
 
     print('*** Splitting data into Train, Validation and Test set ***')
     if test == True:
@@ -402,7 +406,8 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
                                                                                                   test_size=0.1, shuffle = True)
 
     print('*** Preprocessing ***')
-
+    x_test_data.extend(excluded_img_data)
+    y_test_data.extend(excluded_mask_data)
     x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
     x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:5]
 
@@ -532,8 +537,3 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
             best_try = history_epochs.index(max(history_epochs))    #best_try is the try with the most epochs
         history = histories[best_try]
         counter += 1
-
-
-
-
-

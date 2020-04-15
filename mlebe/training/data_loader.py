@@ -29,7 +29,7 @@ def load_bidsdata(dir, studies = [], input_type = 'anat'):
     return paths
 
 
-def load_img(data_dir,blacklist, test = False, studies = []):
+def load_img(data_dir,blacklist = False, test = False, studies = []):
     print('*** Loading images ***')
     im_data = []
     for o in os.listdir(data_dir):
@@ -83,7 +83,7 @@ def load_mask(data_dir):
         data.append(img)
     return data
 
-def load_func_img(data_dir, test = False):
+def load_func_img(data_dir, test = False, studies = []):
     from nipype.interfaces import fsl
     print('*** Loading images ***')
     func_training_dir = os.path.abspath(os.path.expanduser('/var/tmp/func_training'))
@@ -93,7 +93,7 @@ def load_func_img(data_dir, test = False):
         os.makedirs(func_training_dir)
     im_data = []
     for o in os.listdir(data_dir):
-        if o != 'irsabi' and not o.startswith('.'):
+        if o in studies:
             for x in os.listdir(os.path.join(data_dir, o)):
                 if x.endswith('preprocessing'):
                     for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):

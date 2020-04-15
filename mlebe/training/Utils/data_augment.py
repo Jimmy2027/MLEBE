@@ -167,6 +167,14 @@ def gaussian_bias(img, mask, var_range):
     return augmented
 
 def augment(x, mask, brightness_range, noise_var_range, bias_var_range):
+    """
+    :param x: single image
+    :param mask:
+    :param brightness_range:
+    :param noise_var_range:
+    :param bias_var_range:
+    :return:
+    """
     x = random_brightness(x, brightness_range)*(1./255)
     x = np.squeeze(x)
     mask = np.squeeze(mask)
