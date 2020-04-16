@@ -11,6 +11,8 @@ def predict_mask(
         bias_correct_func_bspline_fitting  = '[ 10, 4 ]',
         bias_correct_anat_shrink_factor  = '2',
         bias_correct_func_shrink_factor  = '2',
+        anat_model_path = '',
+        func_model_path = '',
 ):
     """
     :param in_file: path to the file that is to be masked
@@ -97,10 +99,10 @@ def predict_mask(
 
     if model_path == False:
         if input_type == 'anat':
-            model_path = '/mnt/data/mlebe_data/results/anat_br_augment/dice_600_2020-03-06/1_Step/model_ep282.h5'
+            model_path = anat_model_path
 
         if input_type == 'func':
-            model_path = '/mnt/data/mlebe_data/results/func_br_augment/dice_600_2020-03-07/1_Step/model_ep104.h5'
+            model_path = func_model_path
 
     model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss})
     in_file_data = utils.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis= True)

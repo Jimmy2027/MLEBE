@@ -363,6 +363,9 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
         img_data = dl.load_func_img(data_dir, blacklist, studies = data_sets)
         excluded_img_data = dl.load_func_img(data_dir, studies = excluded_from_training)
 
+    print(len(img_data), len(excluded_img_data))
+    dfsdfsd
+
     if test == True:
         epochss = np.ones(len(data_gen_argss), dtype=int)
         save_dir = 'test/{loss}_{epochs}_{date}/'.format(
