@@ -1,6 +1,7 @@
 import network_trainer
 import utils
 import os
+from Utils.data_augment import Augment
 
 """
 :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
@@ -26,14 +27,15 @@ Parameters
 """
 
 pretrained_model = False
-blacklist = False
+blacklist = True
 slice_view = 'coronal'
 data_type = 'anat'
 shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
 test = False
 losses = ['dice']
-data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau', 'hendrik_nvcz']
+# data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau', 'hendrik_nvcz']
+data_sets = ['mgtdbs']
 excluded_from_training = ['irsabi']
 # data_sets = ['ztau']
 
@@ -44,6 +46,10 @@ if test == True:
 if data_type == 'func':
     blacklist = False
 
+brightness_range = (0.7, 1.3)
+noise_var_range = (0, 0.001)    #variance range of the gaussian noise that is added to the image
+bias_var_range = (5, 10)    #width of the bias added on top of the images
+
 data_gen_args = dict(
     rotation_range=90,
     width_shift_range=30,
@@ -53,10 +59,10 @@ data_gen_args = dict(
     horizontal_flip=True,
     vertical_flip=True,
     fill_mode='nearest',
-    brightness_range = (0.7, 1.3),
-    noise_var_range = (0, 0.001),    #variance range of the gaussian noise that is added to the image
-    bias_var_range = (5, 10),   #width of the bias added on top of the images
+    dtype = 'float32',
+    preprocessing_function = Augment(brightness_range, noise_var_range, bias_var_range, )
     )
+
 
 data_gen_argss = [data_gen_args]
 

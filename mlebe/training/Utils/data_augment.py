@@ -166,6 +166,58 @@ def gaussian_bias(img, mask, var_range):
         augmented = augmented / np.max(augmented)
     return augmented
 
+class Augment(object):
+    def __init__(self, brightness_range = None, noise_var_range = None, bias_var_range = None, type = 'scan', save_dir = ''):
+        """
+
+        :param brightness_range:
+        :param noise_var_range:
+        :param bias_var_range:
+        :param type:
+        :param save_dir:
+        """
+        self.brightness_range = brightness_range
+        self.noise_var_range = noise_var_range
+        self.bias_var_range = bias_var_range
+        self.type = type
+        self.scan_count = 0
+        self.scan_list = []
+        self.save_dir = save_dir
+        self.mask_count = 0
+        self.mask_list = []
+
+
+    def __call__(self, input_data):
+        x = input_data
+        if self.type == 'scan':
+            x = random_brightness(x, self.brightness_range) * (1. / 255)
+            x = np.squeeze(x)
+            # mask = np.squeeze(mask)
+            # if random.random() < 0.01:
+            #     x = gaussian_bias(x, mask, self.bias_var_range)
+            var = random.uniform(self.noise_var_range[0], self.noise_var_range[1])
+            x = random_noise(x, mode='gaussian', var=var)
+            x = np.expand_dims(data_normalization(x), -1)
+            if self.scan_count < 51:
+                self.scan_list.append(x)
+            if self.scan_count == 51:
+                np.save(self.save_dir + 'x_train_augmented', np.array(self.scan_list))
+            self.scan_count += 1
+            print('img count: ', self.scan_count)
+            return x / np.max(x).astype('float32')
+        elif self.type == 'mask':
+            if self.mask_count < 51:
+                self.mask_list.append(x)
+            if self.mask_count == 51:
+                np.save(self.save_dir + 'x_train_augmented', np.array(self.mask_list))
+            self.mask_count += 1
+            print('img count: ', self.scan_count)
+            return np.where(x > 0.5, 1, 0)
+
+    def set_save_dir(self, save_dir):
+        self.save_dir = save_dir
+
+
 def augment(x, mask, brightness_range, noise_var_range, bias_var_range):
     """
     :param x: single image

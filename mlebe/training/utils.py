@@ -978,9 +978,10 @@ def write_blacklist(blacklist_dir):
             self.sess = session
 
     for file in os.listdir(blacklist_dir):
-        temp = file.replace('.pdf', '')
-        temp2 = temp.split('_')
-        blacklist.append(blacklist_elem(temp2[0], temp2[1]))
+        if file.endswith('.pdf'):
+            temp = file.replace('.pdf', '')
+            temp2 = temp.split('_')
+            blacklist.append(blacklist_elem(temp2[0], temp2[1]))
     return blacklist
 
 

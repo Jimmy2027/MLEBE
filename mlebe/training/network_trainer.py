@@ -1,7 +1,7 @@
 import data_loader as dl
 import utils
 import unet
-from Utils.data_augment import augment
+from Utils.data_augment import Augment
 import pickle
 import tensorflow as tf
 import scoring_utils as su
@@ -178,72 +178,20 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
 
         data_gen_args_ = {key: data_gen_args[key] for key in data_gen_args.keys() if not key in ['brightness_range', 'noise_var_range', 'bias_var_range']}
         batch_size = 64
+        Augment.set_save_dir(data_gen_args_['preprocessing_function'],save_dir = save_dir)
         image_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
+        image_val_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
+        data_gen_args_['preprocessing_function'] = Augment(type ='mask', save_dir = save_dir)
 
-        train_dataset = image_datagen.flow(x_train, y_train, batch_size=64)
-        val_dataset = image_datagen.flow(x_val, y_val, batch_size= 64)
+        mask_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
+        mask_val_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
+        image_generator = image_datagen.flow(x_train, seed=seed, batch_size=batch_size)
+        mask_generator = mask_datagen.flow(y_train, seed=seed, batch_size=batch_size)
 
-        # Instantiate an optimizer.
-        optimizer = keras.optimizers.SGD(learning_rate=1e-3)
-        # Instantiate a loss function.
-        loss_fn = loss
+        image_val_generator = image_val_datagen.flow(x_val, seed=seed + 1, batch_size=batch_size)
+        mask_val_generator = mask_val_datagen.flow(y_val, seed=seed + 1, batch_size=batch_size)
 
-        # Prepare the metrics.
-        train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
-        val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
-
-        # Define Callbacks
-        ROP = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=5)
-        ROP.set_model(model)
-        ROP.on_train_begin()
-        earlystopper = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
-        earlystopper.set_model(model)
-        earlystopper.on_train_begin()
-        for epoch in range(epochs):
-            print('Start of epoch %d' % (epoch,))
-            # Iterate over the batches of the dataset.
-            for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
-                print('step: ', step)
-                y_batch_train = np.where(y_batch_train > 0.5, 1, 0).astype('float32')
-                x_batch_train = np.array([augment(x_batch_train[i], y_batch_train[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range']) for i in range(x_batch_train.shape[0])])
-                with tf.GradientTape() as tape:
-                    logits = model(x_batch_train)
-                    loss_value = loss_fn(y_batch_train, logits)
-                    grads = tape.gradient(loss_value, model.trainable_weights)
-                    optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-                # Update training metric.
-                train_acc_metric(y_batch_train, logits)
-
-                # Log every 200 batches.
-                if step == len(train_dataset):
-                    print('Training loss (for one epoch) at step %s: %s' % (step, float(loss_value)))
-                    print('Seen so far: %s samples' % ((step + 1) * batch_size))
-                    break
-
-            # Display metrics at the end of each epoch.
-            train_acc = train_acc_metric.result()
-            print('Training acc over epoch: %s' % (float(train_acc),))
-            # Reset training metrics at the end of each epoch
-            train_acc_metric.reset_states()
-
-            # Run a validation loop at the end of each epoch.
-            for x_batch_val, y_batch_val in val_dataset:
-                y_batch_val = np.where(y_batch_val > 0.5, 1, 0).astype('float32')
-                x_batch_val = np.array([augment(x_batch_val[i], y_batch_val[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range']) for i in range(x_batch_val.shape[0])])
-
-                val_logits = model(x_batch_val)
-                # Update val metrics
-                val_acc_metric(y_batch_val, val_logits)
-                loss_value = loss_fn(y_batch_val, val_logits)
-                if step == len(train_dataset):
-                    break
-            val_acc = val_acc_metric.result()
-            val_acc_metric.reset_states()
-            print('Validation acc: %s' % (float(val_acc),))
-
-            ROP.on_epoch_end(epoch)
-            earlystopper.on_epoch_end(epoch)
+        history = model.fit(zip(image_generator, mask_generator),steps_per_epoch = int(len(image_generator) / batch_size), validation_data = zip(image_val_generator, mask_val_generator), epochs=epochs, validation_steps = int(len(image_val_generator) / batch_size), verbose=1, callbacks=callbacks)
 
     else:
         if visualisation:
@@ -266,30 +214,30 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
                             epochs=epochs, validation_steps=int(len(x_train) / 32), verbose=1,
                             callbacks=callbacks)
 
-    # print(history.history.keys())
-    #
-    # plt.figure()
-    #
-    # # Plot training & validation accuracy values:
-    # plt.plot(history.history['accuracy'])
-    # plt.plot(history.history['val_accuracy'])
-    # plt.title('Model accuracy')
-    # plt.ylabel('Accuracy')
-    # plt.xlabel('Epoch')
-    # plt.legend(['Train', 'Validation'], loc='upper left')
-    # plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
-    # plt.close()
-    #
-    # plt.figure()
-    # # Plot training & validation loss values
-    # plt.plot(history.history['loss'])
-    # plt.plot(history.history['val_loss'])
-    # plt.title('Model loss')
-    # plt.ylabel('Loss')
-    # plt.xlabel('Epoch')
-    # plt.legend(['Train', 'Validation'], loc='upper left')
-    # plt.savefig(os.path.join(save_dir, 'loss_values.png'))
-    # plt.close()
+    print(history.history.keys())
+
+    plt.figure()
+
+    # Plot training & validation accuracy values:
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('Model accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Validation'], loc='upper left')
+    plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
+    plt.close()
+
+    plt.figure()
+    # Plot training & validation loss values
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('Model loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Validation'], loc='upper left')
+    plt.savefig(os.path.join(save_dir, 'loss_values.png'))
+    plt.close()
 
     model.save(save_dir + 'model.h5', overwrite=True)
 
