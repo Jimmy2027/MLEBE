@@ -14,8 +14,8 @@ import os
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
 """
 
-file_name = 'func_w_bias_+nvcz_'
-# file_name = 'test'
+# file_name = 'func_w_bias_+nvcz_'
+file_name = 'test'
 
 pretrained_model = '/mnt/data/mlebe_data/results/anat_w_bias_+nvcz_/dice_600_2020-04-13/1_Step/model_ep388.h5'
 data_dir = '/mnt/data/mlebe_data/' #directory of the training data
@@ -25,10 +25,10 @@ template_dir = '/usr/share/mouse-brain-atlases/' #directory of the template
 Parameters
 """
 
-pretrained_model = True
+pretrained_model = False
 blacklist = False
 slice_view = 'coronal'
-data_type = 'func'
+data_type = 'anat'
 shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
 test = False

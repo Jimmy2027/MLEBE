@@ -2,7 +2,6 @@ import data_loader as dl
 import utils
 import unet
 from Utils.data_augment import augment
-
 import pickle
 import tensorflow as tf
 import scoring_utils as su
@@ -178,60 +177,73 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
             os.makedirs(augment_save_dir)
 
         data_gen_args_ = {key: data_gen_args[key] for key in data_gen_args.keys() if not key in ['brightness_range', 'noise_var_range', 'bias_var_range']}
-
+        batch_size = 64
         image_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
-        mask_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
-        image_val_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
-        mask_val_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
 
-        image_generator = image_datagen.flow(x_train, seed=seed)
-        mask_generator = mask_datagen.flow(y_train, seed=seed)
-        image_val_generator = image_val_datagen.flow(x_val, seed=seed + 1)
-        mask_val_generator = mask_val_datagen.flow(y_val, seed=seed + 1)
+        train_dataset = image_datagen.flow(x_train, y_train, batch_size=64)
+        val_dataset = image_datagen.flow(x_val, y_val, batch_size= 64)
 
-        imgs = [next(image_generator) for _ in range(1000)]
-        masks = [np.where(next(mask_generator) > 0.5, 1, 0).astype('float32') for _ in range(1000)]   #because keras datagumentation interpolates the data, a threshold must be taken to make the data binary again
-        imgs_val = [next(image_val_generator) for _ in range(1000)]
-        masks_val = [np.where(next(mask_val_generator) > 0.5, 1, 0).astype('float32') for _ in range(1000)]
+        # Instantiate an optimizer.
+        optimizer = keras.optimizers.SGD(learning_rate=1e-3)
+        # Instantiate a loss function.
+        loss_fn = loss
 
-        imgs = np.concatenate(imgs)
-        masks = np.concatenate(masks)
-        imgs_val = np.concatenate(imgs_val)
-        masks_val = np.concatenate(masks_val)
+        # Prepare the metrics.
+        train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
+        val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
-        for i in range(imgs.shape[0]):
-            imgs[i] = augment(imgs[i], masks[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range'])
-        for i in range(imgs_val.shape[0]):
-            imgs_val[i] = augment(imgs_val[i], masks_val[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range'])
+        # Define Callbacks
+        ROP = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=5)
+        ROP.set_model(model)
+        ROP.on_train_begin()
+        earlystopper = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+        earlystopper.set_model(model)
+        earlystopper.on_train_begin()
+        for epoch in range(epochs):
+            print('Start of epoch %d' % (epoch,))
+            # Iterate over the batches of the dataset.
+            for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
+                print('step: ', step)
+                y_batch_train = np.where(y_batch_train > 0.5, 1, 0).astype('float32')
+                x_batch_train = np.array([augment(x_batch_train[i], y_batch_train[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range']) for i in range(x_batch_train.shape[0])])
+                with tf.GradientTape() as tape:
+                    logits = model(x_batch_train)
+                    loss_value = loss_fn(y_batch_train, logits)
+                    grads = tape.gradient(loss_value, model.trainable_weights)
+                    optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-        np.save(save_dir + 'x_train_augmented', imgs[:50])
-        np.save(save_dir + 'y_train_augmented', masks[:50])
+                # Update training metric.
+                train_acc_metric(y_batch_train, logits)
 
-        for i in range(100):
-            plt.figure()
-            plt.subplot(1,3,1)
-            plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
-            plt.axis('off')
-            plt.subplot(1,3,2)
-            plt.imshow(np.squeeze(masks[i,...]), cmap = 'gray')
-            plt.axis('off')
-            plt.subplot(1,3,3)
-            plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
-            plt.imshow(np.squeeze(masks[i,...]), alpha = 0.6, cmap = 'Blues')
-            plt.axis('off')
-            plt.savefig(augment_save_dir+'/img_{}.pdf'.format(i), format = 'pdf')
-            plt.close()
-            plt.imshow(np.squeeze(imgs_val[i,...]), cmap = 'gray')
-            plt.imshow(np.squeeze(masks_val[i,...]), alpha = 0.6, cmap = 'Blues')
-            plt.axis('off')
-            plt.savefig(augment_save_dir+'/val_{}.pdf'.format(i), format = 'pdf')
-            plt.close()
-        train_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs), tf.data.Dataset.from_tensor_slices(masks)))
-        train_dataset = train_dataset.repeat().shuffle(1000).batch(32)
-        validation_set = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs_val), tf.data.Dataset.from_tensor_slices(masks_val)))
-        validation_set = validation_set.repeat().shuffle(1000).batch(32)
+                # Log every 200 batches.
+                if step == len(train_dataset):
+                    print('Training loss (for one epoch) at step %s: %s' % (step, float(loss_value)))
+                    print('Seen so far: %s samples' % ((step + 1) * batch_size))
+                    break
 
-        history = model.fit(train_dataset, steps_per_epoch= int(len(x_train) / 32), validation_data = validation_set, epochs=epochs, validation_steps = int(len(x_train) / 32), verbose=1, callbacks=callbacks)
+            # Display metrics at the end of each epoch.
+            train_acc = train_acc_metric.result()
+            print('Training acc over epoch: %s' % (float(train_acc),))
+            # Reset training metrics at the end of each epoch
+            train_acc_metric.reset_states()
+
+            # Run a validation loop at the end of each epoch.
+            for x_batch_val, y_batch_val in val_dataset:
+                y_batch_val = np.where(y_batch_val > 0.5, 1, 0).astype('float32')
+                x_batch_val = np.array([augment(x_batch_val[i], y_batch_val[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range']) for i in range(x_batch_val.shape[0])])
+
+                val_logits = model(x_batch_val)
+                # Update val metrics
+                val_acc_metric(y_batch_val, val_logits)
+                loss_value = loss_fn(y_batch_val, val_logits)
+                if step == len(train_dataset):
+                    break
+            val_acc = val_acc_metric.result()
+            val_acc_metric.reset_states()
+            print('Validation acc: %s' % (float(val_acc),))
+
+            ROP.on_epoch_end(epoch)
+            earlystopper.on_epoch_end(epoch)
 
     else:
         if visualisation:
@@ -254,32 +266,32 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
                             epochs=epochs, validation_steps=int(len(x_train) / 32), verbose=1,
                             callbacks=callbacks)
 
-    print(history.history.keys())
+    # print(history.history.keys())
+    #
+    # plt.figure()
+    #
+    # # Plot training & validation accuracy values:
+    # plt.plot(history.history['accuracy'])
+    # plt.plot(history.history['val_accuracy'])
+    # plt.title('Model accuracy')
+    # plt.ylabel('Accuracy')
+    # plt.xlabel('Epoch')
+    # plt.legend(['Train', 'Validation'], loc='upper left')
+    # plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
+    # plt.close()
+    #
+    # plt.figure()
+    # # Plot training & validation loss values
+    # plt.plot(history.history['loss'])
+    # plt.plot(history.history['val_loss'])
+    # plt.title('Model loss')
+    # plt.ylabel('Loss')
+    # plt.xlabel('Epoch')
+    # plt.legend(['Train', 'Validation'], loc='upper left')
+    # plt.savefig(os.path.join(save_dir, 'loss_values.png'))
+    # plt.close()
 
-    plt.figure()
-
-    # Plot training & validation accuracy values:
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('Model accuracy')
-    plt.ylabel('Accuracy')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Validation'], loc='upper left')
-    plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
-    plt.close()
- 
-    plt.figure()
-    # Plot training & validation loss values
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('Model loss')
-    plt.ylabel('Loss')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Validation'], loc='upper left')
-    plt.savefig(os.path.join(save_dir, 'loss_values.png'))
-    plt.close()
-
-    model.save(save_dir + 'model_ep{}.h5'.format(len(history.epoch)), overwrite=True)
+    model.save(save_dir + 'model.h5', overwrite=True)
 
     y_pred = []
     dice_scores_string = []
@@ -331,8 +343,6 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
     utils.save_datavisualisation_plt(list, os.path.join(save_dir,'testset_vis/'), normalized=True, file_names=file_names, figure_title = 'Predictions with a mean Dice score of {}'.format(np.round(np.mean(dice_scores),4)), slice_titles=slice_titles)
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(np.mean(dice_scores), 4)), y_pred)
-
-    return history
 
 def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = [''], excluded_from_training = ['']):
     """
@@ -528,12 +538,11 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
         else: last_step = False
 
         print('Step', counter, 'of', len(epochss))
-        temp_history = training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
-        histories.append(temp_history)
-
-        history_epochs = []
-        for x in histories:
-            history_epochs.append(len(x.epoch))
-            best_try = history_epochs.index(max(history_epochs))    #best_try is the try with the most epochs
-        history = histories[best_try]
-        counter += 1
+        training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
+        # histories.append(temp_history)
+        # history_epochs = []
+        # for x in histories:
+        #     history_epochs.append(len(x.epoch))
+        #     best_try = history_epochs.index(max(history_epochs))    #best_try is the try with the most epochs
+        # history = histories[best_try]
+        # counter += 1
