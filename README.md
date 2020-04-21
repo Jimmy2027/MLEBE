@@ -1,14 +1,14 @@
 # MLEBE
 Machine Learning Enabled Brain Extraction
 
-##training
+## training
 Contains the scripts to train a classifier for image segmentation. 
 
-##masking
+## masking
 Contains the masking function that extends the [SAMRI](https://github.com/IBT-FMI/SAMRI) workflow.
 
 
-##Installation
+## Installation
 #### Python Package Manager (Users):
 Python's `setuptools` allows you to install Python packages independently of your distribution (or operating system, even).
 This approach cannot manage any of our numerous non-Python dependencies (by design) and at the moment will not even manage Python dependencies;
