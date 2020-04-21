@@ -10,7 +10,9 @@ import tensorflow.keras.backend as K
 import unet as u
 
 
-
+"""
+Code taken from https://github.com/lixiaolei1982/Keras-Implementation-of-U-Net-R2U-Net-Attention-U-Net-Attention-R2U-Net.-
+"""
 
 def up_and_concate(down_layer, layer, data_format='channels_first'):
     if data_format == 'channels_first':
