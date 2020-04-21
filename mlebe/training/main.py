@@ -1,7 +1,6 @@
 import network_trainer
 import utils
 import os
-import mlebe.masking
 """
 :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
 :param remote: Bool: If remote is True, the paths are set for remote computer
@@ -25,10 +24,10 @@ template_dir = '/usr/share/mouse-brain-atlases/' #directory of the template
 Parameters
 """
 
-pretrained_model = False  #needs to be string if True
+pretrained_model = False  #needs to be string (path to model) if True
 blacklist = False
 slice_view = 'coronal'
-data_type = 'func'
+data_type = 'anat'
 shape = (128, 128)  #original image shape: (63,96,48) with coronal_slice: (63,48), sagittal: (96, 48), axial: (63,96)
 visualisation = False    #if visualisation true saves pre- and unpreprocessed images for visualisation
 test = False

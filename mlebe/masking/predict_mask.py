@@ -27,7 +27,7 @@ def predict_mask(
     from os import path
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     import nibabel as nib
-    from samri.masking import utils
+    from mlebe.training.masking import utils
     import numpy as np
     import cv2
     from tensorflow import keras
