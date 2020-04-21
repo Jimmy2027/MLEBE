@@ -104,7 +104,7 @@ def predict_mask(
         if input_type == 'func':
             model_path = func_model_path
 
-    model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss})
+    model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef})
     in_file_data = utils.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis= True)
 
     mask_pred = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
@@ -180,13 +180,11 @@ def predict_mask(
     input_image_data = input_image.get_data()
     if not resampled_mask_data.shape == input_image_data.shape:
         # it can happen that after forward and backward resampling the shape is not the same, this fixes that:
-        if resampled_mask_data.shape[0] < temp.shape[0]:
-            temp = np.empty(input_image_data.shape)
-            temp[:resampled_mask_data.shape[0], :resampled_mask_data.shape[1], :resampled_mask_data.shape[2]] = resampled_mask_data
-        elif resampled_mask_data.shape[0] > temp.shape[0]:
-            temp = resampled_mask_data[:input_image_data.shape[0],:,:]
-        resampled_mask_data = temp
-        nib.save(nib.Nifti1Image(resampled_mask_data, input_image.affine, input_image.header), resampled_mask_path)
+        if resampled_mask_data.shape < input_image_data.shape:
+            resampled_mask_data = np.pad(resampled_mask_data, ((input_image_data.shape[0] - resampled_mask_data.shape[0],0), (input_image_data.shape[1] - resampled_mask_data.shape[1],0), (input_image_data.shape[2] - resampled_mask_data.shape[2], 0)), 'edge')
+        else:
+            resampled_mask_data = np.pad(resampled_mask_data, ((resampled_mask_data.shape[0] - input_image_data.shape[0],0), (resampled_mask_data.shape[1] - input_image_data.shape[1],0), (resampled_mask_data.shape[2] - input_image_data.shape[2], 0)), 'edge')
+    nib.save(nib.Nifti1Image(resampled_mask_data, input_image.affine, input_image.header), resampled_mask_path)
 
     masked_image = np.multiply(resampled_mask_data, input_image_data).astype('float32')  #nibabel gives a non-helpful error if trying to save data that has dtype float64
     nii_path_masked = 'masked_output.nii.gz'

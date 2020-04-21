@@ -1,7 +1,7 @@
 import network_trainer
 import utils
 import os
-
+import mlebe.masking
 """
 :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
 :param remote: Bool: If remote is True, the paths are set for remote computer
@@ -14,10 +14,10 @@ import os
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
 """
 
-file_name = 'func_w_bias_+nvcz_'
+file_name = 'attention_unet_func'
 # file_name = 'test'
 
-pretrained_model = '/mnt/data/mlebe_data/results/anat_w_bias_+nvcz_/dice_600_2020-04-13/1_Step/model_ep388.h5'
+pretrained_model = '/mnt/data/mlebe_data/results/attention_unet/dice_600_2020-04-20/1_Step/model_ep113.h5'
 data_dir = '/mnt/data/mlebe_data/' #directory of the training data
 template_dir = '/usr/share/mouse-brain-atlases/' #directory of the template
 
@@ -25,7 +25,7 @@ template_dir = '/usr/share/mouse-brain-atlases/' #directory of the template
 Parameters
 """
 
-pretrained_model = True
+# pretrained_model = False  #needs to be string if True
 blacklist = False
 slice_view = 'coronal'
 data_type = 'func'
@@ -36,7 +36,6 @@ losses = ['dice']
 data_sets = ['drlfom', 'mgtdbs', 'opfvta', 'ztau', 'hendrik_nvcz']
 excluded_from_training = ['irsabi']
 # data_sets = ['ztau']
-
 
 epochss = [600]
 if test == True:
@@ -64,6 +63,7 @@ if blacklist == True:
     if os.path.isdir(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist')):
         blacklist = utils.write_blacklist(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist'))
     else:
+        blacklist = False
         print('No Blacklist dir found')
 
 for i, loss in enumerate(losses):

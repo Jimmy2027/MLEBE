@@ -1,8 +1,9 @@
 import data_loader as dl
 import utils
 import unet
+from mlebe.masking.tester import tester
 from Utils.data_augment import augment
-
+import attention_unet
 import pickle
 import tensorflow as tf
 import scoring_utils as su
@@ -21,7 +22,7 @@ import copy
 import warnings
 
 
-def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False):
+def training(data_dir, studies, data_type, data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False):
     """
     Trains the model
 
@@ -145,15 +146,14 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
                     else:
                         self.model.save(filepath, overwrite=True)
 
-    try :
-        import subprocess
-        git_commit_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-    except Exception as e:
-        print(e)
-
 
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
-    experiment_description.write('Git commit Version: {} \n\n'.format(git_commit_version))
+    # try :
+    #     import subprocess
+    #     git_commit_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+    #     experiment_description.write('Git commit Version: {} \n\n'.format(git_commit_version))
+    # except Exception as e:
+    #     print(e)
     experiment_description.write(
         "This experiment was run on {date_time} \n\n".format(date_time=datetime.datetime.now()))
     if augmentation == True:
@@ -332,6 +332,7 @@ def training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val,
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(np.mean(dice_scores), 4)), y_pred)
 
+    tester(data_dir, studies, os.path.join(save_dir,'vis/'), save_dir + 'model_ep{}.h5'.format(len(history.epoch)), data_type)
     return history
 
 def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = [''], excluded_from_training = ['']):
@@ -363,11 +364,8 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
         img_data = dl.load_func_img(data_dir, blacklist, studies = data_sets)
         excluded_img_data = dl.load_func_img(data_dir, studies = excluded_from_training)
 
-    print(len(img_data), len(excluded_img_data))
-    dfsdfsd
-
     if test == True:
-        epochss = np.ones(len(data_gen_argss), dtype=int)
+        epochss = np.ones(len(data_gen_argss), dtype=int)*5
         save_dir = 'test/{loss}_{epochs}_{date}/'.format(
             loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
         import shutil
@@ -493,13 +491,16 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
 
     if pretrained_model == False:
         if test == True:
-            model = unet.twolayernetwork(input_shape, 3, 0.5)
+            model = attention_unet.att_unet(input_shape[0], input_shape[1], 1)
+            # model = unet.twolayernetwork(input_shape, 3, 0.5)
 
         else:
-            model = unet.unet(input_shape)
+            # model = unet.unet(input_shape)
+            model = attention_unet.att_unet(input_shape[0], input_shape[1], 1)
+
     else:
         print(pretrained_model)
-        model = keras.models.load_model(pretrained_model, custom_objects = {'dice_coef_loss': unet.dice_coef_loss})
+        model = keras.models.load_model(pretrained_model, custom_objects = {'dice_coef_loss': unet.dice_coef_loss, 'dice_coef': unet.dice_coef})
 
     """
     Training
@@ -531,7 +532,7 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
         else: last_step = False
 
         print('Step', counter, 'of', len(epochss))
-        temp_history = training(data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
+        temp_history = training(data_dir, data_sets, data_type,data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
         histories.append(temp_history)
 
         history_epochs = []
