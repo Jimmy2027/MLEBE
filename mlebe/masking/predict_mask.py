@@ -134,7 +134,7 @@ def predict_mask(
             plt.imshow(in_file_data[slice], cmap = 'gray')
             plt.imshow(mask_pred[slice], cmap = 'Blues', alpha= 0.6)
             plt.axis('off')
-            plt.savefig(save_dir + '/{}.pdf'.format(slice), format = 'pdf')
+            plt.savefig(save_dir + '/{}'.format(slice))
             plt.close()
 
     """

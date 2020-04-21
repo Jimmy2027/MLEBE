@@ -332,7 +332,7 @@ def training(data_dir, studies, data_type, data_gen_args, epochs, loss, shape, x
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(np.mean(dice_scores), 4)), y_pred)
 
-    tester(data_dir, studies, os.path.join(save_dir,'vis/'), save_dir + 'model_ep{}.h5'.format(len(history.epoch)), data_type)
+    tester(data_dir, studies, os.path.join(save_dir,'vis', data_type+'/'), save_dir + 'model_ep{}.h5'.format(len(history.epoch)), data_type)
     return history
 
 def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = [''], excluded_from_training = ['']):
@@ -496,7 +496,7 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
 
         else:
             # model = unet.unet(input_shape)
-            model = attention_unet.att_unet(input_shape[0], input_shape[1], 1)
+            model = attention_unet.att_r2_unet(input_shape[0], input_shape[1], 1)
 
     else:
         print(pretrained_model)

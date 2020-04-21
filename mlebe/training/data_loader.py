@@ -84,7 +84,7 @@ def load_mask(data_dir):
     return data
 
 def load_func_img(data_dir, test = False, studies = []):
-    from nipype.interfaces import fsl
+
     print('*** Loading images ***')
     func_training_dir = os.path.abspath(os.path.expanduser('/var/tmp/func_training'))
 

@@ -10,7 +10,6 @@ data_paths: paths to the data that is to be used for testing
 
 
 def tester(data_dir, studies, save_dir, model_path, data_type = 'anat'):
-    data_paths = data_loader.load_bidsdata(data_dir, studies=studies)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -20,6 +19,7 @@ def tester(data_dir, studies, save_dir, model_path, data_type = 'anat'):
     }
 
     if data_type == 'anat':
+        data_paths = data_loader.load_bidsdata(data_dir, studies=studies)
         for path in data_paths:
             print(path)
             masked_path = \
@@ -29,15 +29,12 @@ def tester(data_dir, studies, save_dir, model_path, data_type = 'anat'):
             print(command)
             os.system(command)
 
+
+    if data_type == 'func':
         data_paths = data_loader.load_bidsdata(data_dir, studies=['irsabi_bidsdata'], input_type='func')
-        save_dir = 'vis/func/'
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        visualisation = {
-            'bool': True,
-            'path': save_dir,
-        }
-    if data_type =='func':
+
         for path in data_paths:
             print(path)
             masked_path = predict_mask(path, input_type='func', visualisation_bool=visualisation['bool'],
@@ -54,9 +51,8 @@ def tester(data_dir, studies, save_dir, model_path, data_type = 'anat'):
 if __name__ == '__main__':
     data_dir = os.path.expanduser('/usr/share/')
     studies = ['irsabi_bidsdata']
-    save_dir = 'vis/anat/'
     anat_model_path = '/mnt/data/mlebe_data/results/attention_unet/dice_600_2020-04-20/1_Step/model_ep113.h5'
-    func_model_path = '/mnt/data/mlebe_data/results/anat_w_bias_+nvcz_/dice_600_2020-04-13/1_Step/model_ep388.h5'
+    func_model_path = '/mnt/data/mlebe_data/results/func_w_bias/dice_600_2020-03-12/1_Step/model_ep109.h5'
 
-    tester(data_dir, studies, save_dir, anat_model_path, data_type='anat')
-    # tester(data_dir, studies, save_dir, func_model_path, data_type='func')
+    # tester(data_dir, studies, save_dir= 'vis/anat/', anat_model_path, data_type='anat')
+    tester(data_dir, studies, save_dir = 'vis/func/', model_path = func_model_path, data_type='func')

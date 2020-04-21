@@ -14,7 +14,7 @@ import mlebe.masking
 :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
 """
 
-file_name = 'attention_unet_func'
+file_name = 'attention_r2unet_func'
 # file_name = 'test'
 
 pretrained_model = '/mnt/data/mlebe_data/results/attention_unet/dice_600_2020-04-20/1_Step/model_ep113.h5'
@@ -25,7 +25,7 @@ template_dir = '/usr/share/mouse-brain-atlases/' #directory of the template
 Parameters
 """
 
-# pretrained_model = False  #needs to be string if True
+pretrained_model = False  #needs to be string if True
 blacklist = False
 slice_view = 'coronal'
 data_type = 'func'
