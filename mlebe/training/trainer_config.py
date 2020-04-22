@@ -1,5 +1,5 @@
 import os
-import mlebe.training.Utils.utils
+import mlebe.training.utils.general
 from mlebe.training.network_trainer import network_trainer
 
 
@@ -46,7 +46,7 @@ class trainer_config:
 
         if self.blacklist == True:
             if os.path.isdir(self.blacklist_dir):
-                self.blacklist = mlebe.training.Utils.utils.write_blacklist(self.blacklist_dir)
+                self.blacklist = mlebe.training.utils.general.write_blacklist(self.blacklist_dir)
             else:
                 self.blacklist = False
                 print('No Blacklist dir found')

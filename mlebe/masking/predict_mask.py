@@ -27,7 +27,7 @@ def predict_mask(
     from os import path
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     import nibabel as nib
-    from mlebe.training.Utils import utils
+    from mlebe.training.utils import general
     import numpy as np
     import cv2
     from tensorflow import keras
@@ -95,7 +95,7 @@ def predict_mask(
 
     if not test == True:
         model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef})
-    in_file_data = utils.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis= True)
+    in_file_data = general.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis= True)
 
     mask_pred = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
 

@@ -3,7 +3,7 @@ from data_augment import augment
 from matplotlib import pyplot as plt
 import numpy as np
 import tensorflow.keras.preprocessing as kp
-from mlebe.training.Utils.utils import preprocess
+from mlebe.training.utils.general import preprocess
 
 data_gen_args = dict(
     rotation_range=90,

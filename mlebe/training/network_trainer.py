@@ -1,11 +1,11 @@
 import mlebe.training.data_loader as dl
-import mlebe.training.Utils.utils as utils
+import mlebe.training.utils.general as utils
 import mlebe.training.unet as unet
-from mlebe.training.Utils.data_augment import augment
+from mlebe.training.utils.data_augment import augment
 import mlebe.training.attention_unet as attention_unet
 import pickle
 import tensorflow as tf
-import mlebe.training.Utils.scoring_utils as su
+import mlebe.training.utils.scoring_utils as su
 from tensorflow import keras
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 import tensorflow.keras.preprocessing as kp
