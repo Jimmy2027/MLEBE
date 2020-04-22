@@ -3,7 +3,7 @@ from PIL import Image as pil_image
 import numpy as np
 import random
 from skimage.util import random_noise
-from mlebe.training.utils import data_normalization
+from mlebe.training.utils.general import data_normalization
 
 def img_to_array(img, data_format='channels_last', dtype='float32'):
     """Converts a PIL Image instance to a Numpy array.

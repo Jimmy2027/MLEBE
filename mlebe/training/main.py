@@ -60,7 +60,7 @@ data_gen_argss = [data_gen_args]
 
 if blacklist == True:
     if os.path.isdir(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist')):
-        blacklist = utils.write_blacklist(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist'))
+        blacklist = utils.general.write_blacklist(os.path.expanduser('~/src/MLEBE/mlebe/Blacklist'))
     else:
         blacklist = False
         print('No Blacklist dir found')

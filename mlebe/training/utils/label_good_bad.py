@@ -12,7 +12,7 @@ template_dir = '/Users/Hendrik/Documents/mlebe_data/mouse-brain-atlases'
 shape = (128, 128)
 slice_view = 'coronal'
 if os.path.isdir('/Users/Hendrik/Documents/MLEBE/mlebe/Blacklist'):
-    blacklist = utils.write_blacklist('/Users/Hendrik/Documents/MLEBE/mlebe/Blacklist')
+    blacklist = utils.general.write_blacklist('/Users/Hendrik/Documents/MLEBE/mlebe/Blacklist')
 else:
     print('No Blacklist dir found')
 # list = [blacklist[subj] for subj in blacklist['subject']]
@@ -27,7 +27,7 @@ for data_set in data_sets:
     mask_data = []
     for i in range(len(img_data)):
         mask_data.append(copy.deepcopy(temp[0]))
-    img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers = utils.get_image_and_mask(img_data, mask_data, shape, save_dir = '', slice_view=slice_view, blacklist_bool=False)
+    img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers = utils.general.get_image_and_mask(img_data, mask_data, shape, save_dir = '', slice_view=slice_view, blacklist_bool=False)
     for scan in range(len(img_data)):
         print('subject ' + str(scan) + ' of ' + str(len(img_data)))
         file = img_file_names[scan].replace('.nii.gz', '').split('_')

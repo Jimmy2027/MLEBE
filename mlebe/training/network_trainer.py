@@ -328,7 +328,7 @@ def training(data_dir, studies, data_type, data_gen_args, epochs, loss, shape, x
     list = [x_test, y_test]
     for o in outputs:
         list.append(o)
-    utils.save_datavisualisation_plt(list, os.path.join(save_dir,'testset_vis/'), normalized=True, file_names=file_names, figure_title = 'Predictions with a mean Dice score of {}'.format(np.round(np.mean(dice_scores),4)), slice_titles=slice_titles)
+    utils.general.save_datavisualisation_plt(list, os.path.join(save_dir,'testset_vis/'), normalized=True, file_names=file_names, figure_title = 'Predictions with a mean Dice score of {}'.format(np.round(np.mean(dice_scores),4)), slice_titles=slice_titles)
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(np.mean(dice_scores), 4)), y_pred)
 
@@ -409,8 +409,8 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
     print('*** Preprocessing ***')
     x_test_data.extend(excluded_img_data)
     y_test_data.extend(excluded_mask_data)
-    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
-    x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:5]
+    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.general.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
+    x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.general.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:5]
 
     x_train_struct = {
         'x_train': x_train1,

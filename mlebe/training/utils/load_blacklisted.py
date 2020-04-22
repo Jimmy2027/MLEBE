@@ -10,7 +10,7 @@ def load_blacklisted(remote, slice_view, shape, save_dir):
 
     :return: returns array of blacklisted slices
     """
-    blacklist = utils.write_slice_blacklist()
+    blacklist = utils.general.write_slice_blacklist()
     if remote == 'hongg' or remote == True:
         image_dir_remote = '/mnt/scratch/'
         data_dir = '/usr/share/mouse-brain-atlases/'
@@ -77,10 +77,10 @@ def load_blacklisted(remote, slice_view, shape, save_dir):
         elif slice_view == 'axial':
             img_temp = np.moveaxis(img, 2, 0)
             mask_temp = np.moveaxis(copy.deepcopy(mask), 2, 0)
-        fitted_mask = utils.arrange_mask(img_temp, mask_temp)
-        img_temp, fitted_mask = utils.remove_black_images(img_temp, fitted_mask)
-        img_preprocessed = utils.preprocess(img_temp, shape, slice_view, switched_axis= True)
-        mask_preprocessed = utils.preprocess(fitted_mask, shape, slice_view, switched_axis = True)
+        fitted_mask = utils.general.arrange_mask(img_temp, mask_temp)
+        img_temp, fitted_mask = utils.general.remove_black_images(img_temp, fitted_mask)
+        img_preprocessed = utils.general.preprocess(img_temp, shape, slice_view, switched_axis= True)
+        mask_preprocessed = utils.general.preprocess(fitted_mask, shape, slice_view, switched_axis = True)
         image_list_temp.append(img_preprocessed)
         mask_list_temp.append(mask_preprocessed)
 
