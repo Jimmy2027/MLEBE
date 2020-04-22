@@ -20,6 +20,7 @@ def predict_mask(
     :param visualisation: dictionary with
         'bool': indicates if the predictions will be saved for visualisation
         'path': path where the visualisations will be saved
+    :param model_path: path to trained model for the masking (can be downloaded here: https://zenodo.org/record/3759361#.XqBhyVMzZhH)
     :return:
     """
 

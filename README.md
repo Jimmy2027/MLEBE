@@ -2,7 +2,7 @@
 Machine Learning Enabled Brain Extraction
 
 ## training
-Contains the scripts to train a classifier for image segmentation. 
+Contains the scripts to train a classifier for image segmentation. Pretrained classifieres can be downloaded [here](https://zenodo.org/record/3759361#.XqBhyVMzZhH).
 
 ## masking
 Contains the masking function that extends the [SAMRI](https://github.com/IBT-FMI/SAMRI) workflow.
