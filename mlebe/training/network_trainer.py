@@ -2,7 +2,7 @@ import data_loader as dl
 import utils
 import unet
 from mlebe.masking.tester import tester
-from Utils.data_augment import augment
+from utils.data_augment import augment
 import attention_unet
 import pickle
 import tensorflow as tf
