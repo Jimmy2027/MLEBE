@@ -3,7 +3,7 @@ from PIL import Image as pil_image
 import numpy as np
 import random
 from skimage.util import random_noise
-from mlebe.training.utils import data_normalization
+from mlebe.training.Utils.utils import data_normalization
 
 def img_to_array(img, data_format='channels_last', dtype='float32'):
     """Converts a PIL Image instance to a Numpy array.
@@ -178,8 +178,9 @@ def augment(x, mask, brightness_range, noise_var_range, bias_var_range):
     x = random_brightness(x, brightness_range)*(1./255)
     x = np.squeeze(x)
     mask = np.squeeze(mask)
-    if random.random() < 0.01:
-        x = gaussian_bias(x, mask , bias_var_range)
+    if not bias_var_range == None:
+        if random.random() < 0.01:
+            x = gaussian_bias(x, mask , bias_var_range)
     var = random.uniform(noise_var_range[0], noise_var_range[1])
     x = random_noise(x, mode = 'gaussian', var = var)
     x = np.expand_dims(data_normalization(x), -1)

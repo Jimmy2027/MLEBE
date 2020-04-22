@@ -1,6 +1,6 @@
 import os
 from mlebe.training import data_loader as dl
-from mlebe.training import utils
+from mlebe.training.Utils import utils
 import pandas as pd
 from matplotlib import pyplot as plt
 import copy
@@ -27,7 +27,7 @@ for data_set in data_sets:
     mask_data = []
     for i in range(len(img_data)):
         mask_data.append(copy.deepcopy(temp[0]))
-    img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers = utils.get_image_and_mask(img_data, mask_data, shape, save_dir = '', slice_view=slice_view, blacklist_bool=False)
+    img_data, mask_data, img_affines, img_headers, img_file_names, mask_affines, mask_headers = utils.get_image_and_mask(img_data, mask_data, shape, save_dir ='', slice_view=slice_view, blacklist_bool=False)
     for scan in range(len(img_data)):
         print('subject ' + str(scan) + ' of ' + str(len(img_data)))
         file = img_file_names[scan].replace('.nii.gz', '').split('_')

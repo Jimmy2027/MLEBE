@@ -1008,9 +1008,6 @@ def compute_correlation(images1, images2, images3, save_dir):
     data = pd.DataFrame(data=d)
     corr = data.corr(method='pearson')
 
-
-
-
     fig, ax = plt.subplots()
 
     # hide axes

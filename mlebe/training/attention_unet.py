@@ -7,7 +7,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.optimizers import SGD
 # from tensorflow.keras.layers.core import Lambda
 import tensorflow.keras.backend as K
-import unet as u
+import mlebe.training.unet as u
 
 
 """

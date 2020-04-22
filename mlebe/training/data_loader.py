@@ -33,7 +33,7 @@ def load_img(data_dir,blacklist = False, test = False, studies = []):
     print('*** Loading images ***')
     im_data = []
     for o in os.listdir(data_dir):
-        if o in studies:
+        if (o in studies or not studies):   #i.e. if o in studies or if studies empty
             print(o)
             for x in os.listdir(os.path.join(data_dir, o)):
                 if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):

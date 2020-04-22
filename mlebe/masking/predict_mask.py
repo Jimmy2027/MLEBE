@@ -1,9 +1,9 @@
 def predict_mask(
         in_file,
+        model_path,
         input_type = 'anat',
         visualisation_path = '',
         visualisation_bool = False,
-        model_path = False,
         bias_correct_bool = False,
         bias_correct_anat_convergence = '[ 150x100x50x30, 1e-16 ]',
         bias_correct_func_convergence = '[ 150x100x50x30, 1e-11 ]',
@@ -11,8 +11,8 @@ def predict_mask(
         bias_correct_func_bspline_fitting  = '[ 10, 4 ]',
         bias_correct_anat_shrink_factor  = '2',
         bias_correct_func_shrink_factor  = '2',
-        anat_model_path = '',
-        func_model_path = '',
+        test = False,
+
 ):
     """
     :param in_file: path to the file that is to be masked
@@ -27,12 +27,11 @@ def predict_mask(
     from os import path
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     import nibabel as nib
-    from mlebe.training.masking import utils
+    from mlebe.training.Utils import utils
     import numpy as np
     import cv2
     from tensorflow import keras
     import tensorflow.keras.backend as K
-    import pandas as pd
     from mlebe.masking.utils import pred_volume_stats
 
     def dice_coef(y_true, y_pred, smooth=1):
@@ -53,9 +52,6 @@ def predict_mask(
 
     def remove_outliers(image):
         from scipy import ndimage
-        from skimage.morphology import watershed
-        import os
-        from matplotlib import pyplot as plt
         markers = ndimage.label(image)[0]
         if len(np.unique(markers)) > 2:
             l, counts = np.unique(markers, return_counts=True)
@@ -97,23 +93,19 @@ def predict_mask(
     in_file_data = np.moveaxis(in_file_data, 2, 0)
     ori_shape = in_file_data.shape
 
-    if model_path == False:
-        if input_type == 'anat':
-            model_path = anat_model_path
-
-        if input_type == 'func':
-            model_path = func_model_path
-
-    model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef})
+    if not test == True:
+        model = keras.models.load_model(model_path, custom_objects={'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef})
     in_file_data = utils.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis= True)
 
     mask_pred = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
-    for slice in range(in_file_data.shape[0]):
-        temp = np.expand_dims(in_file_data[slice], -1)  # expand dims for channel
-        temp = np.expand_dims(temp, 0)  # expand dims for batch
-        prediction = model.predict(temp, verbose = 0)
-        prediction = np.squeeze(prediction)
-        mask_pred[slice, ...] = np.where(prediction > 0.9, 1, 0)
+
+    if not test == True:
+        for slice in range(in_file_data.shape[0]):
+            temp = np.expand_dims(in_file_data[slice], -1)  # expand dims for channel
+            temp = np.expand_dims(temp, 0)  # expand dims for batch
+            prediction = model.predict(temp, verbose = 0)
+            prediction = np.squeeze(prediction)
+            mask_pred[slice, ...] = np.where(prediction > 0.9, 1, 0)
 
     mask_pred = remove_outliers(mask_pred)
     if visualisation_bool == True:

@@ -1,15 +1,13 @@
-import data_loader as dl
-import utils
-import unet
-from mlebe.masking.tester import tester
-from Utils.data_augment import augment
-import attention_unet
+import mlebe.training.data_loader as dl
+import mlebe.training.Utils.utils as utils
+import mlebe.training.unet as unet
+from mlebe.training.Utils.data_augment import augment
+import mlebe.training.attention_unet as attention_unet
 import pickle
 import tensorflow as tf
-import scoring_utils as su
+import mlebe.training.Utils.scoring_utils as su
 from tensorflow import keras
-from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
-from tensorflow.keras.optimizers import *
+from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 import tensorflow.keras.preprocessing as kp
 import os
 import numpy as np
@@ -22,7 +20,7 @@ import copy
 import warnings
 
 
-def training(data_dir, studies, data_type, data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False):
+def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False):
     """
     Trains the model
 
@@ -281,6 +279,8 @@ def training(data_dir, studies, data_type, data_gen_args, epochs, loss, shape, x
 
     model.save(save_dir + 'model_ep{}.h5'.format(len(history.epoch)), overwrite=True)
 
+    trainer_config.set_trained_model_path(save_dir + 'model_ep{}.h5'.format(len(history.epoch)))
+
     y_pred = []
     dice_scores_string = []
     dice_scores = []
@@ -328,14 +328,14 @@ def training(data_dir, studies, data_type, data_gen_args, epochs, loss, shape, x
     list = [x_test, y_test]
     for o in outputs:
         list.append(o)
-    utils.save_datavisualisation_plt(list, os.path.join(save_dir,'testset_vis/'), normalized=True, file_names=file_names, figure_title = 'Predictions with a mean Dice score of {}'.format(np.round(np.mean(dice_scores),4)), slice_titles=slice_titles)
+    utils.save_datavisualisation_plt(list, os.path.join(save_dir, 'testset_vis/'), normalized=True, file_names=file_names, figure_title ='Predictions with a mean Dice score of {}'.format(np.round(np.mean(dice_scores), 4)), slice_titles=slice_titles)
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(np.mean(dice_scores), 4)), y_pred)
 
-    tester(data_dir, studies, os.path.join(save_dir,'vis', data_type+'/'), save_dir + 'model_ep{}.h5'.format(len(history.epoch)), data_type)
+    # tester(data_dir, studies, os.path.join(save_dir,'vis', data_type+'/'), save_dir + 'model_ep{}.h5'.format(len(history.epoch)), data_type)
     return history
 
-def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = [''], excluded_from_training = ['']):
+def network_trainer(trainer_config, file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = [''], excluded_from_training = ['']):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
@@ -365,12 +365,12 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
         excluded_img_data = dl.load_func_img(data_dir, studies = excluded_from_training)
 
     if test == True:
-        epochss = np.ones(len(data_gen_argss), dtype=int)*5
-        save_dir = 'test/{loss}_{epochs}_{date}/'.format(
-            loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
-        import shutil
-        if os.path.exists('test/'):
-            shutil.rmtree('test/')
+        # epochss = np.ones(len(data_gen_argss), dtype=int)*5
+        # save_dir = 'test/{loss}_{epochs}_{date}/'.format(
+        #     loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
+        pass
+        # if os.path.exists('test/'):
+        #     shutil.rmtree('test/')
 
 
     else:
@@ -409,7 +409,7 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
     print('*** Preprocessing ***')
     x_test_data.extend(excluded_img_data)
     y_test_data.extend(excluded_mask_data)
-    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir,slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
+    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
     x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:5]
 
     x_train_struct = {
@@ -496,7 +496,8 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
 
         else:
             # model = unet.unet(input_shape)
-            model = attention_unet.att_r2_unet(input_shape[0], input_shape[1], 1)
+            model = attention_unet.att_unet(input_shape[0], input_shape[1], 1)
+
 
     else:
         print(pretrained_model)
@@ -532,7 +533,7 @@ def network_trainer(file_name, data_dir, template_dir, test, loss, epochss, shap
         else: last_step = False
 
         print('Step', counter, 'of', len(epochss))
-        temp_history = training(data_dir, data_sets, data_type,data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
+        temp_history = training(trainer_config, data_dir, data_sets, data_type,data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
         histories.append(temp_history)
 
         history_epochs = []
