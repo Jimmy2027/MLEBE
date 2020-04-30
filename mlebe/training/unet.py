@@ -66,16 +66,6 @@ def unet(input_size, pretrained_weights=None):
 
     return model
 
-def twolayernetwork(img_shape, kernel_size, Dropout_rate):
-    model = Sequential()
-
-    model.add(Conv2D(32, kernel_size, activation='relu', padding='same', input_shape=img_shape))
-    model.add(BatchNormalization())
-    model.add(Conv2D(1, kernel_size, activation='sigmoid', padding='same'))
-    model.add(BatchNormalization())
-
-    return model
-
 
 def dice_coef(y_true, y_pred, smooth=1):
     """

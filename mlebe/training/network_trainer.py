@@ -3,6 +3,7 @@ import mlebe.training.utils.general as utils
 import mlebe.training.unet as unet
 from mlebe.training.utils.data_augment import augment
 import mlebe.training.attention_unet as attention_unet
+from mlebe.training.utils.masking_vis import tester
 import pickle
 import tensorflow as tf
 import mlebe.training.utils.scoring_utils as su
@@ -18,9 +19,14 @@ import datetime
 import random
 import copy
 import warnings
+import json
+import uuid
+import pandas as pd
 
 
-def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation = True, visualisation = False, last_step = False):
+def training(experiment_config, trainer_config, data_dir, studies, data_type, data_gen_args, epochs, loss, shape,
+             x_train, y_train, x_val, y_val, x_test, y_test, save_dir, x_test_data, model, seed, Adam, callbacks,
+             slice_view, augmentation=True, visualisation=False, last_step=False, test=False):
     """
     Trains the model
 
@@ -144,14 +150,13 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
                     else:
                         self.model.save(filepath, overwrite=True)
 
-
     experiment_description = open(save_dir + 'experiment_description.txt', 'w+')
-    # try :
-    #     import subprocess
-    #     git_commit_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-    #     experiment_description.write('Git commit Version: {} \n\n'.format(git_commit_version))
-    # except Exception as e:
-    #     print(e)
+    try:
+        import subprocess
+        git_commit_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+        experiment_description.write('Git commit Version: {} \n\n'.format(git_commit_version))
+    except Exception as e:
+        print(e)
     experiment_description.write(
         "This experiment was run on {date_time} \n\n".format(date_time=datetime.datetime.now()))
     if augmentation == True:
@@ -162,6 +167,14 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
     experiment_description.write('Shape: {shape}'.format(shape=shape) + '\n\n')
     experiment_description.write('Epochs: {epochs}'.format(epochs=epochs) + '\n\n')
     experiment_description.close()
+    experiment_config['callbacks'] = str(callbacks)
+
+    if trainer_config.tensorboard_bool:
+        logdir = save_dir + 'logs/'
+        if not os.path.exists(logdir):
+            os.mkdir(logdir)
+        tb = keras.callbacks.TensorBoard(log_dir=logdir)
+        callbacks.append(tb)
 
     model.compile(loss=loss, optimizer=Adam, metrics=['accuracy', unet.dice_coef])
 
@@ -175,7 +188,8 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
         if not os.path.exists(augment_save_dir):
             os.makedirs(augment_save_dir)
 
-        data_gen_args_ = {key: data_gen_args[key] for key in data_gen_args.keys() if not key in ['brightness_range', 'noise_var_range', 'bias_var_range']}
+        data_gen_args_ = {key: data_gen_args[key] for key in data_gen_args.keys() if
+                          not key in ['brightness_range', 'noise_var_range', 'bias_var_range']}
 
         image_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
         mask_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
@@ -188,7 +202,8 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
         mask_val_generator = mask_val_datagen.flow(y_val, seed=seed + 1)
 
         imgs = [next(image_generator) for _ in range(1000)]
-        masks = [np.where(next(mask_generator) > 0.5, 1, 0).astype('float32') for _ in range(1000)]   #because keras datagumentation interpolates the data, a threshold must be taken to make the data binary again
+        masks = [np.where(next(mask_generator) > 0.5, 1, 0).astype('float32') for _ in range(
+            1000)]  # because keras datagumentation interpolates the data, a threshold must be taken to make the data binary again
         imgs_val = [next(image_val_generator) for _ in range(1000)]
         masks_val = [np.where(next(mask_val_generator) > 0.5, 1, 0).astype('float32') for _ in range(1000)]
 
@@ -198,38 +213,47 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
         masks_val = np.concatenate(masks_val)
 
         for i in range(imgs.shape[0]):
-            imgs[i] = augment(imgs[i], masks[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range'])
+            imgs[i] = augment(imgs[i], masks[i], brightness_range=data_gen_args['brightness_range'],
+                              noise_var_range=data_gen_args['noise_var_range'],
+                              bias_var_range=data_gen_args['bias_var_range'])
         for i in range(imgs_val.shape[0]):
-            imgs_val[i] = augment(imgs_val[i], masks_val[i], brightness_range = data_gen_args['brightness_range'], noise_var_range = data_gen_args['noise_var_range'], bias_var_range = data_gen_args['bias_var_range'])
+            imgs_val[i] = augment(imgs_val[i], masks_val[i], brightness_range=data_gen_args['brightness_range'],
+                                  noise_var_range=data_gen_args['noise_var_range'],
+                                  bias_var_range=data_gen_args['bias_var_range'])
 
         np.save(save_dir + 'x_train_augmented', imgs[:50])
         np.save(save_dir + 'y_train_augmented', masks[:50])
 
         for i in range(100):
             plt.figure()
-            plt.subplot(1,3,1)
-            plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
+            plt.subplot(1, 3, 1)
+            plt.imshow(np.squeeze(imgs[i, ...]), cmap='gray')
             plt.axis('off')
-            plt.subplot(1,3,2)
-            plt.imshow(np.squeeze(masks[i,...]), cmap = 'gray')
+            plt.subplot(1, 3, 2)
+            plt.imshow(np.squeeze(masks[i, ...]), cmap='gray')
             plt.axis('off')
-            plt.subplot(1,3,3)
-            plt.imshow(np.squeeze(imgs[i,...]), cmap = 'gray')
-            plt.imshow(np.squeeze(masks[i,...]), alpha = 0.6, cmap = 'Blues')
+            plt.subplot(1, 3, 3)
+            plt.imshow(np.squeeze(imgs[i, ...]), cmap='gray')
+            plt.imshow(np.squeeze(masks[i, ...]), alpha=0.6, cmap='Blues')
             plt.axis('off')
-            plt.savefig(augment_save_dir+'/img_{}.pdf'.format(i), format = 'pdf')
+            plt.savefig(augment_save_dir + '/img_{}.pdf'.format(i), format='pdf')
             plt.close()
-            plt.imshow(np.squeeze(imgs_val[i,...]), cmap = 'gray')
-            plt.imshow(np.squeeze(masks_val[i,...]), alpha = 0.6, cmap = 'Blues')
+            plt.imshow(np.squeeze(imgs_val[i, ...]), cmap='gray')
+            plt.imshow(np.squeeze(masks_val[i, ...]), alpha=0.6, cmap='Blues')
             plt.axis('off')
-            plt.savefig(augment_save_dir+'/val_{}.pdf'.format(i), format = 'pdf')
+            plt.savefig(augment_save_dir + '/val_{}.pdf'.format(i), format='pdf')
             plt.close()
-        train_dataset = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs), tf.data.Dataset.from_tensor_slices(masks)))
-        train_dataset = train_dataset.repeat().shuffle(1000).batch(32)
-        validation_set = tf.data.Dataset.zip((tf.data.Dataset.from_tensor_slices(imgs_val), tf.data.Dataset.from_tensor_slices(masks_val)))
-        validation_set = validation_set.repeat().shuffle(1000).batch(32)
+        train_dataset = tf.data.Dataset.zip(
+            (tf.data.Dataset.from_tensor_slices(imgs), tf.data.Dataset.from_tensor_slices(masks)))
+        train_dataset = train_dataset.repeat().shuffle(1000).batch(trainer_config.batch_size)
+        validation_set = tf.data.Dataset.zip(
+            (tf.data.Dataset.from_tensor_slices(imgs_val), tf.data.Dataset.from_tensor_slices(masks_val)))
+        validation_set = validation_set.repeat().shuffle(1000).batch(trainer_config.batch_size)
 
-        history = model.fit(train_dataset, steps_per_epoch= int(len(x_train) / 32), validation_data = validation_set, epochs=epochs, validation_steps = int(len(x_train) / 32), verbose=1, callbacks=callbacks)
+        history = model.fit(train_dataset, steps_per_epoch=int(len(x_train) / trainer_config.batch_size),
+                            validation_data=validation_set,
+                            epochs=epochs, validation_steps=int(len(x_train) / trainer_config.batch_size), verbose=1,
+                            callbacks=callbacks)
 
     else:
         if visualisation:
@@ -241,15 +265,21 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
             for i in range(x_train.shape[0]):
                 plt.imshow(np.squeeze(x_train[i, ...]), cmap='gray')
                 plt.imshow(np.squeeze(y_train[i, ...]), alpha=0.6, cmap='Blues')
-                plt.savefig(save_dir + 'train/img_{}.pdf'.format(i), format= 'pdf')
+                plt.savefig(save_dir + 'train/img_{}.pdf'.format(i), format='pdf')
                 plt.close()
             for i in range(x_val.shape[0]):
                 plt.imshow(np.squeeze(x_val[i, ...]), cmap='gray')
                 plt.imshow(np.squeeze(y_val[i, ...]), alpha=0.6, cmap='Blues')
-                plt.savefig(save_dir + 'val/val_{}.pdf'.format(i), format = 'pdf')
+                plt.savefig(save_dir + 'val/val_{}.pdf'.format(i), format='pdf')
                 plt.close()
-        history = model.fit(x_train, y_train, validation_data=(x_val, y_val),
-                            epochs=epochs, validation_steps=int(len(x_train) / 32), verbose=1,
+
+        train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+        train_dataset = train_dataset.shuffle(len(x_train)).batch(batch_size=trainer_config.batch_size).repeat()
+        val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
+        val_dataset = val_dataset.shuffle(len(x_val)).batch(batch_size=trainer_config.batch_size).repeat()
+
+        history = model.fit(train_dataset, steps_per_epoch=int(len(x_train) / trainer_config.batch_size), validation_data=val_dataset,
+                            epochs=epochs, verbose=1, validation_steps=len(x_train) // trainer_config.batch_size,
                             callbacks=callbacks)
 
     print(history.history.keys())
@@ -265,7 +295,7 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
     plt.legend(['Train', 'Validation'], loc='upper left')
     plt.savefig(os.path.join(save_dir, 'accuracy_values.png'))
     plt.close()
- 
+
     plt.figure()
     # Plot training & validation loss values
     plt.plot(history.history['loss'])
@@ -288,8 +318,8 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
         img_pred = np.empty((x.shape))
         dice_score_img = []
         for slice in range(x.shape[0]):
-            temp = np.expand_dims(x[slice],-1) #expand dims for channel
-            temp = np.expand_dims(temp, 0) #expand dims for batch
+            temp = np.expand_dims(x[slice], -1)  # expand dims for channel
+            temp = np.expand_dims(temp, 0)  # expand dims for batch
             prediction = model.predict(temp, verbose=0)
             prediction = np.squeeze(prediction)
             prediction_bin = np.where(prediction > 0.9, 1, 0)
@@ -300,7 +330,7 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
         dice_scores_string.append(dice_score_img)
 
     print('mean Dice score: ', np.mean(dice_scores))
-    if not os.path.exists(os.path.join(save_dir,'testset_vis')):
+    if not os.path.exists(os.path.join(save_dir, 'testset_vis')):
         os.makedirs(os.path.join(save_dir, 'testset_vis'))
     file_names = []
     for i in range(len(y_pred)):
@@ -312,7 +342,7 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
 
         y_true_temp = np.moveaxis(y_test[i], 0, 2)
         y_true_temp = nib.Nifti1Image(y_true_temp, x_test_affine, x_test_header)
-        nib.save(y_true_temp, os.path.join(save_dir,'testset_vis', 'y_true_' + file_name))
+        nib.save(y_true_temp, os.path.join(save_dir, 'testset_vis', 'y_true_' + file_name))
 
         img = nib.Nifti1Image(masked, x_test_affine, x_test_header)
         nib.save(img, os.path.join(save_dir, 'testset_vis', 'masked_' + file_name))
@@ -328,21 +358,58 @@ def training(trainer_config, data_dir, studies, data_type, data_gen_args, epochs
     list = [x_test, y_test]
     for o in outputs:
         list.append(o)
-    utils.save_datavisualisation_plt(list, os.path.join(save_dir, 'testset_vis/'), normalized=True, file_names=file_names, figure_title ='Predictions with a mean Dice score of {}'.format(np.round(np.mean(dice_scores), 4)), slice_titles=slice_titles)
+
+    if visualisation == True:
+        utils.save_datavisualisation_plt(list, os.path.join(save_dir, 'testset_vis/'), normalized=True,
+                                         file_names=file_names,
+                                         figure_title='Predictions with a mean Dice score of {}'.format(
+                                             np.round(np.mean(dice_scores), 4)), slice_titles=slice_titles)
 
     np.save(save_dir + 'y_pred_{}dice'.format(np.round(np.mean(dice_scores), 4)), y_pred)
 
-    # tester(data_dir, studies, os.path.join(save_dir,'vis', data_type+'/'), save_dir + 'model_ep{}.h5'.format(len(history.epoch)), data_type)
+    try:
+        import subprocess
+        git_commit_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+        experiment_config['git_commit'] = git_commit_version
+    except Exception as e:
+        print(e)
+    experiment_config['date_time'] = str(datetime.datetime.now())
+    experiment_config['augmentation_params'] = data_gen_args
+    experiment_config['seed'] = seed
+    experiment_config['epochs'] = len(history.epoch)
+    experiment_config['shape'] = shape
+    experiment_config['model_path'] = save_dir + 'model_ep{}.h5'.format(len(history.epoch))
+    experiment_config['dice_score'] = np.round(np.mean(dice_scores), 4)
+    df = pd.DataFrame(columns=[key for key in experiment_config.keys()])
+    df = df.append(experiment_config, ignore_index=True)
+    df.to_csv(save_dir + 'experiment_config.csv', index=False)
+
+    if trainer_config.model_comparison_df:
+        results_df = pd.read_csv(trainer_config.model_comparison_df)
+        for key in results_df.columns:
+            if key not in df.columns:
+                df[key] = np.nan
+        for key in df.columns:
+            if key not in results_df.columns:
+                results_df[key] = np.nan
+        results_df = results_df.append(df, ignore_index=True)
+        results_df.to_csv(trainer_config.model_comparison_df, index=False)
+
+    if not test:
+        tester(data_dir, ['irsabi'], os.path.join(save_dir, 'vis', data_type + '/'),
+               save_dir + 'model_ep{}.h5'.format(len(history.epoch)), data_type)
     return history
 
-def network_trainer(trainer_config, file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss, blacklist, data_type, slice_view, visualisation = False, pretrained_model = False, data_sets = [''], excluded_from_training = ['']):
+
+def network_trainer(trainer_config, file_name, data_dir, template_dir, test, loss, epochss, shape, data_gen_argss,
+                    blacklist, data_type, slice_view, visualisation=False, pretrained_model=False, data_sets=[''],
+                    excluded_from_training=['']):
     """
     This function loads the data, preprocesses it and trains the network with given parameters.
     It trains the network successively with different data augmentation values.
-    If the training is early stopped before 'min_epochs', the training is started again with reduced augmetnation values
+    If the training is early stopped before 'min_epochs', the training is started again with reduced augmentation values
 
     :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
-    :param remote: Bool: If remote is True, the paths are set for remote computer
     :param loss: string: loss with which the model will be trained
     :param epochss: Array with epochs. Should have the same length than data_gen_argss
     :param shape: Tuple (y,x): Shape of the images that should come out of the preprocessing
@@ -352,35 +419,35 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
     :param visualisation: Bool: if True, all images after preprocessing are saved
     :return: Bool: True if min_epochs is not reached, False otherwise
     """
+    experiment_config = {}
+    experiment_config['data_sets'] = data_sets
+    experiment_config['excluded'] = excluded_from_training
+    experiment_config['slice_view'] = slice_view
+    experiment_config['pretrained_model'] = pretrained_model
+    experiment_config['data_type'] = data_type
+    experiment_config['uid'] = uuid.uuid4()
+    experiment_config['loss'] = loss
+    experiment_config['blacklist'] = trainer_config.blacklist_dir
+    experiment_config['model'] = trainer_config.model
 
     seed = random.randint(0, 1000)
 
     print('Training with seed: ', seed)
 
     if data_type == 'anat':
-        img_data = dl.load_img(data_dir, blacklist, studies = data_sets)
-        excluded_img_data = dl.load_img(data_dir, studies = excluded_from_training)
+        img_data = dl.load_img(data_dir, blacklist, studies=data_sets)
+        excluded_img_data = dl.load_img(data_dir, studies=excluded_from_training)
     elif data_type == 'func':
-        img_data = dl.load_func_img(data_dir, blacklist, studies = data_sets)
-        excluded_img_data = dl.load_func_img(data_dir, studies = excluded_from_training)
+        img_data = dl.load_func_img(data_dir, blacklist, studies=data_sets)
+        excluded_img_data = dl.load_func_img(data_dir, studies=excluded_from_training)
 
-    if test == True:
-        # epochss = np.ones(len(data_gen_argss), dtype=int)*5
-        # save_dir = 'test/{loss}_{epochs}_{date}/'.format(
-        #     loss=loss, epochs=np.sum(epochss), date=datetime.date.today())
-        pass
-        # if os.path.exists('test/'):
-        #     shutil.rmtree('test/')
-
-
-    else:
-        save_dir = data_dir + 'results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,epochs=np.sum(epochss),date=datetime.date.today())
-
+    save_dir = data_dir + 'results/' + file_name + '/{loss}_{epochs}_{date}/'.format(loss=loss,
+                                                                                     epochs=np.sum(epochss),
+                                                                                     date=datetime.date.today())
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
         print('creating dir: ', save_dir)
-
 
     """shape = (z,y,x)"""
 
@@ -394,23 +461,22 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
     for i in range(len(excluded_img_data)):
         excluded_mask_data.append(copy.deepcopy(temp[0]))
 
-    # utils.get_image_and_mask(img_data,mask_data, shape,  save_dir, remove_black_labels_and_columns, slice_view)           #with this line all the images with the mask can be saved to create a blacklist
-
     print('*** Splitting data into Train, Validation and Test set ***')
-    if test == True:
-        x_train1_data, x_test_data, y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data,
-                                                                                                  random_state=seed,
-                                                                                                  test_size=0.9, shuffle = True)
-    else:
-        x_train1_data, x_test_data, y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data,
-                                                                                                  random_state=seed,
-                                                                                                  test_size=0.1, shuffle = True)
+
+    x_train1_data, x_test_data, y_train1_data, y_test_data = model_selection.train_test_split(img_data, mask_data,
+                                                                                              random_state=seed,
+                                                                                              test_size=0.1,
+                                                                                              shuffle=True)
 
     print('*** Preprocessing ***')
     x_test_data.extend(excluded_img_data)
     y_test_data.extend(excluded_mask_data)
-    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(x_test_data, y_test_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)
-    x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(x_train1_data, y_train1_data, shape, save_dir, slice_view= slice_view, visualisation=visualisation, blacklist_bool = blacklist)[:5]
+    x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(
+        x_test_data, y_test_data, shape, save_dir, slice_view=slice_view, visualisation=visualisation,
+        blacklist_bool=blacklist)
+    x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(
+        x_train1_data, y_train1_data, shape, save_dir, slice_view=slice_view, visualisation=visualisation,
+        blacklist_bool=blacklist)[:5]
 
     x_train_struct = {
         'x_train': x_train1,
@@ -436,7 +502,6 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
         'y_test_headers': y_test_headers,
     }
 
-
     xfile = open(save_dir + 'x_test_struct.pkl', 'wb')
     pickle.dump(x_test_struct, xfile)
     xfile.close()
@@ -454,7 +519,8 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
     y_train1 = np.concatenate(y_train1, axis=0)
     x_train1 = np.expand_dims(x_train1, -1)
     y_train1 = np.expand_dims(y_train1, -1)
-    x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25, shuffle= True, random_state= seed)
+    x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25, shuffle=True,
+                                                                      random_state=seed)
 
     print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
     print('*** Training with {} slices ***'.format(x_train.shape[0]))
@@ -466,7 +532,7 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
     """
 
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=5)
-    earlystopper = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+    earlystopper = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
     Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=True)
 
     callbacks = [reduce_lr, earlystopper]
@@ -490,18 +556,17 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
         print('\n*********\n\nWrong loss function, choose between bincross, dice or dice_bincross\n\n*********\n')
 
     if pretrained_model == False:
-        if test == True:
+        if trainer_config.model == 'attention_unet':
             model = attention_unet.att_unet(input_shape[0], input_shape[1], 1)
-            # model = unet.twolayernetwork(input_shape, 3, 0.5)
-
-        else:
-            # model = unet.unet(input_shape)
-            model = attention_unet.att_unet(input_shape[0], input_shape[1], 1)
-
+        elif trainer_config.model == 'unet':
+            model = unet.unet(input_shape)
+        elif trainer_config.model == 'att_r2_unet':
+            model = attention_unet.att_r2_unet(input_shape[0], input_shape[1], 1)
 
     else:
         print(pretrained_model)
-        model = keras.models.load_model(pretrained_model, custom_objects = {'dice_coef_loss': unet.dice_coef_loss, 'dice_coef': unet.dice_coef})
+        model = keras.models.load_model(pretrained_model, custom_objects={'dice_coef_loss': unet.dice_coef_loss,
+                                                                          'dice_coef': unet.dice_coef})
 
     """
     Training
@@ -515,30 +580,36 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
 
         if data_gen_args == None:
             augmentation = False
-        else: augmentation = True
-
+        else:
+            augmentation = True
 
         if counter > 1:
-            print('\n\n\n\n********* \nTraining with higher augmentation values! Taking model from try {} \n*********\n\n\n\n'.format(best_try + 1))
+            print(
+                '\n\n\n\n********* \nTraining with higher augmentation values! Taking model from try {} \n*********\n\n\n\n'.format(
+                    best_try + 1))
             model = history.model
 
         histories = []
-        new_save_dir = save_dir + '{counter}_Step/'.format( counter = counter)
+        new_save_dir = save_dir + '{counter}_Step/'.format(counter=counter)
 
         if not os.path.exists(new_save_dir):
             os.makedirs(new_save_dir)
         if data_gen_args == data_gen_argss[-1]:
             last_step = True
             # callbacks[-1] = EarlyStopping(monitor='val_loss', patience=80, verbose=1)
-        else: last_step = False
+        else:
+            last_step = False
 
         print('Step', counter, 'of', len(epochss))
-        temp_history = training(trainer_config, data_dir, data_sets, data_type,data_gen_args, epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir, x_test_data, model, seed, Adam, callbacks, slice_view, augmentation= augmentation, visualisation=visualisation, last_step = last_step)
+        temp_history = training(experiment_config, trainer_config, data_dir, data_sets, data_type, data_gen_args,
+                                epochs, loss, shape, x_train, y_train, x_val, y_val, x_test, y_test, new_save_dir,
+                                x_test_data, model, seed, Adam, callbacks, slice_view, augmentation=augmentation,
+                                visualisation=visualisation, last_step=last_step, test=test)
         histories.append(temp_history)
 
         history_epochs = []
         for x in histories:
             history_epochs.append(len(x.epoch))
-            best_try = history_epochs.index(max(history_epochs))    #best_try is the try with the most epochs
+            best_try = history_epochs.index(max(history_epochs))  # best_try is the try with the most epochs
         history = histories[best_try]
         counter += 1

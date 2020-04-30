@@ -246,7 +246,7 @@ def r2_unet(img_w, img_h, n_label, data_format='channels_first'):
 
 ########################################################################################################
 #Attention R2U-Net
-def att_r2_unet(img_w, img_h, n_label, data_format='channels_first'):
+def att_r2_unet(img_w, img_h, n_label, data_format='channels_last'):
     inputs = Input((img_w, img_h, 1))
     x = inputs
     depth = 4

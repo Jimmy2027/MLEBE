@@ -4,6 +4,7 @@ def predict_mask(
         input_type = 'anat',
         visualisation_path = '',
         visualisation_bool = False,
+        visualisation_format = 'pdf',
         bias_correct_bool = False,
         bias_correct_anat_convergence = '[ 150x100x50x30, 1e-16 ]',
         bias_correct_func_convergence = '[ 150x100x50x30, 1e-11 ]',
@@ -114,7 +115,7 @@ def predict_mask(
         save_dir = os.path.join(visualisation_path, os.path.basename(in_file))
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        pred_volume_stats(mask_pred, os.path.dirname(os.path.dirname(visualisation_path)), os.path.basename(in_file), model_path)
+        # pred_volume_stats(mask_pred, os.path.dirname(os.path.dirname(visualisation_path)), os.path.basename(in_file), model_path)
         for slice in range(in_file_data.shape[0]):
             plt.figure()
             plt.subplot(1,3,1)
@@ -127,7 +128,7 @@ def predict_mask(
             plt.imshow(in_file_data[slice], cmap = 'gray')
             plt.imshow(mask_pred[slice], cmap = 'Blues', alpha= 0.6)
             plt.axis('off')
-            plt.savefig(save_dir + '/{}'.format(slice))
+            plt.savefig(save_dir + '/{}.{}'.format(slice, visualisation_format), format = visualisation_format)
             plt.close()
 
     """

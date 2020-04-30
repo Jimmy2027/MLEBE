@@ -1,9 +1,13 @@
 import nibabel as nib
-from data_augment import augment
+from mlebe.training.utils.data_augment import augment
 from matplotlib import pyplot as plt
 import numpy as np
 import tensorflow.keras.preprocessing as kp
 from mlebe.training.utils.general import preprocess
+"""
+With this script one can visualise the augmentations
+"""
+
 
 data_gen_args = dict(
     rotation_range=90,
