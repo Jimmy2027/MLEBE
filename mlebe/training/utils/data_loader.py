@@ -2,9 +2,11 @@ import os
 import nibabel as nib
 from matplotlib import pyplot as plt
 import numpy as np
+
+
 # from mlebe.training.utils import *
 
-def load_bidsdata(dir, studies = [], input_type = 'anat'):
+def load_bidsdata(dir, studies=[], input_type='anat'):
     """
     :return: list of paths of all the bids files
     """
@@ -13,15 +15,15 @@ def load_bidsdata(dir, studies = [], input_type = 'anat'):
     if input_type == 'anat':
         for o in os.listdir(dir):
             if o in studies:
-                for root, dirs, files in os.walk(os.path.join(dir, o)):
+                for root, dirs, files in os.walk(os.path.join(dir, o), followlinks=True):
                     for file in files:
-                        if file.endswith("_T2w.nii.gz"):
+                        if file.endswith("_T2w.nii.gz") and 'bids' in root:
                             paths.append(os.path.join(dir, o, root, file))
     if input_type == 'func':
         for o in os.listdir(dir):
             if o in studies:
-                for root, dirs, files in os.walk(os.path.join(dir, o)):
-                    if root.endswith('func'):
+                for root, dirs, files in os.walk(os.path.join(dir, o), followlinks=True):
+                    if root.endswith('func') and 'bids' in root:
                         for file in files:
                             if file.endswith(".nii.gz"):
                                 paths.append(os.path.join(dir, o, root, file))
@@ -29,17 +31,21 @@ def load_bidsdata(dir, studies = [], input_type = 'anat'):
     return paths
 
 
-def load_img(data_dir,blacklist = False, test = False, studies = []):
+def load_img(data_dir, blacklist=False, test=False, studies=[]):
+    """
+    returns: list of Nifti1Images
+    """
     print('*** Loading images ***')
     im_data = []
     for o in os.listdir(data_dir):
-        if (o in studies or not studies):   #i.e. if o in studies or if studies empty
+        if (o in studies or not studies) and not o.startswith('.') and not o.endswith(
+                '.xz'):  # i.e. if o in studies or if studies empty
             print(o)
             for x in os.listdir(os.path.join(data_dir, o)):
                 if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):
                     for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                         for file in files:
-                            if file.endswith("_T2w.nii.gz"):
+                            if file.endswith("_T2w.nii.gz") or file.endswith("_T1w.nii.gz"):
                                 if not blacklist == False:
                                     blacklisted = False
                                     for i in blacklist:
@@ -51,7 +57,6 @@ def load_img(data_dir,blacklist = False, test = False, studies = []):
                                         im_data.append(os.path.join(root, file))
                                 else:
                                     im_data.append(os.path.join(root, file))
-
 
     im_data = np.sort(im_data)
     print('*** Loading {} subjects ***'.format(len(im_data)))
@@ -73,39 +78,34 @@ def load_mask(data_dir):
     im_data = []
     for o in os.listdir(data_dir):
         if o == 'dsurqec_200micron_mask.nii':
-            im_data.append(os.path.join(data_dir,o))
+            im_data = os.path.join(data_dir, o)
 
-    data = []
-    im_data = np.sort(im_data)
+    return nib.load(im_data)
 
-    for i in im_data:
-        img = nib.load(i)
-        data.append(img)
-    return data
 
-def load_func_img(data_dir, test = False, studies = []):
-
+def load_func_img(data_dir, test=False, studies=[]):
     print('*** Loading images ***')
-    func_training_dir = os.path.abspath(os.path.expanduser('/var/tmp/func_training'))
+    func_training_dir = os.path.abspath(os.path.expanduser('~/var/tmp/func_training'))
 
     if not os.path.exists(func_training_dir):
         print('creating dir: ', func_training_dir)
         os.makedirs(func_training_dir)
     im_data = []
     for o in os.listdir(data_dir):
-        if o in studies:
+        if o in studies and not o.startswith('.') and not o.startswith('.') and not o.endswith('.xz'):
             for x in os.listdir(os.path.join(data_dir, o)):
                 if x.endswith('preprocessing'):
                     for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
-                            if root.endswith('func'):
-                                for file in files:
-                                    if file.endswith(".nii.gz"):
-                                        tMean_path = os.path.join(func_training_dir, 'tMean_' + file)
-                                        if not os.path.isfile(tMean_path):
-                                            command = 'fslmaths {a} -Tmean {b}'.format(a = os.path.join(root, file), b = tMean_path)
-                                            print(command)
-                                            os.system(command)
-                                        im_data.append(tMean_path)
+                        if root.endswith('func'):
+                            for file in files:
+                                if file.endswith(".nii.gz"):
+                                    tMean_path = os.path.join(func_training_dir, 'tMean_' + file)
+                                    if not os.path.isfile(tMean_path):
+                                        command = 'fslmaths {a} -Tmean {b}'.format(a=os.path.join(root, file),
+                                                                                   b=tMean_path)
+                                        print(command)
+                                        os.system(command)
+                                    im_data.append(tMean_path)
 
     im_data = np.sort(im_data)
     print('*** Loading {} subjects ***'.format(len(im_data)))

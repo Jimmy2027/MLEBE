@@ -269,5 +269,5 @@ def att_r2_unet(img_w, img_h, n_label, data_format='channels_last'):
     conv6 = Conv2D(n_label, (1, 1), padding='same', data_format=data_format)(x)
     conv7 = Activation('sigmoid')(conv6)
     model = Model(inputs=inputs, outputs=conv7)
-    model.compile(optimizer=Adam(lr=1e-6), loss=[unet.dice_coef_loss], metrics=['accuracy', unet.dice_coef])
+    model.compile(optimizer=Adam(lr=1e-6), loss=[u.dice_coef_loss], metrics=['accuracy', u.dice_coef])
     return model

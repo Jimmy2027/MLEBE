@@ -1,6 +1,5 @@
 from mlebe.masking.predict_mask import predict_mask
-from mlebe.training import data_loader
-import nibabel as nib
+from mlebe.training.utils import data_loader
 import os
 
 """

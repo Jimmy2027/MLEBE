@@ -9,7 +9,7 @@ class trainer_config:
     def __init__(self, file_name, data_dir, template_dir, slice_view, shape, loss, epochss, data_gen_argss,
                  blacklist=False, visualisation=False, test=False, pretrained_model=False, data_type='anat',
                  excluded_from_training=[''], data_sets=[], blacklist_dir='', batch_size=64, model_comparison_df='',
-                 tensorboard_bool=False, model = 'unet'):
+                 tensorboard_bool=False, model='unet', lr = 1e-4):
         """
         :param test: Bool: If Test is True, every parameter is set to increase learning speed. Used to test if the code runs
         :param visualisation: Bool: if True, saves pre- and unpreprocessed images for visualisation (SLOW!)
@@ -43,6 +43,9 @@ class trainer_config:
         self.model_comparison_df = model_comparison_df
         self.tensorboard_bool = tensorboard_bool
         self.model = model
+        self.lr = lr
+        assert model in ['att_r2_unet', 'unet', 'attention_unet'], 'wrong model name {}, expected on of {}'.format(
+            model, ['att_r2_unet', 'unet', 'attention_unet'])
 
     def train(self):
 

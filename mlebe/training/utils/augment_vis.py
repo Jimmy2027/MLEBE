@@ -31,12 +31,12 @@ x = preprocess(x.get_data(), shape, 'coronal')
 mask = preprocess(mask.get_data(), shape, 'coronal')
 mask = np.expand_dims(mask, -1)
 image = np.expand_dims(x, -1)
-
-mask_datagen = image_datagen = kp.image.ImageDataGenerator({key: data_gen_args[key] for key in data_gen_args.keys() if not key in ['brightness_range', 'noise_var_range', 'bias_var_range']})
+temp = {key: data_gen_args[key] for key in data_gen_args.keys() if not key in ['brightness_range', 'noise_var_range', 'bias_var_range']}
+image_datagen = kp.image.ImageDataGenerator(**temp)
 image_generator = image_datagen.flow(image, seed=1)
 mask_generator = image_datagen.flow(mask, seed=1)
-imgs = [next(image_generator) for _ in range(10)]
-masks = [np.where(next(mask_generator) > 0.5, 1, 0).astype('float32') for _ in range(10)]
+imgs = [next(image_generator) for _ in range(50)]
+masks = [np.where(next(mask_generator) > 0.5, 1, 0).astype('float32') for _ in range(50)]
 imgs = np.concatenate(imgs)
 masks = np.concatenate(masks)
 for i in range(len(imgs)):

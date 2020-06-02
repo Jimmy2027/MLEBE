@@ -154,7 +154,7 @@ def gaussian_bias(img, mask, var_range):
     vary = random.randint(var_range[0], var_range[1] + 1)
     meany = coord[1]
     maxx = float(random.randint(255, 500))/255
-    maxy= float(random.randint(255, 500))/255
+    maxy = float(random.randint(255, 500))/255
     gaus2d = gauss(x, maxx, meanx, varx)*gauss(y, maxy, meany, vary)
     if np.max(gaus2d) == 0:
         augmented = img
@@ -166,7 +166,7 @@ def gaussian_bias(img, mask, var_range):
         augmented = augmented / np.max(augmented)
     return augmented
 
-def augment(x, mask, brightness_range, noise_var_range, bias_var_range):
+def augment(x, mask, brightness_range, noise_var_range, bias_var_range, bias_prob = 0.01):
     """
     :param x: single image
     :param mask:
@@ -179,7 +179,7 @@ def augment(x, mask, brightness_range, noise_var_range, bias_var_range):
     x = np.squeeze(x)
     mask = np.squeeze(mask)
     if not bias_var_range == None:
-        if random.random() < 0.01:
+        if random.random() < bias_prob:
             x = gaussian_bias(x, mask , bias_var_range)
     var = random.uniform(noise_var_range[0], noise_var_range[1])
     x = random_noise(x, mode = 'gaussian', var = var)

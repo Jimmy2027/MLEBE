@@ -1,6 +1,5 @@
 import os
-from mlebe.training import data_loader as dl
-from mlebe.training.utils import general
+from mlebe.training.utils import general, data_loader as dl
 import pandas as pd
 from matplotlib import pyplot as plt
 import copy

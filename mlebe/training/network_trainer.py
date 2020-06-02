@@ -1,6 +1,7 @@
-import mlebe.training.data_loader as dl
+import mlebe.training.utils.data_loader as dl
 import mlebe.training.utils.general as utils
 import mlebe.training.unet as unet
+from mlebe.training.threed_unet import unet_model_3d
 from mlebe.training.utils.data_augment import augment
 import mlebe.training.attention_unet as attention_unet
 from mlebe.training.utils.masking_vis import tester
@@ -19,7 +20,6 @@ import datetime
 import random
 import copy
 import warnings
-import json
 import uuid
 import pandas as pd
 
@@ -189,7 +189,7 @@ def training(experiment_config, trainer_config, data_dir, studies, data_type, da
             os.makedirs(augment_save_dir)
 
         data_gen_args_ = {key: data_gen_args[key] for key in data_gen_args.keys() if
-                          not key in ['brightness_range', 'noise_var_range', 'bias_var_range']}
+                          not key in ['brightness_range', 'noise_var_range', 'bias_var_range', 'bias_prob']}
 
         image_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
         mask_datagen = kp.image.ImageDataGenerator(**data_gen_args_)
@@ -215,11 +215,11 @@ def training(experiment_config, trainer_config, data_dir, studies, data_type, da
         for i in range(imgs.shape[0]):
             imgs[i] = augment(imgs[i], masks[i], brightness_range=data_gen_args['brightness_range'],
                               noise_var_range=data_gen_args['noise_var_range'],
-                              bias_var_range=data_gen_args['bias_var_range'])
+                              bias_var_range=data_gen_args['bias_var_range'], bias_prob=data_gen_args['bias_prob'])
         for i in range(imgs_val.shape[0]):
             imgs_val[i] = augment(imgs_val[i], masks_val[i], brightness_range=data_gen_args['brightness_range'],
                                   noise_var_range=data_gen_args['noise_var_range'],
-                                  bias_var_range=data_gen_args['bias_var_range'])
+                                  bias_var_range=data_gen_args['bias_var_range'], bias_prob=data_gen_args['bias_prob'])
 
         np.save(save_dir + 'x_train_augmented', imgs[:50])
         np.save(save_dir + 'y_train_augmented', masks[:50])
@@ -278,7 +278,8 @@ def training(experiment_config, trainer_config, data_dir, studies, data_type, da
         val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
         val_dataset = val_dataset.shuffle(len(x_val)).batch(batch_size=trainer_config.batch_size).repeat()
 
-        history = model.fit(train_dataset, steps_per_epoch=int(len(x_train) / trainer_config.batch_size), validation_data=val_dataset,
+        history = model.fit(train_dataset, steps_per_epoch=int(len(x_train) / trainer_config.batch_size),
+                            validation_data=val_dataset,
                             epochs=epochs, verbose=1, validation_steps=len(x_train) // trainer_config.batch_size,
                             callbacks=callbacks)
 
@@ -380,6 +381,9 @@ def training(experiment_config, trainer_config, data_dir, studies, data_type, da
     experiment_config['shape'] = shape
     experiment_config['model_path'] = save_dir + 'model_ep{}.h5'.format(len(history.epoch))
     experiment_config['dice_score'] = np.round(np.mean(dice_scores), 4)
+    experiment_config['std_dice_scores'] = np.std(dice_scores)
+    experiment_config['min_dice_scores'] = min(dice_scores)
+    experiment_config['max_dice_scores'] = max(dice_scores)
     df = pd.DataFrame(columns=[key for key in experiment_config.keys()])
     df = df.append(experiment_config, ignore_index=True)
     df.to_csv(save_dir + 'experiment_config.csv', index=False)
@@ -398,6 +402,7 @@ def training(experiment_config, trainer_config, data_dir, studies, data_type, da
     if not test:
         tester(data_dir, ['irsabi'], os.path.join(save_dir, 'vis', data_type + '/'),
                save_dir + 'model_ep{}.h5'.format(len(history.epoch)), data_type)
+
     return history
 
 
@@ -429,6 +434,7 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
     experiment_config['loss'] = loss
     experiment_config['blacklist'] = trainer_config.blacklist_dir
     experiment_config['model'] = trainer_config.model
+    experiment_config['lr'] = trainer_config.lr
 
     seed = random.randint(0, 1000)
 
@@ -472,9 +478,11 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
     x_test_data.extend(excluded_img_data)
     y_test_data.extend(excluded_mask_data)
     x_test, y_test, x_test_affines, x_test_headers, file_names, y_test_affines, y_test_headers = utils.get_image_and_mask(
+        trainer_config,
         x_test_data, y_test_data, shape, save_dir, slice_view=slice_view, visualisation=visualisation,
         blacklist_bool=blacklist)
     x_train1, y_train1, x_train1_affines, x_train1_headers, x_train1_file_names, = utils.get_image_and_mask(
+        trainer_config,
         x_train1_data, y_train1_data, shape, save_dir, slice_view=slice_view, visualisation=visualisation,
         blacklist_bool=blacklist)[:5]
 
@@ -515,17 +523,17 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
     pickle.dump(x_train_struct, xfile)
     xfile.close()
 
-    x_train1 = np.concatenate(x_train1, axis=0)
-    y_train1 = np.concatenate(y_train1, axis=0)
-    x_train1 = np.expand_dims(x_train1, -1)
-    y_train1 = np.expand_dims(y_train1, -1)
+    # x_train1 = np.concatenate(x_train1, axis=0)
+    # y_train1 = np.concatenate(y_train1, axis=0)
+    # x_train1 = np.expand_dims(x_train1, -1)
+    # y_train1 = np.expand_dims(y_train1, -1)
     x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train1, y_train1, test_size=0.25, shuffle=True,
                                                                       random_state=seed)
 
-    print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
-    print('*** Training with {} slices ***'.format(x_train.shape[0]))
-    print('*** Validating with {} slices ***'.format(x_val.shape[0]))
-    input_shape = (x_train.shape[1:4])
+    # print('TRAINING SHAPE: ' + str(x_train.shape[1:4]))
+    # print('*** Training with {} slices ***'.format(x_train.shape[0]))
+    # print('*** Validating with {} slices ***'.format(x_val.shape[0]))
+    input_shape = (x_train[0].shape[0:4])
 
     """
     Callbacks
@@ -533,7 +541,7 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
 
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, verbose=1, patience=5)
     earlystopper = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
-    Adam = keras.optimizers.Adam(learning_rate=1e-4, beta_1=0.9, beta_2=0.999, amsgrad=True)
+    Adam = keras.optimizers.Adam(learning_rate=trainer_config.lr, beta_1=0.9, beta_2=0.999, amsgrad=True)
 
     callbacks = [reduce_lr, earlystopper]
 
@@ -559,7 +567,10 @@ def network_trainer(trainer_config, file_name, data_dir, template_dir, test, los
         if trainer_config.model == 'attention_unet':
             model = attention_unet.att_unet(input_shape[0], input_shape[1], 1)
         elif trainer_config.model == 'unet':
-            model = unet.unet(input_shape)
+            input_shape = list((trainer_config.shape))
+            input_shape.insert(0, 1)
+            input_shape = tuple(input_shape)
+            model = unet_model_3d(input_shape)
         elif trainer_config.model == 'att_r2_unet':
             model = attention_unet.att_r2_unet(input_shape[0], input_shape[1], 1)
 
