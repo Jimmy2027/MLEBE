@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from models.networks_other import init_weights
+from mlebe.threed.training.models.networks_other import init_weights
 
 
 class _GridAttentionBlockND(nn.Module):

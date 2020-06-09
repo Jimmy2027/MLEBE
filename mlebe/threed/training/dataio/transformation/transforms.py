@@ -3,7 +3,8 @@ import torchsample.transforms as ts
 # import torchvision.transforms as tv
 from torchio.transforms import Interpolation
 from .imageTransformations import RandomElasticTransform, RandomAffineTransform, RandomNoiseTransform, \
-    RandomFlipTransform
+    RandomFlipTransform, RandomBiasFieldTransform
+
 from pprint import pprint
 
 
@@ -17,7 +18,7 @@ class Transformations:
         self.patch_size = (128, 128, 1)
 
         # Affine and Intensity Transformations
-        self.shift_val = (0.1, 0.1)
+        self.shift_val = (0, 0)
         self.rotate_val = 15.0
         self.scale_val = (0.7, 1.3)
         self.inten_val = (1.0, 1.0)
@@ -25,6 +26,7 @@ class Transformations:
         self.random_affine_prob = 0.0
         self.random_elastic_prob = 0.0
         self.random_noise_prob = 0.0
+        self.bias_field_prob = 0.0
 
         # Divisibility factor for testing
         self.division_factor = (16, 16, 1)
@@ -50,7 +52,7 @@ class Transformations:
         # Affine and Intensity Transformations
         if hasattr(t_opts, 'scale_size'):       self.scale_size = t_opts.scale_size
         if hasattr(t_opts, 'patch_size'):       self.patch_size = t_opts.patch_size
-        if hasattr(t_opts, 'shift_val'):        self.shift_val = t_opts.shift
+        if hasattr(t_opts, 'shift_val'):        self.shift_val = t_opts.shift_val
         if hasattr(t_opts, 'rotate'):           self.rotate_val = t_opts.rotate
         if hasattr(t_opts, 'scale_val'):        self.scale_val = t_opts.scale_val
         if hasattr(t_opts, 'max_deform'):       self.max_deform = t_opts.max_deform
@@ -58,7 +60,9 @@ class Transformations:
         if hasattr(t_opts, 'random_flip_prob'): self.random_flip_prob = t_opts.random_flip_prob
         if hasattr(t_opts, 'random_affine_prob'): self.random_affine_prob = t_opts.random_affine_prob
         if hasattr(t_opts, 'random_elastic_prob'): self.random_elastic_prob = t_opts.random_elastic_prob
+        if hasattr(t_opts, 'bias_field_prob'):  self.bias_field_prob = t_opts.bias_field_prob
         if hasattr(t_opts, 'division_factor'):  self.division_factor = t_opts.division_factor
+        if hasattr(t_opts, 'random_noise_prob'):  self.random_noise_prob = t_opts.random_noise_prob
 
     def get_gsd_pCT_transformer(self):
         return {'train': self.gsd_pCT_train_transform, 'valid': self.gsd_pCT_valid_transform}
@@ -79,15 +83,17 @@ class Transformations:
                                    max_displacement=self.max_deform,
                                    max_output_channels=self.max_output_channels),
 
-            # RandomAffineTransform(scales=self.scale_val, degrees=(self.rotate_val), isotropic=True, default_pad_value=0,
-            #                       image_interpolation=Interpolation.BSPLINE, seed=seed, p=self.random_affine_prob,
-            #                       max_output_channels=self.max_output_channels),
+            RandomAffineTransform(scales=self.scale_val, degrees=(self.rotate_val), isotropic=True, default_pad_value=0,
+                                  image_interpolation=Interpolation.BSPLINE, seed=seed, p=self.random_affine_prob,
+                                  max_output_channels=self.max_output_channels),
 
             RandomNoiseTransform(p=self.random_noise_prob, seed=seed, max_output_channels=self.max_output_channels),
 
-            # Todo Random Affine doesn't support channels --> try newer version of torchsample or torchvision
-            ts.RandomAffine(rotation_range=self.rotate_val, translation_range=self.shift_val,
-                            zoom_range=self.scale_val, interp='nearest'),
+            # somehow applies shift even if "shift": [0,0]
+            ts.RandomAffine(translation_range=self.shift_val),
+
+            # RandomBiasFieldTransform(p=self.bias_field_prob, is_tensor=True),
+
             ts.ChannelsFirst(),
             # ts.NormalizeMedicPercentile(norm_flag=(True, False)),
             # Todo apply channel wise normalisation

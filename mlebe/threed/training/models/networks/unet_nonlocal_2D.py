@@ -1,7 +1,7 @@
 import math
 import torch.nn as nn
 from .utils import unetConv2, unetUp
-from models.layers.nonlocal_layer import NONLocalBlock2D
+from mlebe.threed.training.models.layers.nonlocal_layer import NONLocalBlock2D
 import torch.nn.functional as F
 
 

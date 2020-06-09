@@ -1,4 +1,4 @@
-from dataio.transformation.transforms import Transformations
+from mlebe.threed.training.dataio.transformation.transforms import Transformations
 
 
 def get_dataset_transformation(name, opts=None, max_output_channels=None):

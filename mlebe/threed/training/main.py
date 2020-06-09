@@ -1,10 +1,12 @@
-import pandas as pd
-from dataio.loaders.mlebe_loader import experiment_config
-from train_segmentation import train
-from utils.utils import json_file_to_pyobj
+from mlebe.threed.training.dataio.loaders.mlebe_loader import experiment_config
+from mlebe.threed.training.train_segmentation import train
+from mlebe.threed.training.utils.utils import json_file_to_pyobj
 
-# config_path = 'configs/mlebe_config_func.json'
-config_paths = ['configs/mlebe_config_func.json', 'configs/mlebe_config_anat.json']
+#todo make function that can change some parameters of config file for grid search
+# parameters to try: loss, augmentations, blacklist
+
+# config_paths = ['configs/temp_config.json','configs/temp_config.json']
+config_paths = ['configs/mlebe_config_func.json']
 for config_path in config_paths:
     json_opts = json_file_to_pyobj(config_path)
     exp_config_class = experiment_config(json_opts)
@@ -18,4 +20,8 @@ for config_path in config_paths:
     for key, value in zip(results.columns, results.values[0]):
         exp_config_class.experiment_config[key] = value
 
-    exp_config_class.save()
+    if 'temp_config' in config_path:
+        exp_config_class.save('temp_results')
+    else:
+        exp_config_class.save()
+

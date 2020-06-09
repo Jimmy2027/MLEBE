@@ -6,7 +6,7 @@ import os
 import numpy as np
 import torch.optim as optim
 from torch.nn import CrossEntropyLoss
-from utils.metrics import segmentation_scores, dice_score_list, single_class_dice_score, roc_auc
+from mlebe.threed.training.utils.metrics import segmentation_scores, dice_score_list, single_class_dice_score, roc_auc
 from sklearn import metrics
 from .layers.loss import *
 

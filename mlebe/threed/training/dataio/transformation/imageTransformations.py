@@ -8,7 +8,7 @@ from PIL import Image
 import numbers
 from typing import Optional, Tuple, Union
 from torch.nn.functional import pad
-from torchio.transforms import RandomAffine, Interpolation, RandomFlip, RandomNoise, RandomElasticDeformation
+from torchio.transforms import RandomAffine, Interpolation, RandomFlip, RandomNoise, RandomElasticDeformation, RandomBiasField
 
 
 def center_crop(x, center_crop_size):
@@ -491,7 +491,7 @@ class TorchIOTransformer(object):
                     transformer = self.get_transformer(mask=True)
                     input_tf = transformer(_input.unsqueeze(0)).squeeze(0)
                     input_tf = input_tf.round()
-                    assert _input.unique().size() == input_tf.unique().size()
+                    assert _input.unique().size() >= input_tf.unique().size(), 'Transformed mask not concordant with initial mask (ie different number of classes)'
                 else:
                     transformer = self.get_transformer()
                     input_tf = transformer(_input.unsqueeze(0)).squeeze(0)
@@ -563,7 +563,7 @@ class RandomFlipTransform(TorchIOTransformer):
 class RandomNoiseTransform(TorchIOTransformer):
     def __init__(
             self,
-            std: Tuple[float, float] = (0, 0.25),
+            std: Tuple[float, float] = (0, 0.15),
             p: float = 1,
             seed: Optional[int] = None,
             is_tensor=True,
@@ -576,6 +576,24 @@ class RandomNoiseTransform(TorchIOTransformer):
             else:
                 proba = p
             return RandomNoise(std, proba, seed, is_tensor)
+        super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
+
+class RandomBiasFieldTransform(TorchIOTransformer):
+    def __init__(
+            self,
+            std: Tuple[float, float] = (0, 0.15),
+            p: float = 1,
+            seed: Optional[int] = None,
+            is_tensor=False,
+            max_output_channels=10
+    ):
+        def get_torchio_transformer(mask=False):
+            if mask:
+                # Don't apply bias field on mask
+                proba = 0
+            else:
+                proba = p
+            return RandomBiasField(proba, is_tensor=is_tensor)
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
 
 if __name__ == '__main__':

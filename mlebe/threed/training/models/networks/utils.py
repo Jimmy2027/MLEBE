@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.networks_other import init_weights
+from mlebe.threed.training.models.networks_other import init_weights
 from .torch_patch import Upsample, UpsamplingBilinear2d
 
 class conv2DBatchNorm(nn.Module):

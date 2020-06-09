@@ -7,25 +7,34 @@ from matplotlib.backends.backend_pdf import PdfPages
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataio.loaders import get_dataset
-from dataio.transformation import get_dataset_transformation
-from models import get_model
-from utils import utils
-from utils.utils import json_file_to_pyobj
+from mlebe.threed.training.dataio.loaders import get_dataset
+from mlebe.threed.training.dataio.transformation import get_dataset_transformation
+from mlebe.threed.training.models import get_model
+from mlebe.threed.training.utils import utils
+from mlebe.threed.training.utils.utils import json_file_to_pyobj
+import torchio
+
+print(torchio.__file__)
+
+"""
+Notes:
+shift is working
+rotation is working
+noise is working
+
+rot + shift takes wrong interpolation for mask
+skewing introduces weird artifacts, same with scaling
+"""
 
 
-def train(arguments):
+# todo images need to be in form X,Y,Z
+def aug_vis(json_filename):
     # Visualisation arguments
     with_mask = True
-    only_mask = False
     len_x = 5  # number of images on x-axis for vis pdf
     len_y = 5  # number of images on y-axis for vis pdf
-    nbr_pages = 20
-    total_images = len_x * len_y * nbr_pages  # total number of images that will be augmented
-
-    # Parse input arguments
-    json_filename = arguments.config
-    network_debug = arguments.debug
+    nbr_pages = 10
+    total_images = len_x * len_y * nbr_pages  # total number of slices that will be augmented
 
     # Load options
     json_opts = json_file_to_pyobj(json_filename)
@@ -38,7 +47,6 @@ def train(arguments):
     ds_class = get_dataset('mlebe_dataset')
     ds_path = json_opts.data.data_dir
     template_path = json_opts.data.template_dir
-    studies = json_opts.data.studies
     ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
                                               max_output_channels=json_opts.model.output_nc)
 
@@ -51,20 +59,23 @@ def train(arguments):
 
     # Setup Data Loader
     split_opts = json_opts.data_split
-    train_dataset = ds_class(template_path, ds_path, studies, split='train', transform=ds_transform['train'],
+    train_dataset = ds_class(template_path, ds_path, json_opts.data, split='train',
+                             transform=ds_transform['train'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
                              valid_size=split_opts.validation_size, split_seed=split_opts.seed)
+
+    train_dataset.selection = train_dataset.selection[:(total_images // 96) * 3]
 
     train_loader = DataLoader(dataset=train_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=True)
 
     save_dir = os.path.join('visualisation', json_opts.model.experiment_name)
-    utils.mkdirs(save_dir)
+    utils.rm_and_mkdir(save_dir)
 
     slices = []
     masks = []
 
     for epoch_iter, (images, labels, indices) in tqdm(enumerate(train_loader, 1),
-                                                      total=total_images):
+                                                      total=len(train_loader)):
         if epoch_iter <= total_images:
 
             images = images.numpy()
@@ -73,10 +84,10 @@ def train(arguments):
             for image_idx in range(images.shape[0]):
                 image = np.squeeze(images[image_idx])
                 label = np.squeeze(labels[image_idx])
-                for slice in range(image.shape[0]):
-                    if not np.max(image[slice]) < 0:
-                        slices.append(image[slice])
-                        masks.append(label[slice])
+                for slice in range(image.shape[2]):
+                    if not np.max(image[..., slice]) <= 0:
+                        slices.append(image[..., slice])
+                        masks.append(label[..., slice])
 
     temp = list(zip(slices, masks))
 
@@ -84,31 +95,47 @@ def train(arguments):
 
     slices, masks = zip(*temp)
     list_index = 1
-    with PdfPages(save_dir + '/augm_vis.pdf') as pdf:
+    with PdfPages(save_dir + '/augm_img_vis.pdf') as pdf:
         for page in range(nbr_pages):
             plt.figure()
+            plt.figtext(.05, .9, str(json_opts.augmentation.mlebe), fontsize=4)
             idx = 1
             for slice in range(len_x * len_y):
                 plt.subplot(len_y, len_x, idx)
-                if only_mask:
-                    plt.imshow(masks[list_index], cmap='gray')
-                else:
-                    plt.imshow(slices[list_index], cmap='gray')
-                    if with_mask:
-                        plt.imshow(masks[list_index], cmap='Blues', alpha=0.4)
+                plt.imshow(slices[list_index], cmap='gray')
+                if with_mask:
+                    plt.imshow(masks[list_index], cmap='Blues', alpha=0.4)
                 plt.axis('off')
                 idx += 1
                 list_index += 1
             pdf.savefig()
+            plt.close()
+
+    list_index = 1
+    with PdfPages(save_dir + '/augm_mask_vis.pdf') as pdf:
+        for page in range(nbr_pages):
+            plt.figure()
+            plt.figtext(.05, .9, str(json_opts.augmentation.mlebe), fontsize=4)
+            idx = 1
+            for slice in range(len_x * len_y):
+                plt.subplot(len_y, len_x, idx)
+                plt.imshow(masks[list_index], cmap='gray')
+                plt.axis('off')
+                idx += 1
+                list_index += 1
+            pdf.savefig()
+            plt.close()
 
 
-if __name__ == '__main__':
-    import argparse
+# config_paths = ['/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/elastic.json',
+#                 '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/rotation.json',
+#                 '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/shift.json',
+#                 '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/flip.json',
+#                 '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/noise.json',
+#                 '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/try_augm.json']
 
-    parser = argparse.ArgumentParser(description='CNN Seg Training Function')
-
-    parser.add_argument('-c', '--config', help='training config file', required=True)
-    parser.add_argument('-d', '--debug', help='returns number of parameters and bp/fp runtime', action='store_true')
-    args = parser.parse_args()
-
-    train(args)
+config_paths = [
+    '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/rotation.json',
+]
+for config_path in config_paths:
+    aug_vis(config_path)

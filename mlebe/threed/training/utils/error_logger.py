@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import csv_write
+from mlebe.threed.training.utils.utils import csv_write
 
 
 class BaseMeter(object):

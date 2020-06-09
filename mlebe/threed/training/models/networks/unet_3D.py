@@ -2,7 +2,7 @@ import math
 import torch.nn as nn
 from .utils import UnetConv3, UnetUp3
 import torch.nn.functional as F
-from models.networks_other import init_weights
+from mlebe.threed.training.models.networks_other import init_weights
 
 class unet_3D(nn.Module):
 

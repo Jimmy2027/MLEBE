@@ -2,8 +2,8 @@ import torch.nn as nn
 import torch
 from .utils import UnetConv3, UnetUp3_CT, UnetGridGatingSignal3, UnetDsv3
 import torch.nn.functional as F
-from models.networks_other import init_weights
-from models.layers.grid_attention_layer import GridAttentionBlock3D
+from mlebe.threed.training.models.networks_other import init_weights
+from mlebe.threed.training.models.layers.grid_attention_layer import GridAttentionBlock3D
 
 
 class unet_pCT_multi_att_dsv_3D(nn.Module):

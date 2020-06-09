@@ -1,22 +1,21 @@
 import datetime
 import os
 import uuid
-
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from mlebe.training.utils import data_loader as dl
-from mlebe.training.utils.general import preprocess
+from mlebe.training.utils.general import preprocess, arrange_mask
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 
-from .utils import validate_images
+from mlebe.threed.training.dataio.loaders.utils import validate_images
 
 
 class mlebe_dataset(Dataset):
 
-    def __init__(self, template_dir, data_dir, studies, split, save_dir, data_type, transform=None,
-                 split_seed=42, train_size=0.7, test_size=0.15, valid_size=0.15, excluded_from_training=None):
+    def __init__(self, template_dir, data_dir, data_opts, split, save_dir=None, transform=None,
+                 split_seed=42, train_size=0.7, test_size=0.15, valid_size=0.15):
         """
         if train_size = None, no splitting of the data is done
         """
@@ -25,14 +24,15 @@ class mlebe_dataset(Dataset):
         self.transform = transform
         self.template_dir = template_dir
         self.split = split
-        self.data_type = data_type
-        if data_type == 'anat':
-            self.data_selection = self.make_dataselection_anat(data_dir, studies)
-        elif data_type == 'func':
-            self.data_selection = self.make_dataselection_func(data_dir, studies)
+        self.data_type = data_opts.data_type
+        self.with_arranged_maks = data_opts.with_arranged_maks
+        if data_opts.data_type == 'anat':
+            self.data_selection = self.make_dataselection_anat(data_dir, data_opts.studies)
+        elif data_opts.data_type == 'func':
+            self.data_selection = self.make_dataselection_func(data_dir, data_opts.studies)
         else:
             assert False, 'Wrong data_type defined for {} dataset: {}, choose between anat and func'.format(split,
-                                                                                                            data_type)
+                                                                                                            data_opts.data_type)
 
         if train_size:
             test_valid_size = test_size + valid_size
@@ -49,10 +49,10 @@ class mlebe_dataset(Dataset):
                 self.selection = train_selection
             if split == 'test':
                 self.selection = test_selection
-                if data_type == 'anat':
-                    excluded_dataselection = self.make_dataselection_anat(data_dir, excluded_from_training)
-                elif data_type == 'func':
-                    excluded_dataselection = self.make_dataselection_func(data_dir, excluded_from_training)
+                if data_opts.data_type == 'anat':
+                    excluded_dataselection = self.make_dataselection_anat(data_dir, data_opts.excluded_from_training)
+                elif data_opts.data_type == 'func':
+                    excluded_dataselection = self.make_dataselection_func(data_dir, data_opts.excluded_from_training)
 
                 self.selection = pd.concat([self.selection, excluded_dataselection])
             if split == 'validation':
@@ -74,7 +74,8 @@ class mlebe_dataset(Dataset):
                     if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):
                         for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                             for file in files:
-                                if file.endswith("_T2w.nii.gz") or file.endswith("_T1w.nii.gz"):
+                                if not file.startswith('.') and (
+                                        file.endswith("_T2w.nii.gz") or file.endswith("_T1w.nii.gz")):
                                     split = file.split('_')
                                     subject = split[0].split('-')[1]
                                     session = split[1].split('-')[1]
@@ -143,8 +144,14 @@ class mlebe_dataset(Dataset):
         img = nib.load(self.selection.iloc[index]['path']).get_data()
         target = dl.load_mask(self.template_dir).get_data()
 
-        img = preprocess(img, (128, 128), 'coronal')
-        target = preprocess(target, (128, 128), 'coronal')
+        if self.with_arranged_maks:
+            # set the mask to zero where the image is zero
+            target = arrange_mask(img, target)
+
+        # img = preprocess(img, (128, 128), 'coronal')
+        # target = preprocess(target, (128, 128), 'coronal')
+        img = np.moveaxis(img, 2, 1)
+        target = np.moveaxis(target, 2, 1)
 
         # Make sure there is a channel dimension
         img = np.expand_dims(img, axis=-1)
@@ -169,11 +176,11 @@ class experiment_config():
 
     def make_experiment_config_df(self):
         experiment_config = pd.DataFrame([[]])
-        experiment_config['data_sets'] = str(self.json_config.data.studies)
-        experiment_config['excluded'] = self.json_config.data.excluded_from_training
-        experiment_config['slice_view'] = self.json_config.data.slice_view
+        # experiment_config['data_sets'] = str(self.json_config.data.studies)
+        # experiment_config['excluded'] = self.json_config.data.excluded_from_training
+        # experiment_config['slice_view'] = self.json_config.data.slice_view
         experiment_config['pretrained_model'] = self.pretrained_model
-        experiment_config['data_type'] = self.json_config.data.data_type
+        # experiment_config['data_type'] = self.json_config.data.data_type
         experiment_config['uid'] = uuid.uuid4()
         experiment_config['loss'] = self.json_config.model.criterion
         experiment_config['blacklist'] = False
@@ -183,12 +190,20 @@ class experiment_config():
         experiment_config['augmentation_params'] = str(self.json_config.augmentation.mlebe)
         experiment_config['shape'] = str(self.json_config.augmentation.mlebe.scale_size)
 
+        data_config = self.json_config.data._asdict()
+        for key, value in zip(data_config.keys(), data_config.values()):
+            if not (key == 'data_dir' or key == 'template_dir'):
+                if key == "studies":
+                    experiment_config[key] = str(value)
+                else:
+                    experiment_config[key] = value
+
         return experiment_config
 
-    def save(self):
-        if not os.path.exists('results.csv'):
-            self.experiment_config.to_csv('results.csv', index=False)
+    def save(self, experiment_config_name='results'):
+        if not os.path.exists(experiment_config_name + '.csv'):
+            self.experiment_config.to_csv(experiment_config_name + '.csv', index=False)
         else:
-            old_experiment_results = pd.read_csv('results.csv')
+            old_experiment_results = pd.read_csv(experiment_config_name + '.csv')
             new_experiment_results = pd.concat([old_experiment_results, self.experiment_config])
-            new_experiment_results.to_csv('results.csv')
+            new_experiment_results.to_csv(experiment_config_name + '.csv', index=False)

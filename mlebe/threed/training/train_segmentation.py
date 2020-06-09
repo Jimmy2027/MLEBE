@@ -1,14 +1,15 @@
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import json
-from dataio.loaders import get_dataset, get_dataset_path
-from dataio.transformation import get_dataset_transformation
-from utils.utils import json_file_to_pyobj
-from utils.visualiser import Visualiser
-from utils.error_logger import ErrorLogger
+from mlebe.threed.training.dataio.loaders import get_dataset, get_dataset_path
+from mlebe.threed.training.dataio.transformation import get_dataset_transformation
+from mlebe.threed.training.utils.utils import json_file_to_pyobj
+from mlebe.threed.training.utils.visualiser import Visualiser
+from mlebe.threed.training.utils.finalize import finalize
+from mlebe.threed.training.utils.error_logger import ErrorLogger
 import pandas as pd
 import os
-from models import get_model
+from mlebe.threed.training.models import get_model
 import shutil
 
 
@@ -24,10 +25,8 @@ def train(json_filename, network_debug=False):
 
     # Setup Dataset and Augmentation
     ds_class = get_dataset('mlebe_dataset')
-    data_type = json_opts.data.data_type
     ds_path = json_opts.data.data_dir
     template_path = json_opts.data.template_dir
-    studies = json_opts.data.studies
     ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
                                               max_output_channels=json_opts.model.output_nc)
 
@@ -52,21 +51,20 @@ def train(json_filename, network_debug=False):
 
     # Setup Data Loader
     split_opts = json_opts.data_split
-    train_dataset = ds_class(template_path, ds_path, studies, split='train', save_dir=model.save_dir,
-                             data_type=data_type,
+    data_opts = json_opts.data
+    train_dataset = ds_class(template_path, ds_path, data_opts, split='train', save_dir=model.save_dir,
                              transform=ds_transform['train'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
                              valid_size=split_opts.validation_size, split_seed=split_opts.seed)
-    valid_dataset = ds_class(template_path, ds_path, studies, split='validation', save_dir=model.save_dir,
-                             data_type=data_type,
+    valid_dataset = ds_class(template_path, ds_path, data_opts, split='validation', save_dir=model.save_dir,
+
                              transform=ds_transform['valid'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
                              valid_size=split_opts.validation_size, split_seed=split_opts.seed)
-    test_dataset = ds_class(template_path, ds_path, studies, split='test', save_dir=model.save_dir, data_type=data_type,
+    test_dataset = ds_class(template_path, ds_path, data_opts, split='test', save_dir=model.save_dir,
                             transform=ds_transform['valid'],
                             train_size=split_opts.train_size, test_size=split_opts.test_size,
-                            valid_size=split_opts.validation_size, split_seed=split_opts.seed,
-                            excluded_from_training=json_opts.data.excluded_from_training)
+                            valid_size=split_opts.validation_size, split_seed=split_opts.seed)
     train_loader = DataLoader(dataset=train_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=True)
     valid_loader = DataLoader(dataset=valid_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=False)
     test_loader = DataLoader(dataset=test_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=False)
@@ -128,12 +126,14 @@ def train(json_filename, network_debug=False):
         current_loss = error_logger.get_errors('validation')['Seg_Loss']
         error_logger.reset()
 
-        # Save the model parameters
-
         val_loss_log = pd.read_excel(os.path.join('checkpoints', json_opts.model.experiment_name, 'loss_log.xlsx'),
                                      sheet_name='validation').iloc[:, 1:]
         best_loss = val_loss_log['Seg_Loss'].min()
-        if epoch % train_opts.save_epoch_freq == 0:
+
+        # saving checkpoint
+        if current_loss <= best_loss or epoch < 100:
+            print('saving model')
+            # replacing old model with new model
             model.save(json_opts.model.model_type, epoch)
 
         # Update the model learning rate
@@ -141,38 +141,26 @@ def train(json_filename, network_debug=False):
 
         if current_loss <= best_loss or epoch < 100:
             idx_early_stopping = 0
-            print('current loss {} improved from {}'.format(current_loss, best_loss),
+            print('current loss {} improved from {} at epoch {}'.format(current_loss, best_loss, val_loss_log.loc[
+                val_loss_log['Seg_Loss'] == best_loss, 'epoch'].item()),
                   '-- idx_early_stopping = {} / {}'.format(idx_early_stopping,
                                                            json_opts.training.early_stopping_patience))
         else:
             idx_early_stopping += 1
-            print('current loss {} did not improve from {}'.format(current_loss, best_loss),
+            print('current loss {} did not improve from {} at epoch {}'.format(current_loss, best_loss,
+                                                                               val_loss_log.loc[val_loss_log[
+                                                                                                    'Seg_Loss'] == best_loss, 'epoch'].item()),
                   '-- idx_early_stopping = {} / {}'.format(idx_early_stopping,
                                                            json_opts.training.early_stopping_patience))
 
         if idx_early_stopping >= json_opts.training.early_stopping_patience:
             print('early stopping')
-            model_path = os.path.join(model.save_dir, '{0:03d}_net_{1}.pth'.format(
-                val_loss_log.loc[val_loss_log['Seg_Loss'] == best_loss, 'epoch'].item(),
-                json_opts.model.model_type))
-            command = 'cp {} {}'.format(json_filename, os.path.join(model.save_dir, json_filename.split('/')[-1]))
-            print(command)
-            os.system(command)
+
+            model_path = finalize(json_opts, json_filename, model, val_loss_log, best_loss, test_dataset)
 
             return val_loss_log.loc[val_loss_log['Seg_Loss'] == best_loss], model_path
 
-    # get the model path with the epoch of the best model
-    model_path = os.path.join(model.save_dir, '{0:03d}_net_{1}.pth'.format(
-        val_loss_log.loc[val_loss_log['Seg_Loss'] == best_loss, 'epoch'].item(),
-        json_opts.model.model_type))
-
-    # save config with path of trained model
-    with open(json_filename) as file:
-        config = json.load(file)
-    config['model']['path_pre_trained_model'] = model_path
-    config['model']['isTrain'] = False
-    with open(os.path.join(model.save_dir, json_filename.split('/')[-1])) as outfile:
-        json.dump(config, outfile)
+    model_path = finalize(json_opts, json_filename, model, val_loss_log, best_loss, test_dataset)
 
     return val_loss_log.loc[val_loss_log['Seg_Loss'] == best_loss], model_path
 

@@ -10,7 +10,7 @@ def _fast_hist(label_true, label_pred, n_class):
     mask = (label_true >= 0) & (label_true < n_class)
     hist = np.bincount(
         n_class * label_true[mask].astype(int) +
-        label_pred[mask], minlength=n_class**2).reshape(n_class, n_class)
+        label_pred[mask], minlength=n_class ** 2).reshape(n_class, n_class)
     return hist
 
 
@@ -135,16 +135,16 @@ def distance_metric(seg_A, seg_B, dx, k):
         # The distance is defined only when both contours exist on this slice
         if np.sum(slice_A) > 0 and np.sum(slice_B) > 0:
             # Find contours and retrieve all the points
-            _, contours, _ = cv2.findContours(cv2.inRange(slice_A, 1, 1),
-                                              cv2.RETR_EXTERNAL,
-                                              cv2.CHAIN_APPROX_NONE)
+            contours, _ = cv2.findContours(cv2.inRange(slice_A, 1, 1),
+                                           cv2.RETR_EXTERNAL,
+                                           cv2.CHAIN_APPROX_NONE)
             pts_A = contours[0]
             for i in range(1, len(contours)):
                 pts_A = np.vstack((pts_A, contours[i]))
 
-            _, contours, _ = cv2.findContours(cv2.inRange(slice_B, 1, 1),
-                                              cv2.RETR_EXTERNAL,
-                                              cv2.CHAIN_APPROX_NONE)
+            contours, _ = cv2.findContours(cv2.inRange(slice_B, 1, 1),
+                                           cv2.RETR_EXTERNAL,
+                                           cv2.CHAIN_APPROX_NONE)
             pts_B = contours[0]
             for i in range(1, len(contours)):
                 pts_B = np.vstack((pts_B, contours[i]))
@@ -165,3 +165,13 @@ def distance_metric(seg_A, seg_B, dx, k):
     mean_md = np.mean(table_md) if table_md else None
     mean_hd = np.mean(table_hd) if table_hd else None
     return mean_md, mean_hd
+
+
+def distance_metric_wrapper(seg_A, seg_B, dx, k):
+    """
+    This wrapper is neede for images that are defined as Z, X, Y
+    """
+    seg_A = np.moveaxis(seg_A, 0, 2)
+    seg_B = np.moveaxis(seg_B, 0, 2)
+
+    return distance_metric(seg_A, seg_B, dx, k)

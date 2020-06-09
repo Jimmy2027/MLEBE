@@ -1,6 +1,6 @@
 import os
 import torch
-from utils.utils import mkdir
+from mlebe.threed.training.utils.utils import mkdir
 from .networks_other import get_n_parameters
 
 class BaseModel():
@@ -15,6 +15,7 @@ class BaseModel():
         self.gpu_ids = []
         self.which_epoch = int(0)
         self.path_pre_trained_model = None
+        self.saved_model = None
 
     def name(self):
         return 'BaseModel'

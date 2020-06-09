@@ -1,4 +1,4 @@
-from dataio.loaders.mlebe_loader import mlebe_dataset
+from mlebe.threed.training.dataio.loaders.mlebe_loader import mlebe_dataset
 
 def get_dataset(name):
     """get_dataset

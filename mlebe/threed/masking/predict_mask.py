@@ -33,9 +33,9 @@ def predict_mask(
     from mlebe.training.utils import general
     import cv2
     import numpy as np
-    from models import get_model
-    from utils.utils import json_file_to_pyobj
-    from dataio.transformation import get_dataset_transformation
+    from mlebe.threed.training.models import get_model
+    from mlebe.threed.training.utils.utils import json_file_to_pyobj
+    from mlebe.threed.training.dataio.transformation import get_dataset_transformation
 
     def remove_outliers(image):
         from scipy import ndimage
@@ -89,6 +89,7 @@ def predict_mask(
     if not test == True:
         # skipping this part for testing as it takes too much time
         json_opts = json_file_to_pyobj(model_path)
+        # todo get model might take a lot of time, could be loaded berforehand to save time
         model = get_model(json_opts.model)
         ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
                                                   max_output_channels=json_opts.model.output_nc)
