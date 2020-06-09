@@ -67,19 +67,12 @@ def load_img(data_dir, blacklist=False, test=False, studies=[]):
 
 
 def load_mask(data_dir):
-    print('*** Loading mask ***')
-    im_data = []
     for o in os.listdir(data_dir):
         if o == 'dsurqec_200micron_mask.nii':
-            im_data.append(os.path.join(data_dir, o))
+            mask_path = os.path.join(data_dir, o)
 
-    data = []
-    im_data = np.sort(im_data)
-
-    for i in im_data:
-        img = nib.load(i)
-        data.append(img)
-    return data
+    mask = nib.load(mask_path)
+    return mask
 
 
 def load_func_img(data_dir, test=False, studies=[]):
