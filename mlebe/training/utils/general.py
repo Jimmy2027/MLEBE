@@ -1,4 +1,3 @@
-import os
 import imageio
 import numpy as np
 from matplotlib import pyplot as plt
@@ -6,7 +5,7 @@ from matplotlib import gridspec
 import os
 import pickle
 import cv2
-import mlebe.training.data_loader as dl
+import mlebe.training.utils.data_loader as dl
 import scipy
 import scipy.ndimage
 import pandas as pd
@@ -150,7 +149,6 @@ def get_image_and_mask(image, mask, shape, save_dir, slice_view, visualisation=F
 
 def remove_outliers(image, visualisation=False, save_dir=''):
     from scipy import ndimage
-    from skimage.morphology import watershed
     markers = ndimage.label(image)[0]
     if len(np.unique(markers)) > 2:
         l, counts = np.unique(markers, return_counts=True)

@@ -1,5 +1,5 @@
 from mlebe.threed.masking.predict_mask import predict_mask
-from mlebe.training import data_loader
+from mlebe.training.utils import data_loader
 import os
 from tqdm import tqdm
 
