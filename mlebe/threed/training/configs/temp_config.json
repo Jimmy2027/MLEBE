@@ -31,7 +31,7 @@
             "irsabi"
         ],
         "slice_view": "coronal",
-        "data_dir": "/mnt/data/hendrik/mlebe_data/",
+        "data_dir": "/mnt/data/hendrik/mlebe_trainingdata-1.0/",
         "template_dir": "/usr/share/mouse-brain-atlases/",
         "data_type": "func",
         "with_arranged_maks": false,

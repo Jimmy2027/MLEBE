@@ -89,7 +89,7 @@ class mlebe_dataset(Dataset):
                                     blacklisted = False
                                     if self.with_blacklist:
                                         for i in self.blacklist:
-                                            if subject == i.subject and session == i.sess:
+                                            if subject == i.subj and session == i.sess:
                                                 blacklisted = True
                                     if blacklisted == False:
                                         data_selection = pd.concat([data_selection, pd.DataFrame(
@@ -112,7 +112,7 @@ class mlebe_dataset(Dataset):
             if o in studies and not o.startswith('.') and not o.startswith('.') and not o.endswith('.xz'):
                 data_set = o
                 for x in os.listdir(os.path.join(data_dir, o)):
-                    if x.endswith('preprocessing'):
+                    if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):
                         for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                             if root.endswith('func'):
                                 for file in files:

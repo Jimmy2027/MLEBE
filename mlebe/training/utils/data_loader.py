@@ -86,7 +86,7 @@ def load_func_img(data_dir, test=False, studies=[]):
     for o in os.listdir(data_dir):
         if o in studies:
             for x in os.listdir(os.path.join(data_dir, o)):
-                if x.endswith('preprocessing'):
+                if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):
                     for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                         if root.endswith('func'):
                             for file in files:
