@@ -15,10 +15,11 @@ import shutil
 
 # todo visdom visualisation needs to be an option
 
-def train(json_filename, network_debug=False):
+def train(json_filename, network_debug=False, params=None):
     # Load options
     json_opts = json_file_to_pyobj(json_filename)
     train_opts = json_opts.training
+
 
     # Architecture type
     arch_type = train_opts.arch_type
@@ -57,7 +58,6 @@ def train(json_filename, network_debug=False):
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
                              valid_size=split_opts.validation_size, split_seed=split_opts.seed)
     valid_dataset = ds_class(template_path, ds_path, data_opts, split='validation', save_dir=model.save_dir,
-
                              transform=ds_transform['valid'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
                              valid_size=split_opts.validation_size, split_seed=split_opts.seed)

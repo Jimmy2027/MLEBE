@@ -39,7 +39,7 @@
   },
   "augmentation": {
     "mlebe": {
-      "shift_val": [0.05, 0.05],
+      "shift_val": [0.01, 0.01],
       "rotate": 20,
       "scale_val": [1,1],
       "max_deform": [0, 0, 0],

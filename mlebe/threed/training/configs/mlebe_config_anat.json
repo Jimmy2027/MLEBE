@@ -33,8 +33,9 @@
     "data_type": "anat",
     "with_arranged_maks": false,
     "blacklist": false,
-    "remove_black_slices": false
-
+    "remove_black_slices": false,
+    "with_blacklist": false,
+    "blacklist_dir": "~/docsrc/mlebe/data/Blacklist"
   },
   "data_opts":{
     "channels": [1]
@@ -44,7 +45,7 @@
       "shift_val": [0.01, 0.01],
       "rotate": 20,
       "scale_val": [1,1],
-      "max_deform": [0, 0, 0],
+      "max_deform": [0.1, 0.1, 0],
       "random_flip_prob": 0.5,
       "random_affine_prob": 0.5,
       "random_elastic_prob": 0,

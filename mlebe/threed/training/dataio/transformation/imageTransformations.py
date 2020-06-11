@@ -596,6 +596,25 @@ class RandomBiasFieldTransform(TorchIOTransformer):
             return RandomBiasField(proba, is_tensor=is_tensor)
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
 
+class Normalize_mlebe(object):
+    """
+    Normalises given slice/volume to zero mean
+    """
+    def __call__(self, input):
+        """
+
+        :param data: shape: (y, x)
+        :return: normalised input
+        """
+        data = input.numpy() * 1.
+        data = np.clip(data, 0, np.percentile(data, 99))
+
+        data = data - np.amin(data)
+        if np.amax(data) != 0:
+            data = data / np.amax(data)
+        return data
+
+
 if __name__ == '__main__':
     from torchvision.transforms import Lambda
 

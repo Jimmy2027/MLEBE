@@ -5,10 +5,10 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 from mlebe.training.utils import data_loader as dl
-from mlebe.training.utils.general import preprocess, arrange_mask
+from mlebe.training.utils.general import data_normalization, arrange_mask, write_blacklist
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
-
+import torch
 from mlebe.threed.training.dataio.loaders.utils import validate_images
 
 
@@ -26,6 +26,9 @@ class mlebe_dataset(Dataset):
         self.split = split
         self.data_type = data_opts.data_type
         self.with_arranged_maks = data_opts.with_arranged_maks
+        self.with_blacklist = data_opts.with_blacklist
+        if self.with_blacklist:
+            self.blacklist = write_blacklist(os.path.expanduser(data_opts.blacklist_dir))
         if data_opts.data_type == 'anat':
             self.data_selection = self.make_dataselection_anat(data_dir, data_opts.studies)
         elif data_opts.data_type == 'func':
@@ -83,10 +86,16 @@ class mlebe_dataset(Dataset):
                                     type = split[3].split('.')[0]
                                     uid = file.split('.')[0]
                                     path = os.path.join(root, file)
-                                    data_selection = pd.concat([data_selection, pd.DataFrame(
-                                        [[data_set, subject, session, acquisition, type, uid, path]],
-                                        columns=['data_set', 'subject', 'session', 'acquisition', 'type', 'uid',
-                                                 'path'])])
+                                    blacklisted = False
+                                    if self.with_blacklist:
+                                        for i in self.blacklist:
+                                            if subject == i.subject and session == i.sess:
+                                                blacklisted = True
+                                    if blacklisted == False:
+                                        data_selection = pd.concat([data_selection, pd.DataFrame(
+                                            [[data_set, subject, session, acquisition, type, uid, path]],
+                                            columns=['data_set', 'subject', 'session', 'acquisition', 'type', 'uid',
+                                                     'path'])])
         if self.save_dir:
             data_selection.to_csv(os.path.join(self.save_dir, self.split + '_dataset.csv'), index=False)
         return data_selection
@@ -164,7 +173,7 @@ class mlebe_dataset(Dataset):
         if self.transform:
             transformer = self.transform()
             img, target = transformer(img, target)
-
+        img = torch.from_numpy(data_normalization(img.numpy()))
         return img, target, index
 
 

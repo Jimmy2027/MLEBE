@@ -3,7 +3,7 @@ import torchsample.transforms as ts
 # import torchvision.transforms as tv
 from torchio.transforms import Interpolation
 from .imageTransformations import RandomElasticTransform, RandomAffineTransform, RandomNoiseTransform, \
-    RandomFlipTransform, RandomBiasFieldTransform
+    RandomFlipTransform, RandomBiasFieldTransform, Normalize_mlebe
 
 from pprint import pprint
 
@@ -77,7 +77,7 @@ class Transformations:
             ts.Pad(size=self.scale_size),
             ts.TypeCast(['float', 'float']),
 
-            RandomFlipTransform(axes=(0), p=self.random_flip_prob, seed=seed,
+            RandomFlipTransform(axes=(1), p=self.random_flip_prob, seed=seed,
                                 max_output_channels=self.max_output_channels),
             RandomElasticTransform(seed=seed, p=self.random_elastic_prob, image_interpolation=Interpolation.BSPLINE,
                                    max_displacement=self.max_deform,
@@ -97,7 +97,8 @@ class Transformations:
             ts.ChannelsFirst(),
             # ts.NormalizeMedicPercentile(norm_flag=(True, False)),
             # Todo apply channel wise normalisation
-            ts.NormalizeMedic(norm_flag=(True, False)),
+            # Normalize_mlebe(),
+            # ts.NormalizeMedic(norm_flag=(True, False)),
             # Todo fork torchsample and fix the Random Crop bug
             # ts.ChannelsLast(), # seems to be needed for crop
             # ts.RandomCrop(size=self.patch_size),
