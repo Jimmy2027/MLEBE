@@ -5,29 +5,30 @@ from sklearn.model_selection import ParameterGrid
 from tqdm import tqdm
 import json
 from datetime import date
+from utils.set_remote_paths import set_epfl_paths
 import os
 
 # todo make function that can change some parameters of config file for grid search
 # parameters to try: loss, augmentations, blacklist, remove_black_slices
 params_seach_space_anat = {
-    'criterion': ['focal_tversky_loss', 'dice_loss'],
+    'criterion': ['focal_tversky_loss'],
+    # 'criterion': ['dice_loss'],
     'with_blacklist': [True, False],
 }
 params_seach_space_func = {
-    'criterion': ['focal_tversky_loss', 'dice_loss'],
+    'criterion': ['dice_loss'],
     'with_blacklist': [False],
 }
-
 config_paths = ['configs/temp_config.json']
-# config_paths = ['configs/mlebe_config_func.json']
+# config_paths = ['configs/mlebe_config_func.json', 'configs/mlebe_config_anat.json']
 for config_path in config_paths:
+    set_epfl_paths(config_path)
     if config_path == 'configs/mlebe_config_func.json':
         params_seach_space = params_seach_space_func
     else:
         params_seach_space = params_seach_space_anat
 
     for params in tqdm(list(ParameterGrid(params_seach_space))):
-
         with open(config_path) as file:
             config = json.load(file)
         config['model']['criterion'] = params['criterion']

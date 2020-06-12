@@ -8,7 +8,8 @@ from PIL import Image
 import numbers
 from typing import Optional, Tuple, Union
 from torch.nn.functional import pad
-from torchio.transforms import RandomAffine, Interpolation, RandomFlip, RandomNoise, RandomElasticDeformation, RandomBiasField
+from torchio.transforms import RandomAffine, Interpolation, RandomFlip, RandomNoise, RandomElasticDeformation, \
+    RandomBiasField
 
 
 def center_crop(x, center_crop_size):
@@ -511,15 +512,17 @@ class RandomElasticTransform(TorchIOTransformer):
             image_interpolation: Interpolation = Interpolation.LINEAR,
             p: float = 1,
             seed: Optional[int] = None,
-            is_tensor = True,
-            max_output_channels = 10
-            ):
+            is_tensor=True,
+            max_output_channels=10
+    ):
         def get_torchio_transformer(mask=False):
             if mask:
                 interpolation = Interpolation.LINEAR
             else:
                 interpolation = image_interpolation
-            return RandomElasticDeformation(num_control_points, max_displacement, locked_borders, interpolation, p, seed, is_tensor=is_tensor)
+            return RandomElasticDeformation(num_control_points, max_displacement, locked_borders, interpolation, p,
+                                            seed, is_tensor=is_tensor)
+
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
 
 
@@ -527,7 +530,7 @@ class RandomAffineTransform(TorchIOTransformer):
     def __init__(
             self,
             scales: Tuple[float, float] = (0.9, 1.1),
-            degrees = 10,
+            degrees=10,
             isotropic: bool = False,
             default_pad_value: Union[str, float] = 'otsu',
             image_interpolation: Interpolation = Interpolation.LINEAR,
@@ -542,6 +545,7 @@ class RandomAffineTransform(TorchIOTransformer):
             else:
                 interpolation = image_interpolation
             return RandomAffine(scales, degrees, isotropic, default_pad_value, interpolation, p, seed, is_tensor)
+
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
 
 
@@ -557,6 +561,7 @@ class RandomFlipTransform(TorchIOTransformer):
     ):
         def get_torchio_transformer(mask=False):
             return RandomFlip(axes, flip_probability, p, seed, is_tensor)
+
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
 
 
@@ -576,7 +581,9 @@ class RandomNoiseTransform(TorchIOTransformer):
             else:
                 proba = p
             return RandomNoise(std, proba, seed, is_tensor)
+
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
+
 
 class RandomBiasFieldTransform(TorchIOTransformer):
     def __init__(
@@ -594,12 +601,15 @@ class RandomBiasFieldTransform(TorchIOTransformer):
             else:
                 proba = p
             return RandomBiasField(proba, is_tensor=is_tensor)
+
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
+
 
 class Normalize_mlebe(object):
     """
     Normalises given slice/volume to zero mean
     """
+
     def __call__(self, input):
         """
 

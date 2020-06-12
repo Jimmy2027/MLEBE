@@ -23,11 +23,10 @@ class ModelOpts:
 
         # Attention
         self.nonlocal_mode = 'concatenation'
-        self.attention_dsample = (2,2,2)
+        self.attention_dsample = (2, 2, 2)
 
         # Attention Classifier
         self.aggregation_mode = 'concatenation'
-
 
     def initialise(self, json_opts):
         opts = json_opts
@@ -56,8 +55,8 @@ class ModelOpts:
         # Classifier
         if hasattr(opts, 'aggregation_mode'): self.aggregation_mode = opts.aggregation_mode
 
-def get_model(json_opts):
 
+def get_model(json_opts):
     # Neural Network Model Initialisation
     model = None
     model_opts = ModelOpts()
@@ -72,7 +71,6 @@ def get_model(json_opts):
         from .feedforward_seg_model import FeedForwardSegmentation
         model = FeedForwardSegmentation()
 
-
     # TODO: unet classifiers by atnet (non usefull for now)
     # elif model_type == 'classifier':
     #     # Return the model type
@@ -83,7 +81,6 @@ def get_model(json_opts):
     #     # Return the model type
     #     from atnet.models.aggregated_classifier import AggregatedClassifier
     #     model = AggregatedClassifier()
-
 
     # Initialise the created model
     model.initialize(model_opts)

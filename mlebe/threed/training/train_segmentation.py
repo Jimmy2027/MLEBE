@@ -44,6 +44,8 @@ def train(json_filename, network_debug=False, params=None):
         print('removing dir ', model.save_dir)
         shutil.rmtree(model.save_dir)
         os.mkdir(model.save_dir)
+    else:
+        assert not os.path.exists(model.save_dir), '{} already exists, choose another experiment name'
 
     if network_debug:
         print('# of pars: ', model.get_number_parameters())
