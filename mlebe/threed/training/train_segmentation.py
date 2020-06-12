@@ -11,6 +11,7 @@ import pandas as pd
 import os
 from mlebe.threed.training.models import get_model
 import shutil
+from models.utils import EarlyStopper
 
 
 # todo visdom visualisation needs to be an option
@@ -19,7 +20,6 @@ def train(json_filename, network_debug=False, params=None):
     # Load options
     json_opts = json_file_to_pyobj(json_filename)
     train_opts = json_opts.training
-
 
     # Architecture type
     arch_type = train_opts.arch_type
@@ -77,6 +77,8 @@ def train(json_filename, network_debug=False, params=None):
 
     # Training Function
     model.set_scheduler(train_opts)
+    # Setup Early Stopping
+    early_stopper = EarlyStopper(json_opts.training.early_stopping_patience)
 
     for epoch in range(model.which_epoch, train_opts.n_epochs):
         print('(epoch: %d, total # iters: %d)' % (epoch, len(train_loader)))
@@ -116,9 +118,15 @@ def train(json_filename, network_debug=False, params=None):
 
                 # Visualise predictions
                 if split == 'validation':  # do not look at testing
+                    # Update best validation loss/epoch values
+                    model.update_validation_state(epoch)
+
+                    # Visualise predictions
                     volumes = model.get_current_volumes()
                     visualizer.display_current_volumes(volumes, ids, split, epoch)
                     validation_volumes.append(volumes)
+
+                    early_stopper.update(model, epoch)
 
         # Update the plots
         for split in ['train', 'validation', 'test']:
@@ -128,12 +136,8 @@ def train(json_filename, network_debug=False, params=None):
         current_loss = error_logger.get_errors('validation')['Seg_Loss']
         error_logger.reset()
 
-        val_loss_log = pd.read_excel(os.path.join('checkpoints', json_opts.model.experiment_name, 'loss_log.xlsx'),
-                                     sheet_name='validation').iloc[:, 1:]
-        best_loss = val_loss_log['Seg_Loss'].min()
-
         # saving checkpoint
-        if current_loss <= best_loss or epoch < 100:
+        if model.is_improving:
             print('saving model')
             # replacing old model with new model
             model.save(json_opts.model.model_type, epoch)
@@ -141,30 +145,19 @@ def train(json_filename, network_debug=False, params=None):
         # Update the model learning rate
         model.update_learning_rate()
 
-        if current_loss <= best_loss or epoch < 100:
-            idx_early_stopping = 0
-            print('current loss {} improved from {} at epoch {}'.format(current_loss, best_loss, val_loss_log.loc[
-                val_loss_log['Seg_Loss'] == best_loss, 'epoch'].item()),
-                  '-- idx_early_stopping = {} / {}'.format(idx_early_stopping,
-                                                           json_opts.training.early_stopping_patience))
-        else:
-            idx_early_stopping += 1
-            print('current loss {} did not improve from {} at epoch {}'.format(current_loss, best_loss,
-                                                                               val_loss_log.loc[val_loss_log[
-                                                                                                    'Seg_Loss'] == best_loss, 'epoch'].item()),
-                  '-- idx_early_stopping = {} / {}'.format(idx_early_stopping,
-                                                           json_opts.training.early_stopping_patience))
-
-        if idx_early_stopping >= json_opts.training.early_stopping_patience:
+        if early_stopper.should_stop_early:
             print('early stopping')
+            model_path = finalize(json_opts, json_filename, model)
+            # get validation metrics
+            val_loss_log = pd.read_excel(os.path.join('checkpoints', json_opts.model.experiment_name, 'loss_log.xlsx'),
+                                         sheet_name='validation').iloc[:, 1:]
+            return val_loss_log.loc[val_loss_log['Seg_Loss'] == model.best_validation_loss], model_path
 
-            model_path = finalize(json_opts, json_filename, model, val_loss_log, best_loss, test_dataset)
-
-            return val_loss_log.loc[val_loss_log['Seg_Loss'] == best_loss], model_path
-
-    model_path = finalize(json_opts, json_filename, model, val_loss_log, best_loss, test_dataset)
-
-    return val_loss_log.loc[val_loss_log['Seg_Loss'] == best_loss], model_path
+    model_path = finalize(json_opts, json_filename, model)
+    # get validation metrics
+    val_loss_log = pd.read_excel(os.path.join('checkpoints', json_opts.model.experiment_name, 'loss_log.xlsx'),
+                                 sheet_name='validation').iloc[:, 1:]
+    return val_loss_log.loc[val_loss_log['Seg_Loss'] == model.best_validation_loss], model_path
 
 
 if __name__ == '__main__':

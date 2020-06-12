@@ -10,6 +10,7 @@ from mlebe.threed.training.utils.metrics import segmentation_scores, dice_score_
 from sklearn import metrics
 from .layers.loss import *
 
+
 def get_optimizer(option, params):
     opt_alg = 'sgd' if not hasattr(option, 'optim') else option.optim
     if opt_alg == 'sgd':
@@ -43,16 +44,18 @@ def get_criterion(opts):
 
     return criterion
 
+
 def recursive_glob(rootdir='.', suffix=''):
     """Performs recursive glob with given suffix and rootdir 
         :param rootdir is the root directory
         :param suffix is the suffix to be searched
     """
     return [os.path.join(looproot, filename)
-        for looproot, _, filenames in os.walk(rootdir)
-        for filename in filenames if filename.endswith(suffix)]
+            for looproot, _, filenames in os.walk(rootdir)
+            for filename in filenames if filename.endswith(suffix)]
 
-def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1, max_iter=30000, power=0.9,):
+
+def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1, max_iter=30000, power=0.9, ):
     """Polynomial decay of learning rate
         :param init_lr is base learning rate
         :param iter is a current iteration
@@ -65,7 +68,7 @@ def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1, max_iter=30000,
         return optimizer
 
     for param_group in optimizer.param_groups:
-        param_group['lr'] = init_lr*(1 - iter/max_iter)**power
+        param_group['lr'] = init_lr * (1 - iter / max_iter) ** power
 
 
 def adjust_learning_rate(optimizer, init_lr, epoch):
@@ -99,29 +102,61 @@ def segmentation_stats(prediction, target):
 
 
 def classification_scores(gts, preds, labels):
-    accuracy        = metrics.accuracy_score(gts,  preds)
+    accuracy = metrics.accuracy_score(gts, preds)
     class_accuracies = []
-    for lab in labels: # TODO Fix
+    for lab in labels:  # TODO Fix
         class_accuracies.append(metrics.accuracy_score(gts[gts == lab], preds[gts == lab]))
     class_accuracies = np.array(class_accuracies)
 
-    f1_micro        = metrics.f1_score(gts,        preds, average='micro')
+    f1_micro = metrics.f1_score(gts, preds, average='micro')
     precision_micro = metrics.precision_score(gts, preds, average='micro')
-    recall_micro    = metrics.recall_score(gts,    preds, average='micro')
-    f1_macro        = metrics.f1_score(gts,        preds, average='macro')
+    recall_micro = metrics.recall_score(gts, preds, average='micro')
+    f1_macro = metrics.f1_score(gts, preds, average='macro')
     precision_macro = metrics.precision_score(gts, preds, average='macro')
-    recall_macro    = metrics.recall_score(gts,    preds, average='macro')
+    recall_macro = metrics.recall_score(gts, preds, average='macro')
 
     # class wise score
-    f1s        = metrics.f1_score(gts,        preds, average=None)
+    f1s = metrics.f1_score(gts, preds, average=None)
     precisions = metrics.precision_score(gts, preds, average=None)
-    recalls    = metrics.recall_score(gts,    preds, average=None)
+    recalls = metrics.recall_score(gts, preds, average=None)
 
-    confusion = metrics.confusion_matrix(gts,preds, labels=labels)
+    confusion = metrics.confusion_matrix(gts, preds, labels=labels)
 
-    #TODO confusion matrix, recall, precision
+    # TODO confusion matrix, recall, precision
     return accuracy, f1_micro, precision_micro, recall_micro, f1_macro, precision_macro, recall_macro, confusion, class_accuracies, f1s, precisions, recalls
 
 
 def classification_stats(pred_seg, target, labels):
     return classification_scores(target, pred_seg, labels)
+
+
+class EarlyStopper():
+    def __init__(self, patience):
+        self.index = 0
+        self.patience = patience
+        self.should_stop_early = False
+
+    def update(self, model, epoch):
+        '''
+        Early stopper should be updated upon validation
+        :param model: current model state
+        :param epoch: current epoch
+        :return: boolean, stop or not to stop
+        '''
+        current_loss = model.get_current_errors()['Seg_Loss']
+        best_loss = model.best_validation_loss
+        best_epoch = model.best_epoch
+
+        if current_loss <= best_loss or epoch < 100:  # start early stopping after epoch 100
+            self.index = 0
+            print('current loss {} improved from {} at epoch {}'.format(current_loss, best_loss, best_epoch),
+                  '-- idx_early_stopping = {} / {}'.format(self.index, self.patience))
+        else:
+            self.index += 1
+            print('current loss {} did not improve from {} at epoch {}'.format(current_loss, best_loss, best_epoch),
+                  '-- idx_early_stopping = {} / {}'.format(self.index, self.patience))
+
+        if self.index >= self.patience:
+            self.should_stop_early = True
+
+        return self.should_stop_early

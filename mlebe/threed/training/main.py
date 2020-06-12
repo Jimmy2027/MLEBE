@@ -1,26 +1,24 @@
+import json
+from datetime import date
+from sklearn.model_selection import ParameterGrid
+from tqdm import tqdm
 from mlebe.threed.training.dataio.loaders.mlebe_loader import experiment_config
 from mlebe.threed.training.train_segmentation import train
 from mlebe.threed.training.utils.utils import json_file_to_pyobj
-from sklearn.model_selection import ParameterGrid
-from tqdm import tqdm
-import json
-from datetime import date
-from utils.set_remote_paths import set_epfl_paths
-import os
+from mlebe.threed.training.utils.set_remote_paths import set_epfl_paths
 
 # todo make function that can change some parameters of config file for grid search
 # parameters to try: loss, augmentations, blacklist, remove_black_slices
 params_seach_space_anat = {
-    'criterion': ['focal_tversky_loss'],
-    # 'criterion': ['dice_loss'],
+    'criterion': ['dice_loss'],
     'with_blacklist': [True, False],
 }
 params_seach_space_func = {
     'criterion': ['dice_loss'],
     'with_blacklist': [False],
 }
-config_paths = ['configs/temp_config.json']
-# config_paths = ['configs/mlebe_config_func.json', 'configs/mlebe_config_anat.json']
+
+config_paths = ['configs/mlebe_config_func.json', 'configs/mlebe_config_anat.json']
 for config_path in config_paths:
     set_epfl_paths(config_path)
     if config_path == 'configs/mlebe_config_func.json':
