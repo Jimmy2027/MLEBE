@@ -31,10 +31,10 @@
             "irsabi"
         ],
         "slice_view": "coronal",
-        "data_dir": "/mnt/data/hendrik/mlebe_trainingdata-1.0/",
+        "data_dir": "/mnt/data/hendrik/mlebe_data/",
         "template_dir": "/usr/share/mouse-brain-atlases/",
         "data_type": "func",
-        "with_arranged_maks": false,
+        "with_arranged_mask": false,
         "with_blacklist": true,
         "blacklist_dir": "~/docsrc/mlebe/data/Blacklist"
 
@@ -68,9 +68,9 @@
             "random_affine_prob": 0,
             "random_elastic_prob": 0,
             "scale_size": [
+                64,
+                64,
                 96,
-                128,
-                128,
                 1
             ],
             "random_noise_prob": 0.7
@@ -93,7 +93,7 @@
         ],
         "isTrain": true,
         "checkpoints_dir": "/home/hendrik/src/MLEBE/mlebe/threed/training/checkpoints",
-        "experiment_name": "2020-06-11_func_focal_tversky_loss",
+        "experiment_name": "test",
         "criterion": "focal_tversky_loss"
     }
 }

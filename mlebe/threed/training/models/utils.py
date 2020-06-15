@@ -136,14 +136,14 @@ class EarlyStopper():
         self.patience = patience
         self.should_stop_early = False
 
-    def update(self, model, epoch):
+    def update(self, model, epoch, current_loss):
         '''
         Early stopper should be updated upon validation
         :param model: current model state
         :param epoch: current epoch
         :return: boolean, stop or not to stop
         '''
-        current_loss = model.get_current_errors()['Seg_Loss']
+        # current_loss = model.get_current_errors()['Seg_Loss']
         best_loss = model.best_validation_loss
         best_epoch = model.best_epoch
 

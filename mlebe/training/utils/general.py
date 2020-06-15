@@ -509,7 +509,7 @@ def save_datavisualisation2(img_data, myocar_labels, save_folder, file_name_head
                            (0, 0)), mode='constant', constant_values=0.5)
             if idx1 == None:
                 j = np.pad(j, ((0, 0), (0, 0), (
-                (i.shape[2] - j.shape[2]) // 2, i.shape[2] - j.shape[2] - (i.shape[2] - j.shape[2]) // 2)),
+                    (i.shape[2] - j.shape[2]) // 2, i.shape[2] - j.shape[2] - (i.shape[2] - j.shape[2]) // 2)),
                            mode='constant', constant_values=0.5)
             else:
                 j = np.pad(j, ((0, 0), (0, 0), (idx1[counter], idx2[counter])), mode='constant', constant_values=0.5)

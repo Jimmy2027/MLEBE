@@ -10,6 +10,16 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 import torch
 from mlebe.threed.training.dataio.loaders.utils import validate_images
+import json
+from datetime import date
+from sklearn.model_selection import ParameterGrid
+from tqdm import tqdm
+from mlebe.threed.training.dataio.loaders.mlebe_loader import experiment_config
+from mlebe.threed.training.train_segmentation import train
+from mlebe.threed.training.utils.utils import json_file_to_pyobj
+from mlebe.threed.training.utils.set_remote_paths import set_epfl_paths
+from uuid import uuid4
+from mlebe.threed.training.utils.utils import make_unique_experiment_name, bigprint
 
 
 class mlebe_dataset(Dataset):
@@ -25,8 +35,11 @@ class mlebe_dataset(Dataset):
         self.template_dir = template_dir
         self.split = split
         self.data_type = data_opts.data_type
-        self.with_arranged_maks = data_opts.with_arranged_maks
-        self.with_blacklist = data_opts.with_blacklist
+        self.with_arranged_mask = data_opts.with_arranged_mask
+        if 'with_blacklist' in data_opts._fields:
+            self.with_blacklist = data_opts.with_blacklist
+        else:
+            self.with_blacklist = False
         if self.with_blacklist:
             self.blacklist = write_blacklist(os.path.expanduser(data_opts.blacklist_dir))
         if data_opts.data_type == 'anat':
@@ -98,6 +111,8 @@ class mlebe_dataset(Dataset):
                                                      'path'])])
         if self.save_dir:
             data_selection.to_csv(os.path.join(self.save_dir, self.split + '_dataset.csv'), index=False)
+        assert len(data_selection.data_set.unique()) == len(studies), 'Only found {} studies, expected {}'.format(
+            data_selection.data_set.unique(), studies)
         return data_selection
 
     def make_dataselection_func(self, data_dir, studies):
@@ -138,6 +153,8 @@ class mlebe_dataset(Dataset):
                                                      'path'])])
         if self.save_dir:
             data_selection.to_csv(os.path.join(self.save_dir, self.split + '_dataset.csv'), index=False)
+        assert len(data_selection.data_set.unique()) == len(studies), 'Only found {} studies, expected {}'.format(
+            data_selection.data_set.unique(), studies)
         return data_selection
 
     def get_ids(self, indices):
@@ -153,7 +170,7 @@ class mlebe_dataset(Dataset):
         img = nib.load(self.selection.iloc[index]['path']).get_data()
         target = dl.load_mask(self.template_dir).get_data()
 
-        if self.with_arranged_maks:
+        if self.with_arranged_mask:
             # set the mask to zero where the image is zero
             target = arrange_mask(img, target)
 
@@ -173,24 +190,21 @@ class mlebe_dataset(Dataset):
         if self.transform:
             transformer = self.transform()
             img, target = transformer(img, target)
-        img = torch.from_numpy(data_normalization(img.numpy()))
+        # img = torch.from_numpy(data_normalization(img.numpy()))
         return img, target, index
 
 
 class experiment_config():
-    def __init__(self, json_config, pretrained_model=False):
-        self.json_config = json_config
+    def __init__(self, config_path, pretrained_model=False):
+        self.json_config = json_file_to_pyobj(config_path)
         self.pretrained_model = pretrained_model
         self.experiment_config = self.make_experiment_config_df()
+        self.config_path = config_path
 
     def make_experiment_config_df(self):
         experiment_config = pd.DataFrame([[]])
-        # experiment_config['data_sets'] = str(self.json_config.data.studies)
-        # experiment_config['excluded'] = self.json_config.data.excluded_from_training
-        # experiment_config['slice_view'] = self.json_config.data.slice_view
         experiment_config['pretrained_model'] = self.pretrained_model
-        # experiment_config['data_type'] = self.json_config.data.data_type
-        experiment_config['uid'] = uuid.uuid4()
+        experiment_config['uid'] = self.json_config.model.uid
         experiment_config['loss'] = self.json_config.model.criterion
         experiment_config['blacklist'] = False
         experiment_config['model'] = self.json_config.model.model_type
@@ -216,3 +230,23 @@ class experiment_config():
             old_experiment_results = pd.read_csv(experiment_config_name + '.csv')
             new_experiment_results = pd.concat([old_experiment_results, self.experiment_config])
             new_experiment_results.to_csv(experiment_config_name + '.csv', index=False)
+
+    def write_struct_to_config(self, params):
+        with open(self.config_path) as file:
+            config = json.load(file)
+        config['model']['criterion'] = params['criterion']
+        config['data']['with_blacklist'] = params['with_blacklist']
+        config['data']['with_arranged_mask'] = params['with_arranged_mask']
+        config['model']['uid'] = uuid4().hex
+        config['augmentation']['mlebe']['normalization'] = params['normalization']
+        config['augmentation']['mlebe']['random_elastic_prob'] = params['random_elastic_prob']
+        if not config['model']['experiment_name'] == 'test':
+            config['model']['experiment_name'] = make_unique_experiment_name(config['model']['checkpoints_dir'],
+                                                                             str(date.today()) + '_' + config['data'][
+                                                                                 'data_type'] + '_' + config['model'][
+                                                                                 'criterion'] + '_' +
+                                                                             config['augmentation']['mlebe'][
+                                                                                 'normalization'] + '_blacklist {}'.format(
+                                                                                 config['data']['with_blacklist']))
+        with open(self.config_path, 'w') as outfile:
+            json.dump(config, outfile, indent=4)

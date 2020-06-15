@@ -31,7 +31,7 @@ skewing introduces weird artifacts, same with scaling
 def aug_vis(json_filename):
     # Visualisation arguments
     with_mask = True
-    shuffle_slices = False
+    shuffle_slices = True
     len_x = 5  # number of images on x-axis for vis pdf
     len_y = 5  # number of images on y-axis for vis pdf
     nbr_pages = 20
@@ -219,7 +219,7 @@ def aug_vis(json_filename):
 #                 '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/try_augm.json']
 
 config_paths = [
-    '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/flip.json',
+    '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/mlebe_config_anat.json',
 ]
 for config_path in config_paths:
     aug_vis(config_path)

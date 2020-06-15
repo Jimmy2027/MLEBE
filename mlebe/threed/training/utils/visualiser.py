@@ -4,8 +4,8 @@ from collections import OrderedDict
 import os
 import ntpath
 import time
-from utils import utils, html
-from utils.plot_logs import plot_logs
+from mlebe.threed.training.utils import utils, html
+from mlebe.threed.training.utils.plot_logs import plot_logs
 
 
 # Use the following comment to launch a visdom server
@@ -57,9 +57,10 @@ class Visualiser():
     def display_current_volumes(self, volumes, ids, split, epoch):
         if not self.display_id > 0 or not self.save_to_disk:  # iamges not needed
             return
-        volumes = OrderedDict([('output', utils.volume2img(volumes['output'])),
-                               ('input', utils.volume2img(volumes['input'])),
-                               ('target', utils.volume2img(volumes['target']))])
+        volume2image = utils.volume2img(volumes['input'])
+        volumes = OrderedDict([('output', volume2image.get_slice(volumes['output'])),
+                               ('input', volume2image.get_slice(volumes['input'])),
+                               ('target', volume2image.get_slice(volumes['target']))])
         if self.save_to_disk and epoch % self.save_epoch_freq == 0:
             self.save_volumes(volumes, ids, split, epoch)
         if not self.display_id > 0:  # don't show images in the browser
@@ -70,7 +71,8 @@ class Visualiser():
             volume_stack = np.expand_dims(volume_stack, axis=1)
             volume_stack = np.transpose(volume_stack, (0, 1, 3, 2))
             volume_stack = np.nan_to_num(volume_stack)
-            self.vis.images(volume_stack, opts=dict(title=f'Prediction: {split} {epoch} {ids[i]}'),
+            self.vis.images(volume_stack,
+                            opts=dict(title=f'Prediction: {split} {epoch} {ids[i]} {volume2image.slice_idx}'),
                             win=self.display_id + i)
 
     # |visuals|: dictionary of images to display or save

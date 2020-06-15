@@ -1,4 +1,6 @@
+import torchsample.transforms as ts
 import numpy as np
+import torch
 import scipy
 import scipy.ndimage
 from scipy.ndimage.filters import gaussian_filter
@@ -494,7 +496,7 @@ class TorchIOTransformer(object):
                     input_tf = input_tf.round()
                     assert _input.unique().size() >= input_tf.unique().size(), 'Transformed mask not concordant with initial mask (ie different number of classes)'
                 else:
-                    transformer = self.get_transformer()
+                    transformer = self.get_transformer(mask=False)
                     input_tf = transformer(_input.unsqueeze(0)).squeeze(0)
 
                 outputs.append(input_tf)
@@ -605,25 +607,39 @@ class RandomBiasFieldTransform(TorchIOTransformer):
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
 
 
-class Normalize_mlebe(object):
+class Normalize_mlebe(TorchIOTransformer):
     """
     Normalises given slice/volume to zero mean
     """
 
-    def __call__(self, input):
-        """
+    def __init__(self, max_output_channels=2):
+        def normalize(img):
+            """
 
-        :param data: shape: (y, x)
-        :return: normalised input
-        """
-        data = input.numpy() * 1.
-        data = np.clip(data, 0, np.percentile(data, 99))
+            :param data: shape: (y, x)
+            :return: normalised input
+            """
+            data = img.numpy() * 1.
+            data = np.clip(data, 0, np.percentile(data, 99))
 
-        data = data - np.amin(data)
-        if np.amax(data) != 0:
-            data = data / np.amax(data)
-        return data
+            data = data - np.amin(data)
+            if np.amax(data) != 0:
+                data = data / np.amax(data)
+            return torch.from_numpy(data)
 
+        def get_transform(mask):
+            if mask:
+                return lambda x: x
+            else:
+                return normalize
+
+        super().__init__(get_transformer=get_transform, max_output_channels=max_output_channels)
+
+def get_normalization(normalization):
+    if normalization =='normalize_medic':
+        return ts.NormalizeMedic(norm_flag=(True, False))
+    elif normalization == 'mlebe':
+        return Normalize_mlebe()
 
 if __name__ == '__main__':
     from torchvision.transforms import Lambda

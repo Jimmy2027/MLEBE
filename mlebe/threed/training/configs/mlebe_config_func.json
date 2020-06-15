@@ -31,7 +31,7 @@
     "data_dir" : "/mnt/data/hendrik/mlebe_data/",
     "template_dir": "/usr/share/mouse-brain-atlases/",
     "data_type": "func",
-    "with_arranged_maks": false,
+    "with_arranged_mask": false,
     "remove_black_slices": false,
     "with_blacklist": false,
     "blacklist_dir": "~/docsrc/mlebe/data/Blacklist"
@@ -49,7 +49,9 @@
       "random_affine_prob": 0.5,
       "random_elastic_prob": 0,
       "scale_size": [64,64,96,1],
-      "random_noise_prob": 0.5
+      "random_noise_prob": 0.5,
+      "normalization": "mlebe"
+
     }
   },
   "model":{

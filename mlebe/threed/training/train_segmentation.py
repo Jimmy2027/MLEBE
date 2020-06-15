@@ -3,7 +3,7 @@ from tqdm import tqdm
 import json
 from mlebe.threed.training.dataio.loaders import get_dataset, get_dataset_path
 from mlebe.threed.training.dataio.transformation import get_dataset_transformation
-from mlebe.threed.training.utils.utils import json_file_to_pyobj
+from mlebe.threed.training.utils.utils import json_file_to_pyobj, bigprint
 from mlebe.threed.training.utils.visualiser import Visualiser
 from mlebe.threed.training.utils.finalize import finalize
 from mlebe.threed.training.utils.error_logger import ErrorLogger
@@ -11,7 +11,7 @@ import pandas as pd
 import os
 from mlebe.threed.training.models import get_model
 import shutil
-from models.utils import EarlyStopper
+from .models.utils import EarlyStopper
 
 
 # todo visdom visualisation needs to be an option
@@ -19,6 +19,7 @@ from models.utils import EarlyStopper
 def train(json_filename, network_debug=False, params=None):
     # Load options
     json_opts = json_file_to_pyobj(json_filename)
+    bigprint(f'New try with parameters: {json_opts}')
     train_opts = json_opts.training
 
     # Architecture type
@@ -40,12 +41,13 @@ def train(json_filename, network_debug=False, params=None):
 
     # Setup the NN Model
     model = get_model(json_opts.model)
-    if json_filename == 'configs/temp_config.json':
+    if json_filename == 'configs/test_config.json':
         print('removing dir ', model.save_dir)
         shutil.rmtree(model.save_dir)
         os.mkdir(model.save_dir)
-    else:
-        assert not os.path.exists(model.save_dir), '{} already exists, choose another experiment name'
+    # else:
+    #     assert not os.path.exists(model.save_dir), '{} already exists, choose another experiment name'.format(
+    #         model.save_dir)
 
     if network_debug:
         print('# of pars: ', model.get_number_parameters())
@@ -118,22 +120,20 @@ def train(json_filename, network_debug=False, params=None):
 
                 # Visualise predictions
                 if split == 'validation':  # do not look at testing
-                    # Update best validation loss/epoch values
-                    model.update_validation_state(epoch)
-
                     # Visualise predictions
                     volumes = model.get_current_volumes()
                     visualizer.display_current_volumes(volumes, ids, split, epoch)
                     validation_volumes.append(volumes)
 
-                    early_stopper.update(model, epoch)
-
+        current_loss = error_logger.get_errors('validation')['Seg_Loss']
+        # Update best validation loss/epoch values
+        model.update_validation_state(epoch, current_loss)
+        early_stopper.update(model, epoch, current_loss)
         # Update the plots
         for split in ['train', 'validation', 'test']:
             visualizer.plot_current_errors(epoch, error_logger.get_errors(split), split_name=split)
             visualizer.print_current_errors(epoch, error_logger.get_errors(split), split_name=split)
         visualizer.save_plots(epoch, save_frequency=5)
-        current_loss = error_logger.get_errors('validation')['Seg_Loss']
         error_logger.reset()
 
         # saving checkpoint
@@ -147,17 +147,25 @@ def train(json_filename, network_debug=False, params=None):
 
         if early_stopper.should_stop_early:
             print('early stopping')
-            model_path = finalize(json_opts, json_filename, model)
             # get validation metrics
             val_loss_log = pd.read_excel(os.path.join('checkpoints', json_opts.model.experiment_name, 'loss_log.xlsx'),
                                          sheet_name='validation').iloc[:, 1:]
-            return val_loss_log.loc[val_loss_log['Seg_Loss'] == model.best_validation_loss], model_path
 
-    model_path = finalize(json_opts, json_filename, model)
+            model_path, irsabi_dice_mean, irsabi_dice_std = finalize(json_opts, json_filename, model)
+
+            val_loss_log['irsabi_dice_mean'] = irsabi_dice_mean
+            val_loss_log['irsabi_dice_std'] = irsabi_dice_std
+            return val_loss_log.loc[val_loss_log['Seg_Loss'] == val_loss_log['Seg_Loss'].min()], model_path
+
     # get validation metrics
     val_loss_log = pd.read_excel(os.path.join('checkpoints', json_opts.model.experiment_name, 'loss_log.xlsx'),
                                  sheet_name='validation').iloc[:, 1:]
-    return val_loss_log.loc[val_loss_log['Seg_Loss'] == model.best_validation_loss], model_path
+
+    model_path, irsabi_dice_mean, irsabi_dice_std = finalize(json_opts, json_filename, model)
+
+    val_loss_log['irsabi_dice_mean'] = irsabi_dice_mean
+    val_loss_log['irsabi_dice_std'] = irsabi_dice_std
+    return val_loss_log.loc[val_loss_log['Seg_Loss'] == val_loss_log['Seg_Loss'].min()], model_path
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ import torchsample.transforms as ts
 # import torchvision.transforms as tv
 from torchio.transforms import Interpolation
 from .imageTransformations import RandomElasticTransform, RandomAffineTransform, RandomNoiseTransform, \
-    RandomFlipTransform, RandomBiasFieldTransform, Normalize_mlebe
+    RandomFlipTransform, RandomBiasFieldTransform, Normalize_mlebe, get_normalization
 
 from pprint import pprint
 
@@ -63,6 +63,7 @@ class Transformations:
         if hasattr(t_opts, 'bias_field_prob'):  self.bias_field_prob = t_opts.bias_field_prob
         if hasattr(t_opts, 'division_factor'):  self.division_factor = t_opts.division_factor
         if hasattr(t_opts, 'random_noise_prob'):  self.random_noise_prob = t_opts.random_noise_prob
+        if hasattr(t_opts, 'normalization'):  self.normalization = t_opts.normalization
 
     def get_gsd_pCT_transformer(self):
         return {'train': self.gsd_pCT_train_transform, 'valid': self.gsd_pCT_valid_transform}
@@ -97,6 +98,7 @@ class Transformations:
             ts.ChannelsFirst(),
             # ts.NormalizeMedicPercentile(norm_flag=(True, False)),
             # Todo apply channel wise normalisation
+            get_normalization(self.normalization),
             # Normalize_mlebe(),
             # ts.NormalizeMedic(norm_flag=(True, False)),
             # Todo fork torchsample and fix the Random Crop bug
@@ -104,15 +106,6 @@ class Transformations:
             # ts.RandomCrop(size=self.patch_size),
             ts.TypeCast(['float', 'long'])
         ])
-
-        # train_transform = tv.Compose([
-        #     tv.Lambda(lambda a: torch.from_numpy(a)),
-        #     ts.Pad(size=self.scale_size),
-        #     # tv.Lambda(lambda a: tv.Pad(a, self.get_padding(a))),
-        #     # it.PadToScale(scale_size=self.scale_size),
-        #     tv.Lambda(lambda a: a.permute(3, 0, 1, 2)),
-        #     tv.Lambda(lambda a: a.float()),
-        # ])
 
         return train_transform
 
@@ -123,57 +116,10 @@ class Transformations:
             ts.ChannelsFirst(),
             ts.TypeCast(['float', 'float']),
             # ts.NormalizeMedicPercentile(norm_flag=(True, False)),
-            ts.NormalizeMedic(norm_flag=(True, False)),
+            # ts.NormalizeMedic(norm_flag=(True, False)),
+            get_normalization(self.normalization),
             # ts.ChannelsLast(),
             # ts.SpecialCrop(size=self.patch_size, crop_type=0),
             ts.TypeCast(['float', 'long'])
         ])
-
-        # valid_transform = tv.Compose([
-        #     tv.Lambda(lambda a: torch.from_numpy(a)),
-        #     ts.Pad(size=self.scale_size),
-        #     # tv.Lambda(lambda a: tv.Pad(a, self.get_padding(a))),
-        #     # it.PadToScale(scale_size=self.scale_size),
-        #     tv.Lambda(lambda a: a.permute(3, 0, 1, 2)),
-        #     tv.Lambda(lambda a: a.float()),
-        #
-        # ])
-
         return valid_transform
-
-    # def gsd_pCT_transform(self, seed=None):
-    #     '''
-    #     Data augmentation transformations for the Geneva Stroke dataset (pCT maps)
-    #     :return:
-    #     '''
-    #     if seed is None:
-    #         seed = np.random.rand()
-    #     print('yoooooooo', seed)
-    #
-    #     train_transform = ts.Compose([
-    #         ts.ToTensor(),
-    #         ts.Pad(size=self.scale_size),
-    #         ts.TypeCast(['float', 'float']),
-    #         # ts.RandomFlip(h=True, v=True, p=self.random_flip_prob),
-    #         RandomFlipTransform(axes=(0), p=self.random_flip_prob, seed=seed, max_output_channels=self.max_output_channels),
-    #         RandomElasticTransform(seed=seed, p=0.5, image_interpolation=Interpolation.BSPLINE, max_displacement=self.max_deform,
-    #                                max_output_channels=self.max_output_channels),
-    #         RandomAffineTransform(scales = self.scale_val, degrees = (self.rotate_val), isotropic = False, default_pad_value = 0,
-    #                     image_interpolation = Interpolation.BSPLINE, seed=seed, p=0.5, max_output_channels=self.max_output_channels),
-    #         RandomNoiseTransform(p=0.5, seed=seed, max_output_channels=self.max_output_channels),
-    #         # Todo Random Affine doesn't support channels --> try newer version of torchsample or torchvision
-    #         # ts.RandomAffine(rotation_range=self.rotate_val, translation_range=self.shift_val,
-    #         #                 zoom_range=self.scale_val, interp=('bilinear', 'nearest')),
-    #         ts.ChannelsFirst(),
-    #         #ts.NormalizeMedicPercentile(norm_flag=(True, False)),
-    #         # Todo apply channel wise normalisation
-    #         ts.NormalizeMedic(norm_flag=(True, False)),
-    #         # Todo fork torchsample and fix the Random Crop bug
-    #         # ts.ChannelsLast(), # seems to be needed for crop
-    #         # ts.RandomCrop(size=self.patch_size),
-    #         ts.TypeCast(['float', 'long'])
-    #     ])
-    #
-    #
-    #
-    #     return {'train': train_transform, 'valid': valid_transform}

@@ -1,6 +1,6 @@
 import json
 import os
-from mlebe.threed.training.model_tester import tester
+from mlebe.threed.training.classifier_tester import evaluate
 from mlebe.threed.training.utils.utils import json_file_to_pyobj
 
 
@@ -22,6 +22,6 @@ def finalize(json_opts, json_filename, model):
         json.dump(config, outfile, indent=4)
 
     # testing the model:
-    # tester(json_file_to_pyobj(config_trained_path), test_dataset, save_directory=os.path.join(model.save_dir, 'test'))
+    irsabi_dice_mean, irsabi_dice_std = evaluate(config_trained_path)
 
-    return model_path
+    return model_path, irsabi_dice_mean, irsabi_dice_std

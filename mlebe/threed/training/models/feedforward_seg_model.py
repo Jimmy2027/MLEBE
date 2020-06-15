@@ -142,14 +142,14 @@ class FeedForwardSegmentation(BaseModel):
         return OrderedDict([('Seg_Loss', self.loss_S.data.item())
                             ])
 
-    def update_validation_state(self, epoch):
+    def update_validation_state(self, epoch, current_loss):
         '''
         Update model state with best state
         :return: is_improving (boolean, True if model is improving), best validation loss and associated epoch
         '''
         self.is_improving = False
-        if self.best_validation_loss is None or self.loss_S.data.item() < self.best_validation_loss:
-            self.best_validation_loss = self.loss_S.data.item()
+        if self.best_validation_loss is None or current_loss < self.best_validation_loss:
+            self.best_validation_loss = current_loss
             self.best_epoch = epoch
             self.is_improving = True
         return self.is_improving, self.best_validation_loss, self.best_epoch

@@ -11,6 +11,7 @@ from skimage.exposure import rescale_intensity
 import matplotlib.pyplot as plt
 from openpyxl import load_workbook
 import pandas as pd
+import random
 from shutil import rmtree
 
 
@@ -31,20 +32,54 @@ def tensor2im(image_tensor, imgtype='img', datatype=np.uint8, batch_index=0):
     return rescale_intensity(image_numpy.astype(datatype))
 
 
-def volume2img(volume):
-    # Volume: np array
-    # Todo add possibility to switch between mid_slice=True, labeled_slices=False
-    def normalize(x):
+class volume2img():
+    def __init__(self, volume):
+        self.n_z = volume.shape[-1]
+        self.slice_idx = sample_int_from_normalcdf(self.n_z)
+
+    def normalize(self, x):
         # clipped_x = np.clip(x, np.percentile(x, 1), np.percentile(x, 99)) # can be done fro signal enhancement
         clipped_x = x
         return np.subtract(clipped_x, np.min(clipped_x)) / np.subtract(np.max(clipped_x), np.min(clipped_x))
 
-    n_i, n_c, n_x, n_y, n_z = volume.shape
-    center_z = n_z // 2
-    for c in range(n_c):
-        volume[:, c] = normalize(volume[:, c])
+    def get_slice(self, volume):
+        n_i, n_c, n_x, n_y, n_z = volume.shape
+        for c in range(n_c):
+            volume[:, c] = self.normalize(volume[:, c])
+        return volume[:, :, :, :, self.slice_idx]
 
-    return volume[:, :, :, :, center_z]
+    # def volume2img(volume):
+    #     # Volume: np array
+    #     # Todo add possibility to switch between mid_slice=True, labeled_slices=False
+    #     # def normalize(x):
+    #     #     # clipped_x = np.clip(x, np.percentile(x, 1), np.percentile(x, 99)) # can be done fro signal enhancement
+    #     #     clipped_x = x
+    #     #     return np.subtract(clipped_x, np.min(clipped_x)) / np.subtract(np.max(clipped_x), np.min(clipped_x))
+    #
+    #     n_i, n_c, n_x, n_y, n_z = volume.shape
+    #     # center_z = n_z // 2
+    #     random_slice = sample_int_from_normalcdf(n_z - 1)
+    #     print(random_slice)
+    # for c in range(n_c):
+    #     volume[:, c] = normalize(volume[:, c])
+
+
+#
+#     return volume[:, :, :, :, random_slice]
+
+
+def sample_int_from_normalcdf(n_z):
+    """
+    samples an integer from a gaussian distribution
+    (taken from https://stackoverflow.com/questions/37411633/how-to-generate-a-random-normal-distribution-of-integers)
+    """
+    import scipy.stats as ss
+    x = np.arange(0, n_z)
+    xU, xL = x + 0.5, x - 0.5
+    prob = ss.norm.cdf(xU, loc=n_z // 2, scale=20, ) - ss.norm.cdf(xL, loc=n_z // 2,
+                                                                   scale=20)  # loc is mean, scale is std
+    prob = prob / prob.sum()  # normalize the probabilities so their sum is 1
+    return np.random.choice(x, size=1, p=prob)[0]
 
 
 def diagnose_network(net, name='network'):
@@ -237,3 +272,21 @@ def append_df_to_excel(filename, df, sheet_name='Sheet1', startrow=None,
 
     # save the workbook
     writer.save()
+
+
+def get_unique_path(path):
+    i = 1
+    while os.path.exists(path + str(i)):
+        i += 1
+    path += str(i)
+    return path
+
+
+def make_unique_experiment_name(checkpoints_dir, experiment_name):
+    return get_unique_path(os.path.join(checkpoints_dir, experiment_name)).split('/')[-1]
+
+
+def bigprint(content):
+    print(
+        '\n\n\n\n\n\n\n\n\n *********************************************\n {} \n *********************************************\n\n\n\n\n\n\n\n\n'.format(
+            content))
