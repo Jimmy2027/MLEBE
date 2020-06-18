@@ -1,6 +1,7 @@
 def predict_mask(
         in_file,
-        model_path,
+        model,
+        config,
         input_type='anat',
         visualisation_path='',
         visualisation_bool=False,
@@ -22,6 +23,7 @@ def predict_mask(
         'bool': indicates if the predictions will be saved for visualisation
         'path': path where the visualisations will be saved
     :param model_path: path to trained model for the masking (can be downloaded here: https://zenodo.org/record/3759361#.XqBhyVMzZhH)
+    if using 3D model, this is the path to the config file of that model
     :return:
     """
 
@@ -48,7 +50,9 @@ def predict_mask(
         else:
             return image
 
-    prediction_shape = (128, 128)
+    json_opts = config
+    prediction_shape = json_opts.augmentation.mlebe.scale_size[:2]
+
     input = in_file
     if input_type == 'func':
         tMean_path = 'tMean.nii.gz'
@@ -83,19 +87,19 @@ def predict_mask(
 
     image = nib.load(bias_corrected_path)
     in_file_data = image.get_data()
+    # switching to z,x,y
     in_file_data = np.moveaxis(in_file_data, 2, 0)
     ori_shape = in_file_data.shape
 
     if not test == True:
         # skipping this part for testing as it takes too much time
-        json_opts = json_file_to_pyobj(model_path)
-        # todo get model might take a lot of time, could be loaded berforehand to save time
-        model = get_model(json_opts.model)
         ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
                                                   max_output_channels=json_opts.model.output_nc)
         transformer = ds_transform['valid']()
 
         in_file_data = general.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis=True)
+        # switching to x,y,z for model prediction
+        in_file_data = np.moveaxis(in_file_data, 0, 2)
         # preprocess data for compatibility with model
         network_input = transformer(np.expand_dims(in_file_data, -1))
         # add dimension for batches
@@ -104,12 +108,18 @@ def predict_mask(
         model.test()
         # predict
         mask_pred = np.squeeze(model.pred_seg.cpu().byte().numpy()).astype(np.int16)
+        # switching to z,x,y
+        mask_pred = np.moveaxis(mask_pred, 2, 0)
+        in_file_data = np.moveaxis(in_file_data, 2, 0)
+        network_input = np.moveaxis(np.squeeze(network_input.cpu().numpy()), 2, 0)
+
+        # need to un-pad on the z-axis to the original shape:
+        diff = int(np.ceil(mask_pred.shape[0] - ori_shape[0]))
+        mask_pred = mask_pred[int(np.ceil(diff / 2.)):  ori_shape[0] + int(np.ceil(diff / 2.)), :, :]
+        network_input = network_input[int(np.ceil(diff / 2.)):  ori_shape[0] + int(np.ceil(diff / 2.)), :, :]
     else:
         mask_pred = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
-
-    # need to un-pad on the z-axis to the original shape:
-    diff = int(np.ceil(mask_pred.shape[0] - in_file_data.shape[0]))
-    mask_pred = mask_pred[int(np.ceil(diff / 2.)):  in_file_data.shape[0] + int(np.ceil(diff / 2.)), :, :]
+        network_input = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
 
     # removing predictions that are not attached to the main segmentation in an attempt to remove false segmentation of outer brain regions
     mask_pred = remove_outliers(mask_pred)
@@ -122,13 +132,21 @@ def predict_mask(
         # pred_volume_stats(mask_pred, os.path.dirname(os.path.dirname(visualisation_path)), os.path.basename(in_file), model_path)
         for slice in range(in_file_data.shape[0]):
             plt.figure()
-            plt.subplot(1, 3, 1)
+            plt.subplot(1, 5, 1)
             plt.imshow(in_file_data[slice], cmap='gray')
             plt.axis('off')
-            plt.subplot(1, 3, 2)
+            plt.subplot(1, 5, 2)
+            plt.imshow(network_input[slice], cmap='gray')
+            plt.title('with dataset transformation')
+            plt.axis('off')
+            plt.subplot(1, 5, 3)
+            plt.imshow(network_input[slice], cmap='gray')
+            plt.imshow(mask_pred[slice], cmap='Blues', alpha=0.6)
+            plt.axis('off')
+            plt.subplot(1, 5, 4)
             plt.imshow(mask_pred[slice])
             plt.axis('off')
-            plt.subplot(1, 3, 3)
+            plt.subplot(1, 5, 5)
             plt.imshow(in_file_data[slice], cmap='gray')
             plt.imshow(mask_pred[slice], cmap='Blues', alpha=0.6)
             plt.axis('off')
@@ -149,13 +167,12 @@ def predict_mask(
         elif ori_shape[1] > ori_shape[2]:
             padd = ori_shape[1] - ori_shape[2]
             resized_mask_temp = cv2.resize(slice, (ori_shape[1], ori_shape[1]))
-
             resized_mask = resized_mask_temp[:, padd // 2:ori_shape[2] + padd // 2]
             resized[i] = resized_mask
         else:
             resized_mask = cv2.resize(slice, (ori_shape[2], ori_shape[1]))
             resized[i] = resized_mask
-
+    # switching to x,y,z
     resized = np.moveaxis(resized, 0, 2)
 
     resized_path = 'resized_mask.nii.gz'

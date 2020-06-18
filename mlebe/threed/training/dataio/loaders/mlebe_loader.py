@@ -1,41 +1,36 @@
 import datetime
+import json
 import os
-import uuid
+from datetime import date
+from timeit import default_timer as timer
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from mlebe.training.utils import data_loader as dl
-from mlebe.training.utils.general import data_normalization, arrange_mask, write_blacklist
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
-import torch
 from mlebe.threed.training.dataio.loaders.utils import validate_images
-import json
-from datetime import date
-from sklearn.model_selection import ParameterGrid
-from tqdm import tqdm
-from mlebe.threed.training.dataio.loaders.mlebe_loader import experiment_config
-from mlebe.threed.training.train_segmentation import train
 from mlebe.threed.training.utils.utils import json_file_to_pyobj
-from mlebe.threed.training.utils.set_remote_paths import set_epfl_paths
-from uuid import uuid4
-from mlebe.threed.training.utils.utils import make_unique_experiment_name, bigprint
+from mlebe.threed.training.utils.utils import make_unique_experiment_name
+from mlebe.training.utils import data_loader as dl
+from mlebe.training.utils.general import arrange_mask, write_blacklist, preprocess
 
 
 class mlebe_dataset(Dataset):
 
     def __init__(self, template_dir, data_dir, data_opts, split, save_dir=None, transform=None,
-                 split_seed=42, train_size=0.7, test_size=0.15, valid_size=0.15):
+                 split_seed=42, train_size=0.7, test_size=0.15, valid_size=0.15, training_shape=(128, 128, 96)):
         """
         if train_size = None, no splitting of the data is done
         """
         super(mlebe_dataset, self).__init__()
         self.save_dir = save_dir
+        self.data_opts = data_opts
         self.transform = transform
         self.template_dir = template_dir
         self.split = split
         self.data_type = data_opts.data_type
         self.with_arranged_mask = data_opts.with_arranged_mask
+        self.training_shape = training_shape
         if 'with_blacklist' in data_opts._fields:
             self.with_blacklist = data_opts.with_blacklist
         else:
@@ -173,11 +168,11 @@ class mlebe_dataset(Dataset):
         if self.with_arranged_mask:
             # set the mask to zero where the image is zero
             target = arrange_mask(img, target)
-
-        # img = preprocess(img, (128, 128), 'coronal')
-        # target = preprocess(target, (128, 128), 'coronal')
-        img = np.moveaxis(img, 2, 1)
-        target = np.moveaxis(target, 2, 1)
+        img = preprocess(img, self.training_shape[:2], 'coronal')
+        target = preprocess(target, self.training_shape[:2], 'coronal')
+        if self.data_opts.data_dimension_format == 'x,y,z':
+            img = np.moveaxis(img, 0, 2)
+            target = np.moveaxis(target, 0, 2)
 
         # Make sure there is a channel dimension
         img = np.expand_dims(img, axis=-1)
@@ -190,21 +185,32 @@ class mlebe_dataset(Dataset):
         if self.transform:
             transformer = self.transform()
             img, target = transformer(img, target)
-        # img = torch.from_numpy(data_normalization(img.numpy()))
         return img, target, index
 
+    def preprocess_volume(self, volume):
+        if self.data_opts.data_dimension_format == 'x,y,z':
+            volume = np.moveaxis(volume, 2, 1)
+        # Make sure there is a channel dimension
+        volume = np.expand_dims(volume, axis=-1)
 
-class experiment_config():
+        # apply transformations
+        if self.transform:
+            transformer = self.transform()
+            volume = transformer(volume)
+        return volume
+
+
+class Experiment_config():
     def __init__(self, config_path, pretrained_model=False):
         self.json_config = json_file_to_pyobj(config_path)
         self.pretrained_model = pretrained_model
         self.experiment_config = self.make_experiment_config_df()
         self.config_path = config_path
+        self.start_time = timer()
 
     def make_experiment_config_df(self):
         experiment_config = pd.DataFrame([[]])
         experiment_config['pretrained_model'] = self.pretrained_model
-        experiment_config['uid'] = self.json_config.model.uid
         experiment_config['loss'] = self.json_config.model.criterion
         experiment_config['blacklist'] = False
         experiment_config['model'] = self.json_config.model.model_type
@@ -224,29 +230,54 @@ class experiment_config():
         return experiment_config
 
     def save(self, experiment_config_name='results'):
+        self.experiment_config['experiment_duration'] = (timer() - self.start_time) // 60
         if not os.path.exists(experiment_config_name + '.csv'):
             self.experiment_config.to_csv(experiment_config_name + '.csv', index=False)
         else:
             old_experiment_results = pd.read_csv(experiment_config_name + '.csv')
             new_experiment_results = pd.concat([old_experiment_results, self.experiment_config])
             new_experiment_results.to_csv(experiment_config_name + '.csv', index=False)
+            new_experiment_results.to_csv(os.path.join('/mnt/data/hendrik/', experiment_config_name + '.csv'),
+                                          index=False)
 
     def write_struct_to_config(self, params):
+        self.params = params
         with open(self.config_path) as file:
             config = json.load(file)
         config['model']['criterion'] = params['criterion']
+        config['model']['model_type'] = params['model_type']
         config['data']['with_blacklist'] = params['with_blacklist']
         config['data']['with_arranged_mask'] = params['with_arranged_mask']
-        config['model']['uid'] = uuid4().hex
+        config['model']['uid'] = self.uid = self.experiment_config['uid'] = self.create_uid(params)
         config['augmentation']['mlebe']['normalization'] = params['normalization']
+        config['augmentation']['mlebe']["bias_field_prob"] = params['bias_field_prob']
         config['augmentation']['mlebe']['random_elastic_prob'] = params['random_elastic_prob']
+        config['augmentation']['mlebe']['scale_size'] = params['scale_size']
         if not config['model']['experiment_name'] == 'test':
-            config['model']['experiment_name'] = make_unique_experiment_name(config['model']['checkpoints_dir'],
-                                                                             str(date.today()) + '_' + config['data'][
-                                                                                 'data_type'] + '_' + config['model'][
-                                                                                 'criterion'] + '_' +
-                                                                             config['augmentation']['mlebe'][
-                                                                                 'normalization'] + '_blacklist {}'.format(
-                                                                                 config['data']['with_blacklist']))
+            config['model']['experiment_name'] = self.create_experiment_name()
         with open(self.config_path, 'w') as outfile:
             json.dump(config, outfile, indent=4)
+
+    def create_uid(self, params):
+        uid = ''
+        for elem in params.values():
+            uid += str(elem)
+        return uid
+
+    def create_experiment_name(self):
+        experiment_name = ''
+        idx = 0
+        for key, value in zip(self.params.keys(), self.params.values()):
+            if idx == 0:
+                experiment_name += key + '-' + str(value)
+            else:
+                experiment_name += '_' + key + '-' + str(value)
+            idx += 1
+        return make_unique_experiment_name(self.json_config.model.checkpoints_dir, experiment_name)
+
+    def check_if_already_tried(self):
+        previous_results = pd.read_csv('results.csv')
+        if self.uid in previous_results['uid'].values:
+            self.already_tried = True
+        else:
+            self.already_tried = False

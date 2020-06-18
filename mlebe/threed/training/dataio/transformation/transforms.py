@@ -61,6 +61,7 @@ class Transformations:
         if hasattr(t_opts, 'random_affine_prob'): self.random_affine_prob = t_opts.random_affine_prob
         if hasattr(t_opts, 'random_elastic_prob'): self.random_elastic_prob = t_opts.random_elastic_prob
         if hasattr(t_opts, 'bias_field_prob'):  self.bias_field_prob = t_opts.bias_field_prob
+        if hasattr(t_opts, 'bias_magnitude_range'):  self.bias_magnitude_range = t_opts.bias_magnitude_range
         if hasattr(t_opts, 'division_factor'):  self.division_factor = t_opts.division_factor
         if hasattr(t_opts, 'random_noise_prob'):  self.random_noise_prob = t_opts.random_noise_prob
         if hasattr(t_opts, 'normalization'):  self.normalization = t_opts.normalization
@@ -93,7 +94,7 @@ class Transformations:
             # somehow applies shift even if "shift": [0,0]
             ts.RandomAffine(translation_range=self.shift_val),
 
-            # RandomBiasFieldTransform(p=self.bias_field_prob, is_tensor=True),
+            RandomBiasFieldTransform(p=self.bias_field_prob, is_tensor=True, bias_magnitude_range=self.bias_magnitude_range),
 
             ts.ChannelsFirst(),
             # ts.NormalizeMedicPercentile(norm_flag=(True, False)),

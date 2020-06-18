@@ -22,9 +22,6 @@ def train(json_filename, network_debug=False, params=None):
     bigprint(f'New try with parameters: {json_opts}')
     train_opts = json_opts.training
 
-    # Architecture type
-    arch_type = train_opts.arch_type
-
     # Setup Dataset and Augmentation
     ds_class = get_dataset('mlebe_dataset')
     ds_path = json_opts.data.data_dir
@@ -60,15 +57,15 @@ def train(json_filename, network_debug=False, params=None):
     train_dataset = ds_class(template_path, ds_path, data_opts, split='train', save_dir=model.save_dir,
                              transform=ds_transform['train'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
-                             valid_size=split_opts.validation_size, split_seed=split_opts.seed)
+                             valid_size=split_opts.validation_size, split_seed=split_opts.seed, training_shape = json_opts.augmentation.mlebe.scale_size[:3])
     valid_dataset = ds_class(template_path, ds_path, data_opts, split='validation', save_dir=model.save_dir,
                              transform=ds_transform['valid'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
-                             valid_size=split_opts.validation_size, split_seed=split_opts.seed)
+                             valid_size=split_opts.validation_size, split_seed=split_opts.seed, training_shape = json_opts.augmentation.mlebe.scale_size[:3])
     test_dataset = ds_class(template_path, ds_path, data_opts, split='test', save_dir=model.save_dir,
                             transform=ds_transform['valid'],
                             train_size=split_opts.train_size, test_size=split_opts.test_size,
-                            valid_size=split_opts.validation_size, split_seed=split_opts.seed)
+                            valid_size=split_opts.validation_size, split_seed=split_opts.seed, training_shape = json_opts.augmentation.mlebe.scale_size[:3])
     train_loader = DataLoader(dataset=train_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=True)
     valid_loader = DataLoader(dataset=valid_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=False)
     test_loader = DataLoader(dataset=test_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=False)

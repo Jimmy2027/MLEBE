@@ -4,6 +4,7 @@ from .utils import UnetConv3, UnetUp3
 import torch.nn.functional as F
 from mlebe.threed.training.models.networks_other import init_weights
 
+
 class unet_3D(nn.Module):
 
     def __init__(self, feature_scale=4, n_classes=21, is_deconv=True, in_channels=3, is_batchnorm=True):
@@ -71,20 +72,7 @@ class unet_3D(nn.Module):
         return final
 
     @staticmethod
-    def apply_argmax_softmax(pred):
+    def apply_argmax_softmax(pred, dim=1):
         log_p = F.softmax(pred, dim=1)
 
         return log_p
-
-
-
-
-
-
-
-
-
-
-
-
-

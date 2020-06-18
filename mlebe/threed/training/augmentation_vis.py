@@ -1,6 +1,5 @@
 import os
 import random
-
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -15,7 +14,6 @@ from mlebe.threed.training.utils.utils import json_file_to_pyobj
 import torchio
 
 print(torchio.__file__)
-
 """
 Notes:
 shift is working
@@ -63,11 +61,13 @@ def aug_vis(json_filename):
     train_dataset = ds_class(template_path, ds_path, json_opts.data, split='train',
                              transform=ds_transform['train'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
-                             valid_size=split_opts.validation_size, split_seed=split_opts.seed)
+                             valid_size=split_opts.validation_size, split_seed=split_opts.seed,
+                             training_shape=json_opts.augmentation.mlebe.scale_size[:3])
     valid_dataset = ds_class(template_path, ds_path, json_opts.data, split='train',
                              transform=ds_transform['valid'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
-                             valid_size=split_opts.validation_size, split_seed=split_opts.seed)
+                             valid_size=split_opts.validation_size, split_seed=split_opts.seed,
+                             training_shape=json_opts.augmentation.mlebe.scale_size[:3])
 
     train_dataset.selection = train_dataset.selection[:(total_images // 96) * 3]
     valid_dataset.selection = valid_dataset.selection[:(total_images // 96) * 3]

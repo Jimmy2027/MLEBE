@@ -43,7 +43,7 @@
   },
   "augmentation": {
     "mlebe": {
-      "shift_val": [0.01, 0.01],
+      "shift_val": [0, 0],
       "rotate": 20,
       "scale_val": [1,1],
       "max_deform": [0.1, 0.1, 0],
@@ -52,7 +52,9 @@
       "random_elastic_prob": 0,
       "scale_size": [64,64,96,1],
       "random_noise_prob": 0.5,
-      "normalization": "mlebe"
+      "normalization": "mlebe",
+      "bias_field_prob":0.5,
+      "bias_magnitude_range": 1.0
     }
   },
   "model":{

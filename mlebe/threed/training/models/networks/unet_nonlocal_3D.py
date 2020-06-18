@@ -79,7 +79,7 @@ class unet_nonlocal_3D(nn.Module):
         return final
 
     @staticmethod
-    def apply_argmax_softmax(pred):
+    def apply_argmax_softmax(pred, dim = 1):
         log_p = F.softmax(pred, dim=1)
 
         return log_p

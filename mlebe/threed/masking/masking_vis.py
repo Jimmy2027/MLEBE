@@ -9,7 +9,7 @@ data_paths: paths to the data that is to be used for testing
 """
 
 
-def tester(data_dir, studies, save_dir, model_path, data_type='anat', visualisation_format='pdf'):
+def tester(data_dir, studies, save_dir, model_path, data_type='anat', visualisation_format='pdf', bias_correct = True):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -24,7 +24,7 @@ def tester(data_dir, studies, save_dir, model_path, data_type='anat', visualisat
             print(path)
             masked_path = \
                 predict_mask(path, visualisation_bool=visualisation['bool'], visualisation_path=visualisation['path'],
-                             bias_correct_bool=True, model_path=model_path, visualisation_format=visualisation_format)[
+                             bias_correct_bool=bias_correct, model_path=model_path, visualisation_format=visualisation_format)[
                     0]
             command = 'mv {a} {b}'.format(a=masked_path, b=os.path.join(save_dir, 'masked_' + os.path.basename(path)))
             print(command)
@@ -38,7 +38,7 @@ def tester(data_dir, studies, save_dir, model_path, data_type='anat', visualisat
         for path in tqdm(data_paths):
             print(path)
             masked_path = predict_mask(path, input_type='func', visualisation_bool=visualisation['bool'],
-                                       visualisation_path=visualisation['path'], bias_correct_bool=True,
+                                       visualisation_path=visualisation['path'], bias_correct_bool=bias_correct,
                                        model_path=model_path, visualisation_format=visualisation_format)[0]
             command = 'mv {a} {b}'.format(a=masked_path, b=os.path.join(save_dir, 'masked_' + os.path.basename(path)))
             print(command)
@@ -51,8 +51,10 @@ def tester(data_dir, studies, save_dir, model_path, data_type='anat', visualisat
 if __name__ == '__main__':
     data_dir = os.path.expanduser('/usr/share/')
     studies = ['irsabi_bidsdata']
-    anat_model_path = 'configs/load_pretrained_mlebe_config.json'
-    func_model_path = '/home/hendrik/src/MLEBE/mlebe/threed/training/checkpoints/with_augmentations_func/trained_mlebe_config_func.json'
+    anat_model_path = '/home/hendrik/src/MLEBE/mlebe/threed/training/checkpoints/2020-06-15_anat_dice_loss_normalize_medic_blacklist_True1/trained_mlebe_config_anat.json'
+    func_model_path = '/home/hendrik/src/MLEBE/mlebe/threed/training/checkpoints/2020-06-15_func_dice_loss_normalize_medic_blacklist False1/trained_mlebe_config_func.json'
 
-    # tester(data_dir, studies, save_dir='visualisation/anat/', model_path=anat_model_path, data_type='anat')
-    tester(data_dir, studies, save_dir='visualisation/func/', model_path=func_model_path, data_type='func')
+    tester(data_dir, studies, save_dir='visualisation/anat_with_biascorrect/', model_path=anat_model_path, data_type='anat', bias_correct=True)
+    # tester(data_dir, studies, save_dir='visualisation/func_with_biascorrect/', model_path=func_model_path, data_type='func', bias_correct=True)
+    # tester(data_dir, studies, save_dir='visualisation/anat_no_biascorrect/', model_path=anat_model_path, data_type='anat', bias_correct=False)
+    # tester(data_dir, studies, save_dir='visualisation/func_no_biascorrect/', model_path=func_model_path, data_type='func', bias_correct=False)

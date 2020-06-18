@@ -590,8 +590,8 @@ class RandomNoiseTransform(TorchIOTransformer):
 class RandomBiasFieldTransform(TorchIOTransformer):
     def __init__(
             self,
-            std: Tuple[float, float] = (0, 0.15),
             p: float = 1,
+            bias_magnitude_range: Union[float, Tuple[float, float]] = 0.5,
             seed: Optional[int] = None,
             is_tensor=False,
             max_output_channels=10
@@ -602,7 +602,7 @@ class RandomBiasFieldTransform(TorchIOTransformer):
                 proba = 0
             else:
                 proba = p
-            return RandomBiasField(proba, is_tensor=is_tensor)
+            return RandomBiasField(p=proba, seed=seed, is_tensor=is_tensor, coefficients=bias_magnitude_range)
 
         super().__init__(get_transformer=get_torchio_transformer, max_output_channels=max_output_channels)
 
@@ -635,11 +635,13 @@ class Normalize_mlebe(TorchIOTransformer):
 
         super().__init__(get_transformer=get_transform, max_output_channels=max_output_channels)
 
+
 def get_normalization(normalization):
-    if normalization =='normalize_medic':
+    if normalization == 'normalize_medic':
         return ts.NormalizeMedic(norm_flag=(True, False))
     elif normalization == 'mlebe':
         return Normalize_mlebe()
+
 
 if __name__ == '__main__':
     from torchvision.transforms import Lambda
@@ -664,3 +666,13 @@ if __name__ == '__main__':
 
     # apply the transform
     x, y = transform([image_in, image_target])
+
+
+def unpad(image, target):
+    shape_diffs = [int(np.ceil((i_s - d_s))) for d_s, i_s in zip(target.shape, image.shape)]
+    shape_diffs = np.maximum(shape_diffs, 0)
+    crop_sizes = [(int(np.ceil(s / 2.)), int(np.ceil(s / 2.))) for s in shape_diffs]
+    image = image[crop_sizes[0][0]:target.shape[0] + crop_sizes[0][1],
+            crop_sizes[1][0]:target.shape[1] + crop_sizes[1][1], crop_sizes[2][0]:target.shape[2] + crop_sizes[2][1]]
+    assert image.shape == target.shape
+    return image
