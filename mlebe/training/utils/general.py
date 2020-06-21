@@ -349,8 +349,10 @@ def get_data(data, shape, save_dir, visualisation=False, verbose=False):
     return img_data, affines, headers, file_names
 
 
-def preprocess(img, shape, slice_view, save_dir=None, visualisation=False, switched_axis=False):
+def preprocess(img, shape, slice_view, save_dir=None, visualisation=False, switched_axis=False, normalize=True):
     """
+    This preprocessing function reshapes the volume into the desired shape by first zero-padding the smaller dimension to the same size as the bigger one and then reshaping the image with cv2.resize.
+
     - moves axis such that (x,y,z) becomes (z,x,y)
     - transforms the image such that shape is (z,shape). If one dimension is bigger than shape -> downscale, if one dimension is smaller -> zero-pad
     - normalizes the data
@@ -363,8 +365,9 @@ def preprocess(img, shape, slice_view, save_dir=None, visualisation=False, switc
         elif slice_view == 'axial':
             img = np.moveaxis(img, 2, 0)
 
-    img_data = pad_img(img, shape, save_dir, visualisation)
-    img_data = data_normalization(img_data)
+    img_data = pad_img(img, shape)
+    if normalize:
+        img_data = data_normalization(img_data)
 
     return img_data
 
@@ -925,14 +928,12 @@ def save_datavisualisation_plt_subsubplot(images, save_folder, file_name_header=
 #     return padded
 
 
-def pad_img(img, shape, save_dir=None, visualisation=False):
-    padd_y = shape[0] - img.shape[1]
-    padd_x = shape[1] - img.shape[2]
-    padded = np.empty((img.shape[0], shape[0], shape[1]))
+def pad_img(img, shape):
+    """
+    The preprocessing function reshapes the volume into the desired shape by first zero-padding the smaller dimension to the same size as the bigger one and then reshaping the image with cv2.resize.
+    """
 
-    # if img.shape[1] < shape[0] and img.shape[2] < shape[1]:
-    #     for i in range(img.shape[0]):
-    #         padded[i, ...] = np.pad(img[i, ...], ((padd_y//2, shape[0]-padd_y//2-img.shape[1]), (padd_x//2, shape[1]-padd_x//2-img.shape[2])), 'constant')
+    padded = np.empty((img.shape[0], shape[0], shape[1]))
 
     if img.shape[1] > img.shape[2]:
         for i in range(img.shape[0]):
@@ -952,10 +953,6 @@ def pad_img(img, shape, save_dir=None, visualisation=False):
             temp = cv2.resize(img[i], (shape[1], shape[0]))
             padded[i] = temp
 
-    # if visualisation == True:
-    #     after = []
-    #     after.append(padded)
-    #     save_datavisualisation2(before, after, save_dir + '/visualisation/pad_img/', index_first= True, normalized= True)
     return padded
 
 

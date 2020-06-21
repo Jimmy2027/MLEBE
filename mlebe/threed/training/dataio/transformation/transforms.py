@@ -3,7 +3,7 @@ import torchsample.transforms as ts
 # import torchvision.transforms as tv
 from torchio.transforms import Interpolation
 from .imageTransformations import RandomElasticTransform, RandomAffineTransform, RandomNoiseTransform, \
-    RandomFlipTransform, RandomBiasFieldTransform, Normalize_mlebe, get_normalization
+    RandomFlipTransform, RandomBiasFieldTransform, Normalize_mlebe, get_normalization, Scale_mlebe
 
 from pprint import pprint
 
@@ -54,12 +54,13 @@ class Transformations:
         if hasattr(t_opts, 'patch_size'):       self.patch_size = t_opts.patch_size
         if hasattr(t_opts, 'shift_val'):        self.shift_val = t_opts.shift_val
         if hasattr(t_opts, 'rotate'):           self.rotate_val = t_opts.rotate
-        if hasattr(t_opts, 'scale_val'):        self.scale_val = t_opts.scale_val
+        if hasattr(t_opts, 'scale_range'):        self.scale_range = t_opts.scale_range
         if hasattr(t_opts, 'max_deform'):       self.max_deform = t_opts.max_deform
         if hasattr(t_opts, 'inten_val'):        self.inten_val = t_opts.intensity
         if hasattr(t_opts, 'random_flip_prob'): self.random_flip_prob = t_opts.random_flip_prob
         if hasattr(t_opts, 'random_affine_prob'): self.random_affine_prob = t_opts.random_affine_prob
         if hasattr(t_opts, 'random_elastic_prob'): self.random_elastic_prob = t_opts.random_elastic_prob
+        if hasattr(t_opts, 'scale_proba'):  self.scale_proba = t_opts.scale_proba
         if hasattr(t_opts, 'bias_field_prob'):  self.bias_field_prob = t_opts.bias_field_prob
         if hasattr(t_opts, 'bias_magnitude_range'):  self.bias_magnitude_range = t_opts.bias_magnitude_range
         if hasattr(t_opts, 'division_factor'):  self.division_factor = t_opts.division_factor
@@ -75,6 +76,7 @@ class Transformations:
             seed = np.random.randint(0, 9999)
 
         train_transform = ts.Compose([
+            Scale_mlebe(self.scale_range, self.scale_size, self.scale_proba),
             ts.ToTensor(),
             ts.Pad(size=self.scale_size),
             ts.TypeCast(['float', 'float']),
@@ -85,7 +87,7 @@ class Transformations:
                                    max_displacement=self.max_deform,
                                    max_output_channels=self.max_output_channels),
 
-            RandomAffineTransform(scales=self.scale_val, degrees=(self.rotate_val), isotropic=True, default_pad_value=0,
+            RandomAffineTransform(scales=[1, 1], degrees=(self.rotate_val), isotropic=True, default_pad_value=0,
                                   image_interpolation=Interpolation.BSPLINE, seed=seed, p=self.random_affine_prob,
                                   max_output_channels=self.max_output_channels),
 
@@ -94,7 +96,8 @@ class Transformations:
             # somehow applies shift even if "shift": [0,0]
             ts.RandomAffine(translation_range=self.shift_val),
 
-            RandomBiasFieldTransform(p=self.bias_field_prob, is_tensor=True, bias_magnitude_range=self.bias_magnitude_range),
+            RandomBiasFieldTransform(p=self.bias_field_prob, is_tensor=True,
+                                     bias_magnitude_range=self.bias_magnitude_range),
 
             ts.ChannelsFirst(),
             # ts.NormalizeMedicPercentile(norm_flag=(True, False)),
@@ -112,6 +115,7 @@ class Transformations:
 
     def gsd_pCT_valid_transform(self, seed=None):
         valid_transform = ts.Compose([
+            Scale_mlebe([0,0], self.scale_size, 0),
             ts.ToTensor(),
             ts.Pad(size=self.scale_size),
             ts.ChannelsFirst(),

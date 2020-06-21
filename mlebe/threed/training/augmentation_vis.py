@@ -16,7 +16,7 @@ import torchio
 print(torchio.__file__)
 """
 Notes:
-shift is working
+shift is not working
 rotation is working
 noise is working
 
@@ -25,7 +25,6 @@ skewing introduces weird artifacts, same with scaling
 """
 
 
-# todo images need to be in form X,Y,Z
 def aug_vis(json_filename):
     # Visualisation arguments
     with_mask = True
@@ -220,6 +219,7 @@ def aug_vis(json_filename):
 
 config_paths = [
     '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/mlebe_config_anat.json',
+    # '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/scale.json'
 ]
 for config_path in config_paths:
     aug_vis(config_path)

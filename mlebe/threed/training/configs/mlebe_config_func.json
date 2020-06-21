@@ -34,7 +34,8 @@
     "with_arranged_mask": false,
     "remove_black_slices": false,
     "with_blacklist": false,
-    "blacklist_dir": "~/docsrc/mlebe/data/Blacklist"
+    "blacklist_dir": "~/docsrc/mlebe/data/Blacklist",
+    "data_dimension_format": "x,y,z"
   },
   "data_opts":{
     "channels": [1]

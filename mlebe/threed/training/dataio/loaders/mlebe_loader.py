@@ -1,7 +1,7 @@
 import datetime
 import json
 import os
-from datetime import date
+import random
 from timeit import default_timer as timer
 import nibabel as nib
 import numpy as np
@@ -103,7 +103,7 @@ class mlebe_dataset(Dataset):
                                         data_selection = pd.concat([data_selection, pd.DataFrame(
                                             [[data_set, subject, session, acquisition, type, uid, path]],
                                             columns=['data_set', 'subject', 'session', 'acquisition', 'type', 'uid',
-                                                     'path'])])
+                                                     'path'])]).reset_index(drop=True)
         if self.save_dir:
             data_selection.to_csv(os.path.join(self.save_dir, self.split + '_dataset.csv'), index=False)
         assert len(data_selection.data_set.unique()) == len(studies), 'Only found {} studies, expected {}'.format(
@@ -168,11 +168,11 @@ class mlebe_dataset(Dataset):
         if self.with_arranged_mask:
             # set the mask to zero where the image is zero
             target = arrange_mask(img, target)
-        img = preprocess(img, self.training_shape[:2], 'coronal')
-        target = preprocess(target, self.training_shape[:2], 'coronal')
-        if self.data_opts.data_dimension_format == 'x,y,z':
-            img = np.moveaxis(img, 0, 2)
-            target = np.moveaxis(target, 0, 2)
+        # img = preprocess(img, self.training_shape[:2], 'coronal', normalize=False)
+        # target = preprocess(target, self.training_shape[:2], 'coronal', normalize=False)
+        # if self.data_opts.data_dimension_format == 'x,y,z':
+        #     img = np.moveaxis(img, 0, 2)
+        #     target = np.moveaxis(target, 0, 2)
 
         # Make sure there is a channel dimension
         img = np.expand_dims(img, axis=-1)
@@ -204,7 +204,6 @@ class Experiment_config():
     def __init__(self, config_path, pretrained_model=False):
         self.json_config = json_file_to_pyobj(config_path)
         self.pretrained_model = pretrained_model
-        self.experiment_config = self.make_experiment_config_df()
         self.config_path = config_path
         self.start_time = timer()
 
@@ -218,7 +217,7 @@ class Experiment_config():
         experiment_config['date_time'] = str(datetime.datetime.now())
         experiment_config['augmentation_params'] = str(self.json_config.augmentation.mlebe)
         experiment_config['shape'] = str(self.json_config.augmentation.mlebe.scale_size)
-
+        experiment_config['uid'] = self.uid
         data_config = self.json_config.data._asdict()
         for key, value in zip(data_config.keys(), data_config.values()):
             if not (key == 'data_dir' or key == 'template_dir'):
@@ -227,7 +226,7 @@ class Experiment_config():
                 else:
                     experiment_config[key] = value
 
-        return experiment_config
+        self.experiment_config = experiment_config
 
     def save(self, experiment_config_name='results'):
         self.experiment_config['experiment_duration'] = (timer() - self.start_time) // 60
@@ -248,7 +247,8 @@ class Experiment_config():
         config['model']['model_type'] = params['model_type']
         config['data']['with_blacklist'] = params['with_blacklist']
         config['data']['with_arranged_mask'] = params['with_arranged_mask']
-        config['model']['uid'] = self.uid = self.experiment_config['uid'] = self.create_uid(params)
+        config['data_split']['seed'] = random.randint(1, 1000)
+        config['model']['uid'] = self.uid = self.create_uid(params)
         config['augmentation']['mlebe']['normalization'] = params['normalization']
         config['augmentation']['mlebe']["bias_field_prob"] = params['bias_field_prob']
         config['augmentation']['mlebe']['random_elastic_prob'] = params['random_elastic_prob']
@@ -257,6 +257,8 @@ class Experiment_config():
             config['model']['experiment_name'] = self.create_experiment_name()
         with open(self.config_path, 'w') as outfile:
             json.dump(config, outfile, indent=4)
+
+        self.json_config = json_file_to_pyobj(self.config_path)
 
     def create_uid(self, params):
         uid = ''

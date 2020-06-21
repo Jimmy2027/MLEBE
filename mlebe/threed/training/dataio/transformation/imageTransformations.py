@@ -12,6 +12,9 @@ from typing import Optional, Tuple, Union
 from torch.nn.functional import pad
 from torchio.transforms import RandomAffine, Interpolation, RandomFlip, RandomNoise, RandomElasticDeformation, \
     RandomBiasField
+import cv2
+from mlebe.training.utils.general import pad_img
+import random
 
 
 def center_crop(x, center_crop_size):
@@ -634,6 +637,47 @@ class Normalize_mlebe(TorchIOTransformer):
                 return normalize
 
         super().__init__(get_transformer=get_transform, max_output_channels=max_output_channels)
+
+
+class Scale_mlebe():
+    """
+    scales the images for augmentation and resizes it to scale_size
+    """
+
+    def __init__(self, scale_range, scale_size, scale_proba):
+        self.scale_range = scale_range
+        self.scale_size = scale_size
+        self.scale_proba = scale_proba
+
+    def __call__(self, *inputs):
+        outputs = []
+        for idx, input in enumerate(inputs):
+            outputs.append(self.scale(input))
+        return outputs
+
+    def scale(self, volume):
+        # switch to z,x,y
+        volume = np.moveaxis(np.squeeze(volume), 1, 0)
+        scale_value = random.randint(self.scale_range[0], self.scale_range[1])
+        scale_range = [scale_value, scale_value]
+        training_shape = self.scale_size[:2]
+        if self.scale_proba * 100 >= random.randint(0, 100):
+            rescaled = np.empty((volume.shape[0], volume.shape[1] - scale_range[0], volume.shape[2] - scale_range[1]))
+            for i in range(volume.shape[0]):
+                rescaled[i] = cv2.resize(volume[i],
+                                         (volume.shape[2] - scale_range[1], volume.shape[1] - scale_range[0]))
+            rescaled = pad_img(rescaled, training_shape)
+        else:
+            rescaled = pad_img(volume, training_shape)
+        # switch to x,y,z
+        rescaled = np.moveaxis(rescaled, 0, 2)
+        # make sure the rescaled mask is binary. Future transformations recognize the mask by it being binary
+        if len(np.unique(volume)) <= 2 and not len(np.unique(rescaled)) <= 2:
+                rescaled = np.where(rescaled >= 0.5, 1, 0)
+        return np.expand_dims(rescaled, -1)
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'(scale_values={self.scale_values}, scale_size={self.scale_size})'
 
 
 def get_normalization(normalization):
