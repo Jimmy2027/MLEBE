@@ -25,19 +25,18 @@
     },
     "data": {
         "studies": [
-            "mgtdbs"
-        ],
+        "drlfom", "mgtdbs", "opfvta", "ztau" ],
         "excluded_from_training": [
             "irsabi"
         ],
         "slice_view": "coronal",
-        "data_dir": "/mnt/data/hendrik/mlebe_data/",
+        "data_dir": "/mnt/data/hendrik/mlebe_trainingdata-1.0",
         "template_dir": "/usr/share/mouse-brain-atlases/",
-        "data_type": "func",
+        "data_type": "anat",
         "with_arranged_mask": false,
         "with_blacklist": true,
-        "blacklist_dir": "~/docsrc/mlebe/data/Blacklist"
-
+        "blacklist_dir": "~/docsrc/mlebe/data/Blacklist",
+        "func_training_dir": "~/var/tmp/func_training"
     },
     "data_opts": {
         "channels": [
@@ -67,7 +66,7 @@
             "random_flip_prob": 0,
             "random_affine_prob": 0,
             "random_elastic_prob": 0,
-            "scale_range": [-10,20],
+            "scale_range": [0.7,1.2],
             "scale_proba": 1,
             "scale_size": [
                 64,

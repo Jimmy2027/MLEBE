@@ -82,7 +82,7 @@ class mlebe_dataset(Dataset):
                 print(o)
                 data_set = o
                 for x in os.listdir(os.path.join(data_dir, o)):
-                    if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):
+                    if (x.endswith('preprocessed') or x.startswith('preprocess') or x.endswith('preprocessing')) and not x.endswith('work'):
                         for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                             for file in files:
                                 if not file.startswith('.') and (
@@ -113,7 +113,7 @@ class mlebe_dataset(Dataset):
     def make_dataselection_func(self, data_dir, studies):
         data_selection = pd.DataFrame()
 
-        func_training_dir = os.path.abspath(os.path.expanduser('~/var/tmp/func_training'))
+        func_training_dir = os.path.abspath(os.path.expanduser(self.data_opts.func_training_dir))
 
         if not os.path.exists(func_training_dir):
             print('creating dir: ', func_training_dir)
@@ -122,7 +122,7 @@ class mlebe_dataset(Dataset):
             if o in studies and not o.startswith('.') and not o.startswith('.') and not o.endswith('.xz'):
                 data_set = o
                 for x in os.listdir(os.path.join(data_dir, o)):
-                    if x.endswith('preprocessing') or x.startswith('preprocess') and not x.endswith('work'):
+                    if (x.endswith('preprocessed') or x.startswith('preprocess') or x.endswith('preprocessing')) and not x.endswith('work'):
                         for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                             if root.endswith('func'):
                                 for file in files:

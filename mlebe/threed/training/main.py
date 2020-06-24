@@ -2,6 +2,7 @@ from sklearn.model_selection import ParameterGrid
 from tqdm import tqdm
 from mlebe.threed.training.dataio.loaders.mlebe_loader import Experiment_config
 from mlebe.threed.training.train_segmentation import train
+from mlebe.threed.training.utils.set_remote_paths import set_epfl_paths
 
 # parameters to try: loss, augmentations, blacklist, remove_black_slices, with_elastic_transform
 # todo try loss that penalizes strong change in contour of mask
@@ -26,7 +27,7 @@ params_seach_space_func = {
     "scale_range": [[0.7, 1.2]],
 }
 
-config_paths = ['configs/test_config.json', 'configs/mlebe_config_anat.json']
+config_paths = ['configs/mlebe_config_anat.json']
 # config_paths = ['configs/test_config.json']
 for config_path in config_paths:
     if config_path == 'configs/mlebe_config_func.json':
@@ -36,6 +37,7 @@ for config_path in config_paths:
 
     for params in tqdm(list(ParameterGrid(params_seach_space))):
         print(params)
+        set_epfl_paths(config_path)
         experiment_config = Experiment_config(config_path)
         experiment_config.write_struct_to_config(params)
         experiment_config.make_experiment_config_df()

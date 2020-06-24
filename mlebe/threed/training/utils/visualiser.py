@@ -9,6 +9,7 @@ from mlebe.threed.training.utils.plot_logs import plot_logs
 
 
 # Use the following comment to launch a visdom server
+# set "display_id" to -1 tp skip visualisation
 # python -m visdom.server
 
 class Visualiser():

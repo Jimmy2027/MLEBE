@@ -25,7 +25,7 @@
     "seed": 42
   },
   "data": {
-    "studies": ["drlfom", "mgtdbs", "opfvta", "ztau", "hendrik_nvcz", "irsabi_dargcc"],
+    "studies": ["drlfom", "mgtdbs", "opfvta", "ztau", "hendrik_nvcz"],
     "excluded_from_training": ["irsabi"],
     "slice_view": "coronal",
     "data_dir" : "/mnt/data/hendrik/mlebe_data/",
@@ -35,7 +35,8 @@
     "remove_black_slices": false,
     "with_blacklist": false,
     "blacklist_dir": "~/docsrc/mlebe/data/Blacklist",
-    "data_dimension_format": "x,y,z"
+    "data_dimension_format": "x,y,z",
+    "func_training_dir": "~/var/tmp/func_training"
   },
   "data_opts":{
     "channels": [1]
