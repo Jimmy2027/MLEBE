@@ -1,7 +1,6 @@
 def predict_mask(
         in_file,
-        model,
-        config,
+        model_path,
         input_type='anat',
         visualisation_path='',
         visualisation_bool=False,
@@ -32,14 +31,16 @@ def predict_mask(
     # todo this code has to be runable without gpu
     # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     import nibabel as nib
-    from mlebe.training.utils import general
-    import cv2
-    import numpy as np
     from mlebe.threed.training.models import get_model
     from mlebe.threed.training.utils.utils import json_file_to_pyobj
+    import cv2
+    import numpy as np
     from mlebe.threed.training.dataio.transformation import get_dataset_transformation
 
     def remove_outliers(image):
+        """
+        Simply counts the number of unconnected objects in the volume and returns the second biggest one (the biggest is the black background)
+        """
         from scipy import ndimage
         markers = ndimage.label(image)[0]
         if len(np.unique(markers)) > 2:
@@ -50,7 +51,9 @@ def predict_mask(
         else:
             return image
 
-    json_opts = config
+    json_opts = json_file_to_pyobj(model_path)
+    # todo loading the model in samri.pipelines.preprocess gives a memory error
+    model = get_model(json_opts.model)
     prediction_shape = json_opts.augmentation.mlebe.scale_size[:2]
 
     input = in_file
@@ -66,6 +69,16 @@ def predict_mask(
     resample_cmd = 'ResampleImage 3 {input} '.format(input=input) + resampled_nii_path + ' 0.2x0.2x0.2'
     os.system(resample_cmd)
     print(resample_cmd)
+    """
+    Cropping the bids image
+    """
+    resampled_bids_nib = nib.load(resampled_nii_path)
+    resampled_bids = resampled_bids_nib.get_data()
+    crop_values = [20, 20]
+    resampled_bids_cropped = resampled_bids[crop_values[0]:resampled_bids.shape[0] - crop_values[1], ...]
+    resampled_bids_cropped_nib = nib.Nifti1Image(resampled_bids_cropped, resampled_bids_nib.affine,
+                                                 resampled_bids_nib.header)
+    nib.save(resampled_bids_cropped_nib, resampled_nii_path)
 
     """
     Bias correction
@@ -87,19 +100,13 @@ def predict_mask(
 
     image = nib.load(bias_corrected_path)
     in_file_data = image.get_data()
-    # switching to z,x,y
-    in_file_data = np.moveaxis(in_file_data, 2, 0)
-    ori_shape = in_file_data.shape
+    ori_shape = np.moveaxis(in_file_data, 2, 0).shape
 
     if not test == True:
         # skipping this part for testing as it takes too much time
         ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
                                                   max_output_channels=json_opts.model.output_nc)
-        transformer = ds_transform['valid']()
-
-        in_file_data = general.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis=True)
-        # switching to x,y,z for model prediction
-        in_file_data = np.moveaxis(in_file_data, 0, 2)
+        transformer = ds_transform['bids']()
         # preprocess data for compatibility with model
         network_input = transformer(np.expand_dims(in_file_data, -1))
         # add dimension for batches
@@ -172,6 +179,7 @@ def predict_mask(
         else:
             resized_mask = cv2.resize(slice, (ori_shape[2], ori_shape[1]))
             resized[i] = resized_mask
+
     # switching to x,y,z
     resized = np.moveaxis(resized, 0, 2)
 
