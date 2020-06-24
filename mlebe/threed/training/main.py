@@ -6,7 +6,7 @@ from mlebe.threed.training.train_segmentation import train
 # parameters to try: loss, augmentations, blacklist, remove_black_slices, with_elastic_transform
 # todo try loss that penalizes strong change in contour of mask
 params_seach_space_anat = {
-    'criterion': ['dice_boundary_loss', 'dice_and_hd', ],
+    'criterion': ['dice_loss'],
     'with_blacklist': [True],
     'model_type': ['unet_pct_multi_att_dsv'],
     'normalization': ['normalize_medic'],

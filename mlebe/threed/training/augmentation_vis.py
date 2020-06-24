@@ -28,7 +28,7 @@ skewing introduces weird artifacts, same with scaling
 def aug_vis(json_filename):
     # Visualisation arguments
     with_mask = True
-    shuffle_slices = True
+    shuffle_slices = False
     len_x = 5  # number of images on x-axis for vis pdf
     len_y = 5  # number of images on y-axis for vis pdf
     nbr_pages = 20
@@ -88,11 +88,6 @@ def aug_vis(json_filename):
     ori_slices = []
 
     data_selection = train_dataset.selection
-
-    # for epoch_iter, [(images, labels, indices), (val_images, val_labels, val_indices)] in enumerate(
-    #         tqdm(zip(train_loader, valid_loader))):
-    #     print(len(images))
-    #     asdfds
 
     for epoch_iter, [(images, labels, indices), (val_images, val_labels, val_indices)] in tqdm(
             enumerate(zip(train_loader, valid_loader), 1),
@@ -218,8 +213,8 @@ def aug_vis(json_filename):
 #                 '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/try_augm.json']
 
 config_paths = [
-    '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/mlebe_config_anat.json',
-    # '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/scale.json'
+    # '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/mlebe_config_anat.json',
+    '/home/hendrik/src/MLEBE/mlebe/threed/training/configs/augm_tries/scale.json'
 ]
 for config_path in config_paths:
     aug_vis(config_path)

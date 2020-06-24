@@ -62,12 +62,12 @@ def evaluate(config_path):
             # set the mask to zero where the image is zero
             target = arrange_mask(img, target)
 
-        img = preprocess(img, training_shape[:2], 'coronal')
-        target = preprocess(target, training_shape[:2], 'coronal')
-
-        # set image shape to x,y,z
-        img = np.moveaxis(img, 0, 2)
-        target = np.moveaxis(target, 0, 2)
+        # img = preprocess(img, training_shape[:2], 'coronal')
+        # target = preprocess(target, training_shape[:2], 'coronal')
+        #
+        # # set image shape to x,y,z
+        # img = np.moveaxis(img, 0, 2)
+        # target = np.moveaxis(target, 0, 2)
 
         # preprocess data for compatibility with model
         network_input = transformer(np.expand_dims(img, -1))
@@ -110,7 +110,7 @@ def evaluate(config_path):
             plt.figtext(.5, .9, 'Mean dice score of {}'.format(np.round(dice_scores_df['dice_score'].mean(), 4)),
                         fontsize=100, ha='center')
             i = 1
-            while i <= IMG_NBR * 2:
+            while i <= IMG_NBR * 2 and df_idx < len(min_df):
                 volume = min_df.iloc[df_idx]['idx']
                 slice = min_df.iloc[df_idx]['slice']
                 dice_score = min_df.iloc[df_idx]['dice_score']

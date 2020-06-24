@@ -27,6 +27,8 @@ class Transformations:
         self.random_elastic_prob = 0.0
         self.random_noise_prob = 0.0
         self.bias_field_prob = 0.0
+        self.scale_range = [0, 0]
+        self.scale_proba = 0
 
         # Divisibility factor for testing
         self.division_factor = (16, 16, 1)
@@ -68,7 +70,8 @@ class Transformations:
         if hasattr(t_opts, 'normalization'):  self.normalization = t_opts.normalization
 
     def get_gsd_pCT_transformer(self):
-        return {'train': self.gsd_pCT_train_transform, 'valid': self.gsd_pCT_valid_transform}
+        return {'train': self.gsd_pCT_train_transform, 'valid': self.gsd_pCT_valid_transform,
+                'bids': self.bids_transform}
 
     def gsd_pCT_train_transform(self, seed=None):
         if seed is None:
@@ -115,7 +118,7 @@ class Transformations:
 
     def gsd_pCT_valid_transform(self, seed=None):
         valid_transform = ts.Compose([
-            Scale_mlebe([0,0], self.scale_size, 0),
+            Scale_mlebe([0, 0], self.scale_size, 0),
             ts.ToTensor(),
             ts.Pad(size=self.scale_size),
             ts.ChannelsFirst(),
@@ -128,3 +131,20 @@ class Transformations:
             ts.TypeCast(['float', 'long'])
         ])
         return valid_transform
+
+    def bids_transform(self):
+        bids_transform = ts.Compose([
+            Scale_mlebe([0, 0], self.scale_size, 0, bids=True),
+            ts.ToTensor(),
+            ts.Pad(size=self.scale_size),
+            ts.ChannelsFirst(),
+            ts.TypeCast(['float', 'float']),
+            # ts.NormalizeMedicPercentile(norm_flag=(True, False)),
+            # ts.NormalizeMedic(norm_flag=(True, False)),
+            get_normalization(self.normalization),
+            # ts.ChannelsLast(),
+            # ts.SpecialCrop(size=self.patch_size, crop_type=0),
+            ts.TypeCast(['float', 'long'])
+        ])
+
+        return bids_transform

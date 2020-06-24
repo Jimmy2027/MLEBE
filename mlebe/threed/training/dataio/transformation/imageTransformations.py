@@ -13,7 +13,7 @@ from torch.nn.functional import pad
 from torchio.transforms import RandomAffine, Interpolation, RandomFlip, RandomNoise, RandomElasticDeformation, \
     RandomBiasField
 import cv2
-from mlebe.training.utils.general import pad_img
+from mlebe.training.utils.general import pad_and_reshape_img, pad_img
 import random
 
 
@@ -641,13 +641,19 @@ class Normalize_mlebe(TorchIOTransformer):
 
 class Scale_mlebe():
     """
-    scales the images for augmentation and resizes it to scale_size
+    scales the images for augmentation
     """
 
-    def __init__(self, scale_range, scale_size, scale_proba):
+    def __init__(self, scale_range, scale_size, scale_proba, bids=False):
+        """
+        scale_range: range by which the image size will be changed
+        """
         self.scale_range = scale_range
         self.scale_size = scale_size
         self.scale_proba = scale_proba
+        self.bids = bids
+        self.scale_value = random.randint(self.scale_range[0] * 100, self.scale_range[1] * 100) * 0.01
+        self.do_augment = self.scale_proba * 100 >= random.randint(0, 100)
 
     def __call__(self, *inputs):
         outputs = []
@@ -657,23 +663,29 @@ class Scale_mlebe():
 
     def scale(self, volume):
         # switch to z,x,y
-        volume = np.moveaxis(np.squeeze(volume), 1, 0)
-        scale_value = random.randint(self.scale_range[0], self.scale_range[1])
-        scale_range = [scale_value, scale_value]
+        if self.bids:
+            volume = np.moveaxis(np.squeeze(volume), 2, 0)
+        else:
+            volume = np.moveaxis(np.squeeze(volume), 1, 0)
+
+        scale_value = self.scale_value
         training_shape = self.scale_size[:2]
-        if self.scale_proba * 100 >= random.randint(0, 100):
-            rescaled = np.empty((volume.shape[0], volume.shape[1] - scale_range[0], volume.shape[2] - scale_range[1]))
+        if self.do_augment:
+            rescaled = np.empty(
+                (volume.shape[0], int(volume.shape[1] * scale_value), int(volume.shape[2] * scale_value)))
             for i in range(volume.shape[0]):
                 rescaled[i] = cv2.resize(volume[i],
-                                         (volume.shape[2] - scale_range[1], volume.shape[1] - scale_range[0]))
-            rescaled = pad_img(rescaled, training_shape)
+                                         (rescaled.shape[2], rescaled.shape[1]))
+            # pad the rescaled volume to its original shape
+            rescaled = pad_img(rescaled, volume.shape)
+            rescaled = pad_and_reshape_img(rescaled, training_shape)
         else:
-            rescaled = pad_img(volume, training_shape)
+            rescaled = pad_and_reshape_img(volume, training_shape)
         # switch to x,y,z
         rescaled = np.moveaxis(rescaled, 0, 2)
         # make sure the rescaled mask is binary. Future transformations recognize the mask by it being binary
         if len(np.unique(volume)) <= 2 and not len(np.unique(rescaled)) <= 2:
-                rescaled = np.where(rescaled >= 0.5, 1, 0)
+            rescaled = np.where(rescaled >= 0.5, 1, 0)
         return np.expand_dims(rescaled, -1)
 
     def __repr__(self):

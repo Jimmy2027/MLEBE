@@ -4,7 +4,7 @@ from mlebe.threed.training.classifier_tester import evaluate
 from mlebe.threed.training.utils.utils import json_file_to_pyobj
 
 
-def finalize(json_opts, json_filename, model):
+def finalize(json_opts, json_filename, model, experiment_config):
     """
     function that saves the experiment results and tests the model
     """
@@ -21,7 +21,10 @@ def finalize(json_opts, json_filename, model):
     with open(config_trained_path, 'w') as outfile:
         json.dump(config, outfile, indent=4)
 
+    experiment_config.experiment_config['model_path'] = model_path
+    experiment_config.experiment_config['config_path'] = config_trained_path
+
     # testing the model:
     irsabi_dice_mean, irsabi_dice_std = evaluate(config_trained_path)
 
-    return model_path, irsabi_dice_mean, irsabi_dice_std
+    return irsabi_dice_mean, irsabi_dice_std

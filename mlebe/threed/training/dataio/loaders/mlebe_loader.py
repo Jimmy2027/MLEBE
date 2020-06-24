@@ -250,8 +250,8 @@ class Experiment_config():
         config['data_split']['seed'] = random.randint(1, 1000)
         config['model']['uid'] = self.uid = self.create_uid(params)
         config['augmentation']['mlebe']['normalization'] = params['normalization']
+        config['augmentation']['mlebe']["scale_range"] = params['scale_range']
         config['augmentation']['mlebe']["bias_field_prob"] = params['bias_field_prob']
-        config['augmentation']['mlebe']['random_elastic_prob'] = params['random_elastic_prob']
         config['augmentation']['mlebe']['scale_size'] = params['scale_size']
         if not config['model']['experiment_name'] == 'test':
             config['model']['experiment_name'] = self.create_experiment_name()

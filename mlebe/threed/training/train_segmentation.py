@@ -16,7 +16,7 @@ from .models.utils import EarlyStopper
 
 # todo visdom visualisation needs to be an option
 
-def train(json_filename, network_debug=False, params=None):
+def train(json_filename, network_debug=False, params=None, experiment_config=None):
     # Load options
     json_opts = json_file_to_pyobj(json_filename)
     bigprint(f'New try with parameters: {json_opts}')
@@ -57,15 +57,18 @@ def train(json_filename, network_debug=False, params=None):
     train_dataset = ds_class(template_path, ds_path, data_opts, split='train', save_dir=model.save_dir,
                              transform=ds_transform['train'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
-                             valid_size=split_opts.validation_size, split_seed=split_opts.seed, training_shape = json_opts.augmentation.mlebe.scale_size[:3])
+                             valid_size=split_opts.validation_size, split_seed=split_opts.seed,
+                             training_shape=json_opts.augmentation.mlebe.scale_size[:3])
     valid_dataset = ds_class(template_path, ds_path, data_opts, split='validation', save_dir=model.save_dir,
                              transform=ds_transform['valid'],
                              train_size=split_opts.train_size, test_size=split_opts.test_size,
-                             valid_size=split_opts.validation_size, split_seed=split_opts.seed, training_shape = json_opts.augmentation.mlebe.scale_size[:3])
+                             valid_size=split_opts.validation_size, split_seed=split_opts.seed,
+                             training_shape=json_opts.augmentation.mlebe.scale_size[:3])
     test_dataset = ds_class(template_path, ds_path, data_opts, split='test', save_dir=model.save_dir,
                             transform=ds_transform['valid'],
                             train_size=split_opts.train_size, test_size=split_opts.test_size,
-                            valid_size=split_opts.validation_size, split_seed=split_opts.seed, training_shape = json_opts.augmentation.mlebe.scale_size[:3])
+                            valid_size=split_opts.validation_size, split_seed=split_opts.seed,
+                            training_shape=json_opts.augmentation.mlebe.scale_size[:3])
     train_loader = DataLoader(dataset=train_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=True)
     valid_loader = DataLoader(dataset=valid_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=False)
     test_loader = DataLoader(dataset=test_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=False)
@@ -148,21 +151,21 @@ def train(json_filename, network_debug=False, params=None):
             val_loss_log = pd.read_excel(os.path.join('checkpoints', json_opts.model.experiment_name, 'loss_log.xlsx'),
                                          sheet_name='validation').iloc[:, 1:]
 
-            model_path, irsabi_dice_mean, irsabi_dice_std = finalize(json_opts, json_filename, model)
+            irsabi_dice_mean, irsabi_dice_std = finalize(json_opts, json_filename, model, experiment_config)
 
             val_loss_log['irsabi_dice_mean'] = irsabi_dice_mean
             val_loss_log['irsabi_dice_std'] = irsabi_dice_std
-            return val_loss_log.loc[val_loss_log['Seg_Loss'] == val_loss_log['Seg_Loss'].min()], model_path
+            return val_loss_log.loc[val_loss_log['Seg_Loss'] == val_loss_log['Seg_Loss'].min()]
 
     # get validation metrics
     val_loss_log = pd.read_excel(os.path.join('checkpoints', json_opts.model.experiment_name, 'loss_log.xlsx'),
                                  sheet_name='validation').iloc[:, 1:]
 
-    model_path, irsabi_dice_mean, irsabi_dice_std = finalize(json_opts, json_filename, model)
+    irsabi_dice_mean, irsabi_dice_std = finalize(json_opts, json_filename, model, experiment_config)
 
     val_loss_log['irsabi_dice_mean'] = irsabi_dice_mean
     val_loss_log['irsabi_dice_std'] = irsabi_dice_std
-    return val_loss_log.loc[val_loss_log['Seg_Loss'] == val_loss_log['Seg_Loss'].min()], model_path
+    return val_loss_log.loc[val_loss_log['Seg_Loss'] == val_loss_log['Seg_Loss'].min()]
 
 
 if __name__ == '__main__':

@@ -290,3 +290,23 @@ def bigprint(content):
     print(
         '\n\n\n\n\n\n\n\n\n *********************************************\n {} \n *********************************************\n\n\n\n\n\n\n\n\n'.format(
             content))
+
+
+def write_to_config(config_path, parameters):
+    """
+    parameters: list of tuples. Example [('model.use_cuda',VALUE),] where VALUE is the parameter to be set
+    """
+    with open(config_path) as file:
+        config = json.load(file)
+    for parameter, value in parameters:
+        split = parameter.split('.')
+        idx = 1
+        key = config[split[0]]
+        while idx < len(split) - 1:
+            key = key[split[idx]]
+            idx += 1
+
+        key[split[-1]] = value
+
+    with open(config_path, 'w') as outfile:
+        json.dump(config, outfile, indent=4)
