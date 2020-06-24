@@ -9,6 +9,7 @@ from torch.nn import CrossEntropyLoss
 from mlebe.threed.training.utils.metrics import segmentation_scores, dice_score_list, single_class_dice_score, roc_auc
 from sklearn import metrics
 from .layers.loss import *
+from .layers.boundary_losses import BDLoss, DC_and_BD_loss, DC_and_HDBinary_loss
 
 
 def get_optimizer(option, params):
@@ -41,6 +42,12 @@ def get_criterion(opts):
         criterion = CustomSoftDiceLoss(opts.output_nc, class_ids=[0, 2])
     elif opts.criterion == 'focal_tversky_loss':
         criterion = FocalTverskyLoss()
+    elif opts.criterion == 'boundary_loss':
+        criterion = BDLoss()
+    elif opts.criterion == 'dice_boundary_loss':
+        criterion = DC_and_BD_loss()
+    elif opts.criterion == "dice_and_hd":
+        criterion = DC_and_HDBinary_loss()
 
     return criterion
 

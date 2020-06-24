@@ -49,6 +49,11 @@ class ModelOpts:
 
         if hasattr(opts, 'path_pre_trained_model'): self.path_pre_trained_model = opts.path_pre_trained_model
         if hasattr(opts, 'criterion'):              self.criterion = opts.criterion
+        if hasattr(opts, 'use_cuda'):
+            self.use_cuda = opts.use_cuda
+        else:
+            self.use_cuda = True
+
 
         if hasattr(opts, 'nonlocal_mode'): self.nonlocal_mode = opts.nonlocal_mode
         if hasattr(opts, 'attention_dsample'): self.attention_dsample = opts.attention_dsample

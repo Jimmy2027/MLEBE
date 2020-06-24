@@ -23,6 +23,7 @@ class BaseModel():
     def initialize(self, opt, **kwargs):
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
+        self.use_cuda = opt.use_cuda
         self.ImgTensor = torch.cuda.FloatTensor if self.gpu_ids else torch.Tensor
         self.LblTensor = torch.cuda.FloatTensor if self.gpu_ids else torch.Tensor
         self.save_dir = opt.save_dir; mkdir(self.save_dir)

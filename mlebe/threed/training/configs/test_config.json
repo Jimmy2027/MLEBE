@@ -1,7 +1,7 @@
 {
     "training": {
         "arch_type": "gsd_pCT",
-        "n_epochs": 2,
+        "n_epochs": 1,
         "save_epoch_freq": 10,
         "lr_policy": "step",
         "lr_decay_iters": 250,
@@ -41,7 +41,7 @@
     },
     "data_opts": {
         "channels": [
-            0
+            1
         ]
     },
     "augmentation": {
@@ -67,12 +67,15 @@
             "random_flip_prob": 0,
             "random_affine_prob": 0,
             "random_elastic_prob": 0,
+            "scale_range": [-10,20],
+            "scale_proba": 1,
             "scale_size": [
                 64,
                 64,
                 96,
                 1
             ],
+            "bias_magnitude_range": 1.0,
             "random_noise_prob": 0.7
         }
     },
@@ -84,7 +87,7 @@
         "tensor_dim": "3D",
         "division_factor": 16,
         "input_nc": 1,
-        "output_nc": 1,
+        "output_nc": 2,
         "lr_rate": 0.0001,
         "l2_reg_weight": 1e-06,
         "feature_scale": 4,
