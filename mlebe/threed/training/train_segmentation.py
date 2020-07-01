@@ -69,9 +69,9 @@ def train(json_filename, network_debug=False, params=None, experiment_config=Non
                             train_size=split_opts.train_size, test_size=split_opts.test_size,
                             valid_size=split_opts.validation_size, split_seed=split_opts.seed,
                             training_shape=json_opts.augmentation.mlebe.scale_size[:3])
-    train_loader = DataLoader(dataset=train_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=True)
-    valid_loader = DataLoader(dataset=valid_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=False)
-    test_loader = DataLoader(dataset=test_dataset, num_workers=16, batch_size=train_opts.batchSize, shuffle=False)
+    train_loader = DataLoader(dataset=train_dataset, num_workers=1, batch_size=train_opts.batchSize, shuffle=True)
+    valid_loader = DataLoader(dataset=valid_dataset, num_workers=1, batch_size=train_opts.batchSize, shuffle=False)
+    test_loader = DataLoader(dataset=test_dataset, num_workers=1, batch_size=train_opts.batchSize, shuffle=False)
 
     # Visualisation Parameters
     visualizer = Visualiser(json_opts.visualisation, save_dir=model.save_dir)
@@ -143,7 +143,7 @@ def train(json_filename, network_debug=False, params=None, experiment_config=Non
             model.save(json_opts.model.model_type, epoch)
 
         # Update the model learning rate
-        model.update_learning_rate()
+        model.update_learning_rate(metric=current_loss)
 
         if early_stopper.should_stop_early:
             print('early stopping')

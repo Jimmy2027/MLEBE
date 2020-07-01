@@ -44,6 +44,8 @@ class ModelOpts:
         if hasattr(opts, 'type'): self.type = opts.type
         if hasattr(opts, 'l2_reg_weight'): self.l2_reg_weight = opts.l2_reg_weight
         if hasattr(opts, 'lr_rate'):       self.lr_rate = opts.lr_rate
+        if hasattr(opts, 'lr_policy'):       self.lr_policy = opts.lr_policy
+        if hasattr(opts, 'optimizer'):       self.optimizer = opts.optimizer
         if hasattr(opts, 'feature_scale'): self.feature_scale = opts.feature_scale
         if hasattr(opts, 'tensor_dim'):    self.tensor_dim = opts.tensor_dim
 
@@ -53,8 +55,6 @@ class ModelOpts:
             self.use_cuda = opts.use_cuda
         else:
             self.use_cuda = True
-
-
         if hasattr(opts, 'nonlocal_mode'): self.nonlocal_mode = opts.nonlocal_mode
         if hasattr(opts, 'attention_dsample'): self.attention_dsample = opts.attention_dsample
         # Classifier

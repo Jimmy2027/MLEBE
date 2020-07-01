@@ -25,12 +25,13 @@
     },
     "data": {
         "studies": [
-        "drlfom", "mgtdbs", "opfvta", "ztau" ],
+        "mgtdbs"
+        ],
         "excluded_from_training": [
             "irsabi"
         ],
         "slice_view": "coronal",
-        "data_dir": "/mnt/data/hendrik/mlebe_trainingdata-1.0",
+        "data_dir": "/mnt/data/hendrik/mlebe_data/",
         "template_dir": "/usr/share/mouse-brain-atlases/",
         "data_type": "anat",
         "with_arranged_mask": false,

@@ -652,7 +652,7 @@ class Scale_mlebe():
         self.scale_size = scale_size
         self.scale_proba = scale_proba
         self.bids = bids
-        self.scale_value = random.randint(self.scale_range[0] * 100, self.scale_range[1] * 100) * 0.01
+        self.scale_value = random.randint(int(self.scale_range[0] * 100), int(self.scale_range[1] * 100)) * 0.01
         self.do_augment = self.scale_proba * 100 >= random.randint(1, 100)
 
     def __call__(self, *inputs):
@@ -673,9 +673,6 @@ class Scale_mlebe():
         if self.do_augment:
             rescaled = np.empty(
                 (volume.shape[0], int(volume.shape[1] * scale_value), int(volume.shape[2] * scale_value)))
-            if rescaled.shape[1] == 0 or rescaled.shape[2] == 0:
-                dsfgh = 0
-                wre
             for i in range(volume.shape[0]):
                 rescaled[i] = cv2.resize(volume[i],
                                          (rescaled.shape[2], rescaled.shape[1]))

@@ -50,11 +50,12 @@
       "random_flip_prob": 0.5,
       "random_affine_prob": 0.5,
       "random_elastic_prob": 0,
+      "scale_proba": 0.5,
       "scale_size": [64,64,96,1],
       "random_noise_prob": 0.5,
       "normalization": "mlebe",
       "bias_field_prob": 0.5,
-      "bias_magnitude_range": 1.0
+      "bias_magnitude_range": 0.5
 
     }
   },

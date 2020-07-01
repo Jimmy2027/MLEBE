@@ -13,7 +13,7 @@ from .layers.boundary_losses import BDLoss, DC_and_BD_loss, DC_and_HDBinary_loss
 
 
 def get_optimizer(option, params):
-    opt_alg = 'sgd' if not hasattr(option, 'optim') else option.optim
+    opt_alg = 'sgd' if not hasattr(option, 'optimizer') else option.optimizer
     if opt_alg == 'sgd':
         optimizer = optim.SGD(params,
                               lr=option.lr_rate,

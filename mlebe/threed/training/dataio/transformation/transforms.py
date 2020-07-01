@@ -20,14 +20,13 @@ class Transformations:
         # Affine and Intensity Transformations
         self.shift_val = (0, 0)
         self.rotate_val = 15.0
-        self.scale_val = (0.7, 1.3)
         self.inten_val = (1.0, 1.0)
         self.random_flip_prob = 0.0
         self.random_affine_prob = 0.0
         self.random_elastic_prob = 0.0
         self.random_noise_prob = 0.0
         self.bias_field_prob = 0.0
-        self.scale_range = [0, 0]
+        self.scale_range = [1, 1]
         self.scale_proba = 0
 
         # Divisibility factor for testing
@@ -53,16 +52,20 @@ class Transformations:
 
         # Affine and Intensity Transformations
         if hasattr(t_opts, 'scale_size'):       self.scale_size = t_opts.scale_size
+        if hasattr(t_opts, 'scale_range'):        self.scale_range = t_opts.scale_range
+        if hasattr(t_opts, 'scale_proba'):
+            if self.scale_range == [1, 1]:
+                self.scale_proba = 0
+            else:
+                self.scale_proba = t_opts.scale_proba
         if hasattr(t_opts, 'patch_size'):       self.patch_size = t_opts.patch_size
         if hasattr(t_opts, 'shift_val'):        self.shift_val = t_opts.shift_val
         if hasattr(t_opts, 'rotate'):           self.rotate_val = t_opts.rotate
-        if hasattr(t_opts, 'scale_range'):        self.scale_range = t_opts.scale_range
         if hasattr(t_opts, 'max_deform'):       self.max_deform = t_opts.max_deform
         if hasattr(t_opts, 'inten_val'):        self.inten_val = t_opts.intensity
         if hasattr(t_opts, 'random_flip_prob'): self.random_flip_prob = t_opts.random_flip_prob
         if hasattr(t_opts, 'random_affine_prob'): self.random_affine_prob = t_opts.random_affine_prob
         if hasattr(t_opts, 'random_elastic_prob'): self.random_elastic_prob = t_opts.random_elastic_prob
-        if hasattr(t_opts, 'scale_proba'):  self.scale_proba = t_opts.scale_proba
         if hasattr(t_opts, 'bias_field_prob'):  self.bias_field_prob = t_opts.bias_field_prob
         if hasattr(t_opts, 'bias_magnitude_range'):  self.bias_magnitude_range = t_opts.bias_magnitude_range
         if hasattr(t_opts, 'division_factor'):  self.division_factor = t_opts.division_factor
@@ -104,7 +107,6 @@ class Transformations:
 
             ts.ChannelsFirst(),
             # ts.NormalizeMedicPercentile(norm_flag=(True, False)),
-            # Todo apply channel wise normalisation
             get_normalization(self.normalization),
             # Normalize_mlebe(),
             # ts.NormalizeMedic(norm_flag=(True, False)),

@@ -13,6 +13,7 @@ from mlebe.threed.training.utils.utils import json_file_to_pyobj
 from mlebe.threed.training.utils.utils import make_unique_experiment_name
 from mlebe.training.utils import data_loader as dl
 from mlebe.training.utils.general import arrange_mask, write_blacklist, preprocess
+import uuid
 
 
 class mlebe_dataset(Dataset):
@@ -76,13 +77,15 @@ class mlebe_dataset(Dataset):
 
     def make_dataselection_anat(self, data_dir, studies):
         data_selection = pd.DataFrame()
+        blacklist_selection = pd.DataFrame()
         for o in os.listdir(data_dir):
             if (not studies or o in studies) and not o.startswith('.') and not o.endswith(
                     '.xz'):  # i.e. if o in studies or if studies empty
                 print(o)
                 data_set = o
                 for x in os.listdir(os.path.join(data_dir, o)):
-                    if (x.endswith('preprocessed') or x.startswith('preprocess') or x.endswith('preprocessing')) and not x.endswith('work'):
+                    if (x.endswith('preprocessed') or x.startswith('preprocess') or x.endswith(
+                            'preprocessing')) and not x.endswith('work'):
                         for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                             for file in files:
                                 if not file.startswith('.') and (
@@ -99,6 +102,11 @@ class mlebe_dataset(Dataset):
                                         for i in self.blacklist:
                                             if subject == i.subj and session == i.sess:
                                                 blacklisted = True
+                                                blacklist_selection = pd.concat([blacklist_selection, pd.DataFrame(
+                                                    [[data_set, subject, session, acquisition, type, uid, path]],
+                                                    columns=['data_set', 'subject', 'session', 'acquisition', 'type',
+                                                             'uid',
+                                                             'path'])]).reset_index(drop=True)
                                     if blacklisted == False:
                                         data_selection = pd.concat([data_selection, pd.DataFrame(
                                             [[data_set, subject, session, acquisition, type, uid, path]],
@@ -108,6 +116,7 @@ class mlebe_dataset(Dataset):
             data_selection.to_csv(os.path.join(self.save_dir, self.split + '_dataset.csv'), index=False)
         assert len(data_selection.data_set.unique()) == len(studies), 'Only found {} studies, expected {}'.format(
             data_selection.data_set.unique(), studies)
+        self.blacklist_selection = blacklist_selection
         return data_selection
 
     def make_dataselection_func(self, data_dir, studies):
@@ -122,7 +131,8 @@ class mlebe_dataset(Dataset):
             if o in studies and not o.startswith('.') and not o.startswith('.') and not o.endswith('.xz'):
                 data_set = o
                 for x in os.listdir(os.path.join(data_dir, o)):
-                    if (x.endswith('preprocessed') or x.startswith('preprocess') or x.endswith('preprocessing')) and not x.endswith('work'):
+                    if (x.endswith('preprocessed') or x.startswith('preprocess') or x.endswith(
+                            'preprocessing')) and not x.endswith('work'):
                         for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
                             if root.endswith('func'):
                                 for file in files:
@@ -236,8 +246,10 @@ class Experiment_config():
             old_experiment_results = pd.read_csv(experiment_config_name + '.csv')
             new_experiment_results = pd.concat([old_experiment_results, self.experiment_config])
             new_experiment_results.to_csv(experiment_config_name + '.csv', index=False)
-            new_experiment_results.to_csv(os.path.join('/mnt/data/hendrik/', experiment_config_name + '.csv'),
-                                          index=False)
+            # create backup of experiment results
+            if os.path.exists('/mnt/data/hendrik/'):
+                new_experiment_results.to_csv(os.path.join('/mnt/data/hendrik/', experiment_config_name + '.csv'),
+                                              index=False)
 
     def write_struct_to_config(self, params):
         self.params = params
@@ -249,6 +261,8 @@ class Experiment_config():
         config['data']['with_arranged_mask'] = params['with_arranged_mask']
         config['data_split']['seed'] = random.randint(1, 1000)
         config['model']['uid'] = self.uid = self.create_uid(params)
+        config['training']['lr_policy'] = params['lr_scheduler']
+        config['model']['optimizer'] = params['optimizer']
         config['augmentation']['mlebe']['normalization'] = params['normalization']
         config['augmentation']['mlebe']["scale_range"] = params['scale_range']
         config['augmentation']['mlebe']["bias_field_prob"] = params['bias_field_prob']
@@ -266,16 +280,22 @@ class Experiment_config():
             uid += str(elem)
         return uid
 
-    def create_experiment_name(self):
-        experiment_name = ''
-        idx = 0
-        for key, value in zip(self.params.keys(), self.params.values()):
-            if idx == 0:
-                experiment_name += key + '-' + str(value)
-            else:
-                experiment_name += '_' + key + '-' + str(value)
-            idx += 1
-        return make_unique_experiment_name(self.json_config.model.checkpoints_dir, experiment_name)
+    def create_experiment_name(self, mode='time'):
+        if mode == 'hex':
+            return uuid.uuid4().hex
+        elif mode == 'readable':
+            experiment_name = ''
+            idx = 0
+            for key, value in zip(self.params.keys(), self.params.values()):
+                if idx == 0:
+                    experiment_name += key + '-' + str(value)
+                else:
+                    experiment_name += '_' + key + '-' + str(value)
+                idx += 1
+            return make_unique_experiment_name(self.json_config.model.checkpoints_dir, experiment_name)
+        elif mode == 'time':
+            time_struct = datetime.datetime.now().timetuple()
+            return f"{time_struct.tm_year}_{time_struct.tm_mon}_{time_struct.tm_mday}_{time_struct.tm_hour}_{time_struct.tm_min}_{time_struct.tm_sec}"
 
     def check_if_already_tried(self):
         previous_results = pd.read_csv('results.csv')

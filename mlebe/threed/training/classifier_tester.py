@@ -15,18 +15,14 @@ from mlebe.training.utils.general import preprocess, arrange_mask, remove_black_
 import nibabel as nib
 from tqdm import tqdm
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-
-template_dir = '/usr/share/mouse-brain-atlases/'
 study = ['irsabi_dargcc', 'irsabi']
 slice_view = 'coronal'
-shape = (128, 128)
 IMG_NBRs = [65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65]
 
 
 def evaluate(config_path):
     json_opts = json_file_to_pyobj(config_path)
-
+    template_dir = json_opts.data.template_dir
     model = get_model(json_opts.model)
     save_path = os.path.join(model.save_dir, 'irsabi_test')
     mkdir(save_path)

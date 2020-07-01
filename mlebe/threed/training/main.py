@@ -6,15 +6,19 @@ from mlebe.threed.training.utils.set_remote_paths import set_epfl_paths
 
 # parameters to try: loss, augmentations, blacklist, remove_black_slices, with_elastic_transform
 # todo try loss that penalizes strong change in contour of mask
+# todo find a better way to remove wrong predictions
+# todo try adaptive learning rate
 params_seach_space_anat = {
     'criterion': ['dice_loss'],
     'with_blacklist': [True],
     'model_type': ['unet_pct_multi_att_dsv'],
     'normalization': ['normalize_medic'],
     'with_arranged_mask': [True],
-    "scale_size": [[128, 128, 96, 1]],
+    "scale_size": [[64, 64, 96, 1]],
     "bias_field_prob": [0.5],
-    "scale_range": [[0.7, 1.2]],
+    "scale_range": [[0.8, 1.1], [1, 1]],
+    "optimizer": ['adam', 'sgd'],
+    "lr_scheduler": ['plateau'],
 }
 params_seach_space_func = {
     'criterion': ['dice_loss'],
@@ -22,12 +26,14 @@ params_seach_space_func = {
     'with_blacklist': [False],
     'normalization': ['normalize_medic'],
     'with_arranged_mask': [True],
-    "scale_size": [[128, 128, 96, 1]],
+    "scale_size": [[64, 64, 96, 1]],
     "bias_field_prob": [0.5],
-    "scale_range": [[0.7, 1.2]],
+    "scale_range": [[0.8, 1.1], [1, 1]],
+    "optimizer": ['adam', 'sgd'],
+    "lr_scheduler": ['plateau'],
 }
 
-config_paths = ['configs/mlebe_config_anat.json']
+config_paths = ['configs/test_config.json', 'configs/mlebe_config_anat.json']
 # config_paths = ['configs/test_config.json']
 for config_path in config_paths:
     if config_path == 'configs/mlebe_config_func.json':
@@ -47,8 +53,6 @@ for config_path in config_paths:
             results = train(config_path, params=params, experiment_config=experiment_config)
             # remove all "class" scores
             results = results.loc[:, ~results.columns.str.contains('^Class')]
-            # todo why is this not working? this concatenates the dataframes on axis = 0 while I want to concatenate them on axis = 1
-            # exp_config_class.experiment_config = pd.concat([results, exp_config_class.experiment_config], axis=1)
             for key, value in zip(results.columns, results.values[0]):
                 experiment_config.experiment_config[key] = value
 

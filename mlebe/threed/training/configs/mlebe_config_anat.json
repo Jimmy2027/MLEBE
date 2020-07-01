@@ -25,7 +25,7 @@
     "seed": 42
   },
   "data": {
-    "studies": ["drlfom", "mgtdbs", "opfvta", "ztau", "hendrik_nvcz", "irsabi_dargcc"],
+    "studies": ["drlfom", "mgtdbs", "opfvta", "ztau", "hendrik_nvcz"],
     "excluded_from_training": ["irsabi"],
     "slice_view": "coronal",
     "data_dir" : "/mnt/data/hendrik/mlebe_data/",
@@ -56,7 +56,7 @@
       "random_noise_prob": 0.5,
       "normalization": "mlebe",
       "bias_field_prob":0.5,
-      "bias_magnitude_range": 1.0
+      "bias_magnitude_range": 0.5
     }
   },
   "model":{
@@ -75,7 +75,7 @@
     "isTrain": true,
     "checkpoints_dir": "/home/hendrik/src/MLEBE/mlebe/threed/training/checkpoints",
     "experiment_name": "with_augmentations_anat_new",
-    "criterion": "dice_loss"
+    "criterion": " "
   }
 }
 

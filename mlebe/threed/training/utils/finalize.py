@@ -17,6 +17,7 @@ def finalize(json_opts, json_filename, model, experiment_config):
         config = json.load(file)
     config['model']['path_pre_trained_model'] = model_path
     config['model']['isTrain'] = False
+    config['model']['uid'] = experiment_config.experiment_config['uid'].item()
     config_trained_path = os.path.join(model.save_dir, 'trained_' + json_filename.split('/')[-1])
     with open(config_trained_path, 'w') as outfile:
         json.dump(config, outfile, indent=4)

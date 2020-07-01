@@ -1,0 +1,41 @@
+{
+    "workflow_config": {
+        "model_type": "2D",
+        "data_path": "/mnt/data/hendrik/mlebe_data/",
+        "with_FLASH": false,
+        "subjects": []
+    },
+    "masking_config": {
+        "masking_config_anat": {
+            "use_cuda": false,
+            "with_bids_cropping": false,
+            "input_type": "anat",
+            "visualisation_bool": true,
+            "bias_correct_bool": false,
+            "test": false,
+            "model_config_path": "/mnt/data/hendrik/results/new_bl128/dice_600_2020-02-07/1_Step/experiment_config.csv",
+            "directory": "/mnt/data/hendrik/results/new_bl128/dice_600_2020-02-07/1_Step/",
+            "bias_field_correction": {
+                "convergence": "[ 150x100x50x30, 1e-16 ]",
+                "bspline_fitting": "[ 10, 4 ]",
+                "shrink_factor": "2"
+            },
+            "visualisation_format": "pdf",
+            "visualisation_path": "visualisation/twoD_anat_nobiascor_nocrop/"
+        },
+        "masking_config_func": {
+            "use_cuda": false,
+            "with_bids_cropping": false,
+            "input_type": "func",
+            "visualisation_bool": false,
+            "bias_correct_bool": false,
+            "test": false,
+            "model_config_path": "/home/hendrik/src/MLEBE/mlebe/threed/training/checkpoints/bias_field_prob-0.5_criterion-dice_loss_model_type-unet_pct_multi_att_dsv_normalization-normalize_medic_random_elastic_prob-0_scale_range-[-20, 40]_scale_size-[64, 64, 96, 1]_with_arranged_mask-True_with_blacklist-False1/trained_mlebe_config_func.json",
+            "bias_field_correction": {
+                "convergence": "[ 150x100x50x30, 1e-11 ]",
+                "bspline_fitting": "[ 10, 4 ]",
+                "shrink_factor": "2"
+            }
+        }
+    }
+}

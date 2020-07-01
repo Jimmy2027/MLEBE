@@ -1,85 +1,14 @@
-import cv2
-import numpy as np
 import os
-from matplotlib import pyplot as plt
-import scipy.ndimage
+import cv2
+import nibabel as nib
+import numpy as np
+import pandas as pd
+from scipy import ndimage
+from mlebe.threed.training.dataio.transformation import get_dataset_transformation
+from mlebe.threed.training.utils.utils import json_file_to_pyobj
 
-
-def pad_img(img, shape):
-    padded = np.empty((img.shape[0], shape[0], shape[1]))
-
-    if img.shape[1] > img.shape[2]:
-        for i in range(img.shape[0]):
-            padd = img.shape[1] - img.shape[2]
-            temp_padded = np.pad(img[i, ...], ((0,0), (padd // 2, img.shape[1] - padd // 2 - img.shape[2])), 'constant')
-            padded[i] = cv2.resize(temp_padded, (shape[1], shape[0]))
-
-    elif img.shape[1] < img.shape[2]:
-        for i in range(img.shape[0]):
-            padd = img.shape[2] - img.shape[1]
-            temp_padded = np.pad(img[i, ...], ((padd // 2, img.shape[2] - padd // 2 - img.shape[1]),(0,0)), 'constant')
-            padded[i] = cv2.resize(temp_padded, (shape[1], shape[0]))
-    else:
-        temp = cv2.resize(img[i], (shape[1], shape[0]))
-        padded[i] = temp
-    return padded
-
-
-
-
-def preprocess(img, shape,slice_view, switched_axis = False):
-    """
-    - moves axis such that (x,y,z) becomes (z,x,y)
-    - transforms the image such that shape is (z,shape). If one dimension is bigger than shape -> downscale, if one dimension is smaller -> zero-pad around the border
-    - normalizes the data
-    :param img: img with shape (x,y,z)
-    :return: img with shape (z,shape)
-    """
-    if switched_axis == False:
-        if slice_view == 'coronal':
-            img = np.moveaxis(img, 1, 0)
-        elif slice_view == 'axial':
-            img = np.moveaxis(img, 2, 0)
-
-    img_data = pad_img(img, shape)
-    img_data = data_normalization(img_data)
-
-    return img_data
-
-def data_normalization(data):
-    """
-
-    :param data: shape: (y, x)
-    :return: normalised input
-    """
-    data = data*1.
-    data = np.clip(data, 0, np.percentile(data, 99))
-
-    data = data - np.amin(data)
-    if np.amax(data) != 0:
-        data = data / np.amax(data)
-    return data
-
-
-
-def arrange_mask(img, mask, save_dir = False, visualisation = False):
-
-    new_mask = mask[:,:,:]
-    new_mask[img == 0] = 0
-    fixed_mask = new_mask[:, :, :]
-    structure = [[1,0,1], [1,1,1], [0,1,0]]
-
-    for i in range(new_mask.shape[0]):
-        fixed_mask[i] = scipy.ndimage.morphology.binary_fill_holes(new_mask[i], structure=structure)
-
-    if visualisation == True:
-        save_datavisualisation([img,mask,new_mask,fixed_mask], save_dir + 'visualisation/arrange_mask/')
-
-    return fixed_mask
 
 def pred_volume_stats(mask_pred, save_path, file_name, model_path):
-    import pandas as pd
-
     unique, counts = np.unique(mask_pred, return_counts=True)
     volume = dict(zip(unique, counts))[1]
     if 'T2' in file_name:
@@ -92,6 +21,130 @@ def pred_volume_stats(mask_pred, save_path, file_name, model_path):
         pred_volume_df = pd.DataFrame(columns=['file_name', 'Contrast', 'Volume', 'model_path'])
     else:
         pred_volume_df = pd.read_csv(os.path.join(save_path, 'pred_volume.csv'))
-    pred_volume_df = pred_volume_df.append(pd.DataFrame([[file_name, contrast, volume, model_path]], columns=['file_name', 'Contrast', 'Volume', 'model_path']), sort= False)
-    pred_volume_df.to_csv(os.path.join(save_path, 'pred_volume.csv'), index = False)
+    pred_volume_df = pred_volume_df.append(pd.DataFrame([[file_name, contrast, volume, model_path]],
+                                                        columns=['file_name', 'Contrast', 'Volume', 'model_path']),
+                                           sort=False)
+    pred_volume_df.to_csv(os.path.join(save_path, 'pred_volume.csv'), index=False)
     return
+
+
+def remove_outliers(image):
+    """
+    Simply counts the number of unconnected objects in the volume and returns the second biggest one (the biggest is the black background)
+    """
+    markers = ndimage.label(image)[0]
+    if len(np.unique(markers)) > 2:
+        l, counts = np.unique(markers, return_counts=True)
+        brain_label = l[np.argsort(-counts)[1]]
+        new = np.where(markers == brain_label, 1, 0)
+        return new.astype('float64')
+    else:
+        return image
+
+
+def get_workflow_config(workflow_config_path, input_type):
+    if input_type == 'anat':
+        workflow_config = json_file_to_pyobj(workflow_config_path).masking_config.masking_config_anat
+    elif input_type == 'func':
+        workflow_config = json_file_to_pyobj(workflow_config_path).masking_config.masking_config_func
+    return workflow_config
+
+
+def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
+    """
+    Cropping the bids image
+    """
+    resampled_bids_nib = nib.load(resampled_nii_path)
+    resampled_bids = resampled_bids_nib.get_data()
+    resampled_bids_cropped = resampled_bids[crop_values[0]:resampled_bids.shape[0] - crop_values[1], ...]
+    resampled_bids_cropped_nib = nib.Nifti1Image(resampled_bids_cropped, resampled_bids_nib.affine,
+                                                 resampled_bids_nib.header)
+    nib.save(resampled_bids_cropped_nib, resampled_nii_path)
+
+
+def get_mask(json_opts, in_file_data, model, ori_shape):
+    ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
+                                              max_output_channels=json_opts.model.output_nc)
+    transformer = ds_transform['bids']()
+    # preprocess data for compatibility with model
+    network_input = transformer(np.expand_dims(in_file_data, -1))
+    # add dimension for batches
+    network_input = network_input.unsqueeze(0)
+    model.set_input(network_input)
+    model.test()
+    # predict
+    mask_pred = np.squeeze(model.pred_seg.cpu().byte().numpy()).astype(np.int16)
+    # switching to z,x,y
+    mask_pred = np.moveaxis(mask_pred, 2, 0)
+    in_file_data = np.moveaxis(in_file_data, 2, 0)
+    network_input = np.moveaxis(np.squeeze(network_input.cpu().numpy()), 2, 0)
+
+    # need to un-pad on the z-axis to the original shape:
+    diff = int(np.ceil(mask_pred.shape[0] - ori_shape[0]))
+    mask_pred = mask_pred[int(np.ceil(diff / 2.)):  ori_shape[0] + int(np.ceil(diff / 2.)), :, :]
+    network_input = network_input[int(np.ceil(diff / 2.)):  ori_shape[0] + int(np.ceil(diff / 2.)), :, :]
+
+    return in_file_data, mask_pred, network_input
+
+
+def save_visualisation(workflow_config, in_file, network_input, mask_pred):
+    from matplotlib import pyplot as plt
+    save_dir = os.path.join(workflow_config.visualisation_path, os.path.basename(in_file))
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    # pred_volume_stats(mask_pred, os.path.dirname(os.path.dirname(visualisation_path)), os.path.basename(in_file), model_path)
+    for slice in range(network_input.shape[0]):
+        plt.figure()
+        plt.subplot(1, 3, 1)
+        plt.imshow(network_input[slice], cmap='gray')
+        plt.axis('off')
+        plt.subplot(1, 3, 2)
+        plt.imshow(network_input[slice], cmap='gray')
+        plt.imshow(mask_pred[slice], cmap='Blues', alpha=0.6)
+        plt.axis('off')
+        plt.subplot(1, 3, 3)
+        plt.imshow(mask_pred[slice])
+        plt.axis('off')
+        plt.savefig(save_dir + '/{}.{}'.format(slice, workflow_config.visualisation_format),
+                    format=workflow_config.visualisation_format)
+        plt.close()
+
+
+def reconstruct_image(ori_shape, mask_pred):
+    resized = np.empty(ori_shape)
+    for i, slice in enumerate(mask_pred):
+        if ori_shape[1] < ori_shape[2]:
+            padd = ori_shape[2] - ori_shape[1]
+            resized_mask_temp = cv2.resize(slice, (ori_shape[2], ori_shape[2]))
+            resized_mask = resized_mask_temp[padd // 2:ori_shape[1] + padd // 2, :]
+
+            resized[i] = resized_mask
+        elif ori_shape[1] > ori_shape[2]:
+            padd = ori_shape[1] - ori_shape[2]
+            resized_mask_temp = cv2.resize(slice, (ori_shape[1], ori_shape[1]))
+            resized_mask = resized_mask_temp[:, padd // 2:ori_shape[2] + padd // 2]
+            resized[i] = resized_mask
+        else:
+            resized_mask = cv2.resize(slice, (ori_shape[2], ori_shape[1]))
+            resized[i] = resized_mask
+
+    # switching to x,y,z
+    resized = np.moveaxis(resized, 0, 2)
+
+    return resized
+
+
+def pad_to_shape(resampled_mask_data, input_image_data):
+    # it can happen that after forward and backward resampling the shape is not the same, this fixes that:
+    if resampled_mask_data.shape < input_image_data.shape:
+        resampled_mask_data = np.pad(resampled_mask_data, (
+            (input_image_data.shape[0] - resampled_mask_data.shape[0], 0),
+            (input_image_data.shape[1] - resampled_mask_data.shape[1], 0),
+            (input_image_data.shape[2] - resampled_mask_data.shape[2], 0)), 'edge')
+    else:
+        resampled_mask_data = np.pad(resampled_mask_data, (
+            (resampled_mask_data.shape[0] - input_image_data.shape[0], 0),
+            (resampled_mask_data.shape[1] - input_image_data.shape[1], 0),
+            (resampled_mask_data.shape[2] - input_image_data.shape[2], 0)), 'edge')
+
+    return resampled_mask_data
