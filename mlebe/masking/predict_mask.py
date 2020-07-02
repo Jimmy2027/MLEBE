@@ -15,19 +15,13 @@ def predict_mask(
 
     import os
     from os import path
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     import nibabel as nib
-    from mlebe.training.utils import general
     import numpy as np
-    from tensorflow import keras
-    from mlebe.training.unet import dice_coef, dice_coef_loss
-    from mlebe.threed.masking.utils import remove_outliers, get_workflow_config, crop_bids_image, \
-        save_visualisation, reconstruct_image, pad_to_shape
-    import pandas as pd
+    from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
+        save_visualisation, reconstruct_image, pad_to_shape, get_model_config
 
-    workflow_config = get_workflow_config(workflow_config_path, input_type)
-    model_config = pd.read_csv(workflow_config.model_config_path).iloc[0].to_dict()
-    prediction_shape = (128, 128)
+    masking_opts = get_masking_opts(workflow_config_path, input_type)
+    model_config, model_type = get_model_config(workflow_config_path, masking_opts)
     input = in_file
     if input_type == 'func':
         tMean_path = 'tMean.nii.gz'
@@ -42,14 +36,14 @@ def predict_mask(
     os.system(resample_cmd)
     print(resample_cmd)
 
-    if workflow_config.with_bids_cropping:
-        crop_bids_image(resampled_nii_path)
+    if masking_opts['with_bids_cropping']:
+        crop_bids_image(resampled_nii_path, masking_opts['crop_values'])
 
     """
     Bias correction
     """
-    if workflow_config.bias_correct_bool == True:
-        bias_correction_config = workflow_config.bias_field_correction
+    if masking_opts['bias_correct_bool'] == True:
+        bias_correction_config = masking_opts['bias_field_correction']
         bias_corrected_path = path.abspath(path.expanduser('corrected_input.nii.gz'))
         if input_type == 'anat':
             command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(
@@ -68,28 +62,32 @@ def predict_mask(
 
     image = nib.load(bias_corrected_path)
     in_file_data = image.get_data()
-    in_file_data = np.moveaxis(in_file_data, 2, 0)
-    ori_shape = in_file_data.shape
 
-    if not workflow_config.test == True:
-        model = keras.models.load_model(model_config['model_path'],
-                                        custom_objects={'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef})
-    in_file_data = general.preprocess(in_file_data, prediction_shape, 'coronal', switched_axis=True)
-
-    mask_pred = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
-
-    if not workflow_config.test == True:
-        for slice in range(in_file_data.shape[0]):
-            temp = np.expand_dims(in_file_data[slice], -1)  # expand dims for channel
-            temp = np.expand_dims(temp, 0)  # expand dims for batch
-            prediction = model.predict(temp, verbose=0)
-            prediction = np.squeeze(prediction)
-            mask_pred[slice, ...] = np.where(prediction > 0.9, 1, 0)
+    if not masking_opts['test'] == True:
+        if model_type == '2D':
+            from mlebe.masking.utils import get_mask_twod
+            in_file_data = np.moveaxis(in_file_data, 2, 0)
+            ori_shape = in_file_data.shape
+            in_file_data, mask_pred = get_mask_twod(model_config, in_file_data, ori_shape)
+        if model_type == '3D':
+            from mlebe.masking.utils import get_mask_threed
+            ori_shape = np.moveaxis(in_file_data, 2, 0).shape
+            in_file_data, mask_pred, network_input = get_mask_threed(model_config, in_file_data, ori_shape)
+        else:
+            raise NotImplementedError('Model type [{}] is not implemented'.format(masking_opts['model_type']))
+    else:
+        prediction_shape = (128, 128)
+        ori_shape = np.moveaxis(in_file_data, 2, 0).shape
+        mask_pred = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
+        network_input = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
 
     mask_pred = remove_outliers(mask_pred)
 
-    if workflow_config.visualisation_bool == True:
-        save_visualisation(workflow_config, in_file, in_file_data, mask_pred)
+    if masking_opts['visualisation_bool'] == True:
+        if model_type == '2D':
+            save_visualisation(masking_opts, in_file, in_file_data, mask_pred)
+        if model_type == '3D':
+            save_visualisation(masking_opts, in_file, network_input, mask_pred)
 
     """
     Reconstruct to original image size

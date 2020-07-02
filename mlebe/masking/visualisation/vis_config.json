@@ -1,0 +1,44 @@
+{
+    "workflow_config": {
+        "model_type": "3D",
+        "data_path": "/mnt/data/hendrik/mlebe_data/",
+        "with_FLASH": false,
+        "subjects": []
+    },
+    "masking_config": {
+        "masking_config_anat": {
+            "use_cuda": false,
+            "with_bids_cropping": false,
+            "input_type": "anat",
+            "visualisation_bool": true,
+            "bias_correct_bool": false,
+            "test": false,
+            "model_config_path": "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_1_8_58_40/trained_mlebe_config_anat.json",
+            "directory": "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020-06-15_anat_dice_loss_normalize_medic_blacklist_True1/",
+            "bias_field_correction": {
+                "convergence": "[ 150x100x50x30, 1e-16 ]",
+                "bspline_fitting": "[ 10, 4 ]",
+                "shrink_factor": "2"
+            },
+            "visualisation_format": "pdf",
+            "visualisation_path": "visualisation/new_threed_anat_nobiascor_nocrop/"
+        },
+        "masking_config_func": {
+            "use_cuda": false,
+            "with_bids_cropping": false,
+            "input_type": "func",
+            "visualisation_bool": true,
+            "bias_correct_bool": false,
+            "test": false,
+            "model_config_path": "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_2_8_45_10/trained_mlebe_config_func.json",
+            "bias_field_correction": {
+                "convergence": "[ 150x100x50x30, 1e-11 ]",
+                "bspline_fitting": "[ 10, 4 ]",
+                "shrink_factor": "2"
+            },
+            "masking_config": "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_2_8_45_10/trained_mlebe_config_func.json",
+            "visualisation_format": "pdf",
+            "visualisation_path": "visualisation/func_nobiascor_nocrop/"
+        }
+    }
+}
