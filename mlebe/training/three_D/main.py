@@ -7,22 +7,23 @@ from tqdm import tqdm
 # parameters to try: loss, augmentations, blacklist, remove_black_slices, with_elastic_transform
 # todo try loss that penalizes strong change in contour of mask
 # todo find a better way to remove wrong predictions
+# todo add dropout?
 # todo make defaults for masking function
 # todo make tests for mlebe package
 params_seach_space_anat = {
-    'criterion': ['dice_loss'],
+    'criterion': ['focal_tversky_loss', "dice_and_hd", 'dice_boundary_loss', 'dice_loss'],
     'with_blacklist': [True],
     'model_type': ['unet_pct_multi_att_dsv'],
     'normalization': ['normalize_medic'],
     'with_arranged_mask': [True],
     "scale_size": [[64, 64, 96, 1]],
     "bias_field_prob": [0.5],
-    "scale_range": [[0.8, 1.1], [1, 1]],
+    "scale_range": [[0.8, 1.1]],
     "optimizer": ['adam', 'sgd'],
     "lr_scheduler": ['plateau'],
 }
 params_seach_space_func = {
-    'criterion': ['dice_loss'],
+    'criterion': ['focal_tversky_loss', "dice_and_hd", 'dice_boundary_loss', 'dice_loss'],
     'model_type': ['unet_pct_multi_att_dsv'],
     'with_blacklist': [False],
     'normalization': ['normalize_medic'],
@@ -34,7 +35,7 @@ params_seach_space_func = {
     "lr_scheduler": ['plateau'],
 }
 
-config_paths = ['configs/mlebe_config_func.json']
+config_paths = ['configs/mlebe_config_anat.json']
 # config_paths = ['configs/test_config.json']
 for config_path in config_paths:
     if config_path == 'configs/mlebe_config_func.json':

@@ -71,6 +71,7 @@ def predict_mask(
             in_file_data, mask_pred = get_mask_twod(model_config, in_file_data, ori_shape)
         if model_type == '3D':
             from mlebe.masking.utils import get_mask_threed
+
             ori_shape = np.moveaxis(in_file_data, 2, 0).shape
             in_file_data, mask_pred, network_input = get_mask_threed(model_config, in_file_data, ori_shape)
         else:

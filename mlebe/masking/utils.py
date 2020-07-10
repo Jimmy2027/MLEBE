@@ -1,11 +1,10 @@
 import os
-
 import cv2
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from jsonschema import Draft7Validator, validators
-from mlebe.training.three_D.configs.utils import json_to_dict
+from mlebe.training.three_D.configs.utils import json_to_dict, write_to_jsonfile
 from mlebe.training.three_D.dataio.transformation import get_dataset_transformation
 from mlebe.training.three_D.utils.utils import json_file_to_pyobj
 from scipy import ndimage
@@ -113,7 +112,7 @@ def get_masking_func_opts_defaults(config):
                     "bias_correct_bool": {'default': False},
                     "test": {'default': False},
                     "model_config_path": {'default': ''},
-                    "crop_values": {'default':[15, 15]}
+                    "crop_values": {'default': [15, 15]}
 
                 }},
         }}
@@ -160,7 +159,9 @@ def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
 
 def get_mask_threed(json_opts, in_file_data, ori_shape):
     from mlebe.training.three_D.models import get_model
-
+    # To make sure that the GPU is not used for the predictions: (might be unnecessary)
+    if not json_opts.model.use_cuda:
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     model = get_model(json_opts.model)
     ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
                                               max_output_channels=json_opts.model.output_nc)

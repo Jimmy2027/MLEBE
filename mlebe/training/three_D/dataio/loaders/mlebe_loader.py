@@ -4,18 +4,15 @@ import os
 import random
 import uuid
 from timeit import default_timer as timer
-
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
-
 from mlebe.training.three_D.dataio.loaders.utils import validate_images
 from mlebe.training.three_D.utils.utils import json_file_to_pyobj
 from mlebe.training.three_D.utils.utils import make_unique_experiment_name
-from mlebe.training.two_D.utils import data_loader as dl
-from mlebe.training.two_D.utils.general import arrange_mask, write_blacklist
+from mlebe.training.three_D.dataio.loaders.utils import load_mask, arrange_mask, write_blacklist
 
 
 class mlebe_dataset(Dataset):
@@ -175,7 +172,7 @@ class mlebe_dataset(Dataset):
         np.random.seed(datetime.datetime.now().second + datetime.datetime.now().microsecond)
 
         img = nib.load(self.selection.iloc[index]['path']).get_data()
-        target = dl.load_mask(self.template_dir).get_data()
+        target = load_mask(self.template_dir).get_data()
 
         if self.with_arranged_mask:
             # set the mask to zero where the image is zero

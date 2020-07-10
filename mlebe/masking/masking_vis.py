@@ -3,7 +3,6 @@ import os
 from mlebe.training.three_D.configs.utils import write_to_jsonfile
 from mlebe.training.three_D.utils.utils import json_file_to_pyobj
 from tqdm import tqdm
-
 from mlebe.masking.predict_mask import predict_mask
 from mlebe.training.two_D.utils import data_loader
 
@@ -68,12 +67,10 @@ if __name__ == '__main__':
     # worst case seems to be sub-4006
     data_dir = os.path.expanduser('/usr/share/')
     studies = ['irsabi_bidsdata']
-    anat_config_path = '/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_1_8_58_40/trained_mlebe_config_anat.json'
-    func_model_path = '/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_2_8_45_10/trained_mlebe_config_func.json'
-    write_to_jsonfile(anat_config_path, [('model.use_cuda', False)])
-    write_to_jsonfile(func_model_path, [('model.use_cuda', False)])
+    anat_config_path = "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_1_8_58_40/trained_mlebe_config_anat.json"
+    func_model_path = "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_7_9_58_4/trained_mlebe_config_func.json"
 
-    # tester(data_dir, studies, save_dir='visualisation/new_threed_anat_nobiascor_nocrop/',
+    # tester(data_dir, studies, save_dir='visualisation/anat_nobiascor_nocrop/',
     #        model_config_path=anat_config_path,
     #        data_type='anat', bias_correct=False, with_bids_cropping=False)
     tester(data_dir, studies, save_dir='visualisation/func_nobiascor_nocrop/', model_config_path=func_model_path,

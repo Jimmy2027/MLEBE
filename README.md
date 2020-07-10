@@ -1,5 +1,5 @@
 # MLEBE
-Machine Learning Enabled Brain Extraction
+MLEBE (Machine Learning Enabled Brain Extraction) is a python package for both the training pipeline of a segmentation model  
 
 ## training
 Contains the scripts to train a classifier for image segmentation. Pretrained classifieres can be downloaded [here](https://zenodo.org/record/3759361#.XqBhyVMzZhH).
