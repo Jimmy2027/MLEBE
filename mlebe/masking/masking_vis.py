@@ -11,7 +11,7 @@ With this script one can visualize the performance of the masking functions for 
 data_paths: paths to the data that is to be used for testing
 """
 
-
+#todo check if use cuda is set when predicting mask
 def tester(data_dir, studies, save_dir, data_type='anat', visualisation_format='pdf', bias_correct=True,
            with_bids_cropping=False, model_config_path=''):
     config_path = 'visualisation/vis_config.json'
@@ -70,10 +70,10 @@ if __name__ == '__main__':
     anat_config_path = "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_1_8_58_40/trained_mlebe_config_anat.json"
     func_model_path = "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_7_9_58_4/trained_mlebe_config_func.json"
 
-    # tester(data_dir, studies, save_dir='visualisation/anat_nobiascor_nocrop/',
-    #        model_config_path=anat_config_path,
-    #        data_type='anat', bias_correct=False, with_bids_cropping=False)
-    tester(data_dir, studies, save_dir='visualisation/func_nobiascor_nocrop/', model_config_path=func_model_path,
-           data_type='func', bias_correct=False, with_bids_cropping=False)
+    tester(data_dir, studies, save_dir='visualisation/test/',
+           model_config_path=anat_config_path,
+           data_type='anat', bias_correct=False, with_bids_cropping=False)
+    # tester(data_dir, studies, save_dir='visualisation/func_nobiascor_nocrop/', model_config_path=func_model_path,
+    #        data_type='func', bias_correct=False, with_bids_cropping=False)
     # tester(data_dir, studies, save_dir='visualisation/func_no_biascorrect_with_cropping/', model_path=func_model_path,
     #        data_type='func', bias_correct=False)

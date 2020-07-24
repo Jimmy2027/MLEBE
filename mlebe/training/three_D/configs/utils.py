@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 
-def write_to_jsonfile(config_path, parameters):
+def write_to_jsonfile(config_path: str, parameters: list):
     """
     parameters: list of tuples. Example [('model.use_cuda',VALUE),] where VALUE is the parameter to be set
     """
@@ -43,4 +43,4 @@ def twoD_json_config_wrapper(model_dir):
     if not os.path.exists(os.path.join(model_dir, 'config.json')):
         model_config = pd.read_csv(os.path.join(model_dir, 'experiment_config.csv')).iloc[0].to_dict()
         with open(os.path.join(model_dir, 'config.json'), 'w') as outfile:
-            json.dump(model_config, outfile, skipkeys = True, indent=4)
+            json.dump(model_config, outfile, skipkeys=True, indent=4)

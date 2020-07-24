@@ -47,14 +47,14 @@ def predict_mask(
         bias_corrected_path = path.abspath(path.expanduser('corrected_input.nii.gz'))
         if input_type == 'anat':
             command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(
-                bias_correction_config.bspline_fitting, resampled_nii_path,
-                bias_correction_config.convergence,
-                bias_corrected_path, bias_correction_config.shrink_factor)
+                bias_correction_config['bspline_fitting'], resampled_nii_path,
+                bias_correction_config['convergence'],
+                bias_corrected_path, bias_correction_config['shrink_factor'])
         if input_type == 'func':
             command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(
-                bias_correction_config.bspline_fitting, resampled_nii_path,
-                bias_correction_config.convergence,
-                bias_corrected_path, bias_correction_config.shrink_factor)
+                bias_correction_config['bspline_fitting'], resampled_nii_path,
+                bias_correction_config['convergence'],
+                bias_corrected_path, bias_correction_config['shrink_factor'])
         os.system(command)
         print(command)
     else:

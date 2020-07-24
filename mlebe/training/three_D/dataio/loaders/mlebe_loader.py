@@ -177,11 +177,6 @@ class mlebe_dataset(Dataset):
         if self.with_arranged_mask:
             # set the mask to zero where the image is zero
             target = arrange_mask(img, target)
-        # img = preprocess(img, self.training_shape[:2], 'coronal', normalize=False)
-        # target = preprocess(target, self.training_shape[:2], 'coronal', normalize=False)
-        # if self.data_opts.data_dimension_format == 'x,y,z':
-        #     img = np.moveaxis(img, 0, 2)
-        #     target = np.moveaxis(target, 0, 2)
 
         # Make sure there is a channel dimension
         img = np.expand_dims(img, axis=-1)
@@ -266,6 +261,12 @@ class Experiment_config():
         config['augmentation']['mlebe']["scale_range"] = params['scale_range']
         config['augmentation']['mlebe']["bias_field_prob"] = params['bias_field_prob']
         config['augmentation']['mlebe']['scale_size'] = params['scale_size']
+        if 'with_FLASH' in params.keys() and params['with_FLASH']:
+            if not 'irsabi_dargcc' in config['data']['studies']:
+                config['data']['studies'].append('irsabi_dargcc')
+        if 'with_FLASH' in params.keys() and not params['with_FLASH']:
+            config['data']['studies'] = [elem for elem in config['data']['studies'] if not elem == 'irsabi_dargcc']
+
         if not config['model']['experiment_name'] == 'test':
             config['model']['experiment_name'] = self.create_experiment_name()
         with open(self.config_path, 'w') as outfile:
