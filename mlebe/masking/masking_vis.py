@@ -1,7 +1,7 @@
 import os
 
-from mlebe.training.three_D.configs.utils import write_to_jsonfile
-from mlebe.training.three_D.utils.utils import json_file_to_pyobj
+from mlebe.training.three_D import write_to_jsonfile
+from mlebe.training.three_D import json_file_to_pyobj
 from tqdm import tqdm
 from mlebe.masking.predict_mask import predict_mask
 from mlebe.training.two_D.utils import data_loader

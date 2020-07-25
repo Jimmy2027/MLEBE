@@ -1,7 +1,7 @@
 def get_masking_func(in_file,
                      workflow_config_path,
                      input_type='anat'):
-    from mlebe.training.three_D.utils.utils import json_file_to_pyobj
+    from mlebe.training.utils.utils import json_file_to_pyobj
 
     workflow_config = json_file_to_pyobj(workflow_config_path).workflow_config
     if workflow_config.model_type == '2D':

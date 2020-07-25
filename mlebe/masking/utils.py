@@ -1,13 +1,15 @@
 import os
+
 import cv2
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from jsonschema import Draft7Validator, validators
-from mlebe.training.three_D.configs.utils import json_to_dict, write_to_jsonfile
-from mlebe.training.three_D.dataio.transformation import get_dataset_transformation
-from mlebe.training.three_D.utils.utils import json_file_to_pyobj
 from scipy import ndimage
+
+from mlebe.training.configs.utils import json_to_dict
+from mlebe.training.dataio.transformation import get_dataset_transformation
+from mlebe.training.utils.utils import json_file_to_pyobj
 
 
 def pred_volume_stats(mask_pred, save_path, file_name, model_path):
@@ -158,7 +160,7 @@ def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
 
 
 def get_mask_threed(json_opts, in_file_data, ori_shape):
-    from mlebe.training.three_D.models import get_model
+    from mlebe.training.three_D import get_model
     # To make sure that the GPU is not used for the predictions: (might be unnecessary)
     if not json_opts.model.use_cuda:
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
