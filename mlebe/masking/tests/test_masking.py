@@ -7,12 +7,12 @@ import numpy as np
 
 import mlebe
 from mlebe.masking.predict_mask import predict_mask
+from mlebe.training.configs.utils import json_to_dict
 
 
-def test_masker():
+def test_masker(test_config):
     test_dir = os.path.join(os.path.dirname(mlebe.__file__), 'masking/tests/temp/')
     os.makedirs(test_dir, exist_ok=True)
-    test_config = {"masking_config": {"masking_config_anat": {"test": True}}}
     with open(os.path.join(test_dir, 'test_config.json'), 'w') as jsonfile:
         json.dump(test_config, jsonfile, indent=4)
     test_in_file = np.ones((63, 96, 48))
@@ -24,4 +24,7 @@ def test_masker():
 
 
 if __name__ == '__name__':
-    test_masker()
+    test_config = {"masking_config": {"masking_config_anat": {"test": True}}}
+    test_masker(test_config)
+    test_config = json_to_dict("/home/hendrik/docsrc/mlebe/prepare/configs/noBiascorr_noCrop.json")
+    test_masker(test_config)
