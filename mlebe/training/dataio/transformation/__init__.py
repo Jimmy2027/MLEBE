@@ -4,7 +4,6 @@ from mlebe.training.dataio.transformation.transforms import Transformations
 def get_dataset_transformation(name, opts=None, max_output_channels=None):
     '''
     :param opts: augmentation parameters
-    :return:
     '''
     # Build the transformation object and initialise the augmentation parameters
     trans_obj = Transformations(name)

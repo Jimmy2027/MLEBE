@@ -17,16 +17,15 @@ from mlebe.training.models.utils import EarlyStopper
 
 def train(json_filename, network_debug=False, experiment_config=None):
     """
-
-    :param json_filename:
-    :type json_filename:
-    :param network_debug:
-    :type network_debug:
-    :param experiment_config:
-    :type experiment_config:
-    :return:
-    :rtype:
+Main training function for the model.
+    Parameters
+    ----------
+    json_filename : str
+        Path to the json configuration file
+    network_debug : bool (optional)
+    experiment_config : class used for logging (optional)
     """
+
     # Load options
     json_opts = json_file_to_pyobj(json_filename)
     bigprint(f'New try with parameters: {json_opts}')

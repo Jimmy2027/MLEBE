@@ -49,7 +49,7 @@ for config_path in config_paths:
         experiment_config.check_if_already_tried()
         if not experiment_config.already_tried:
             # train model
-            results = train(config_path, params=params, experiment_config=experiment_config)
+            results = train(config_path, experiment_config=experiment_config)
             # remove all "class" scores
             results = results.loc[:, ~results.columns.str.contains('^Class')]
             for key, value in zip(results.columns, results.values[0]):

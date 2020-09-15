@@ -18,7 +18,33 @@ class mlebe_dataset(Dataset):
     def __init__(self, template_dir, data_dir, data_opts, split, save_dir=None, transform=None,
                  split_seed=42, train_size=0.7, test_size=0.15, valid_size=0.15, training_shape=(128, 128, 96)):
         """
-        if train_size = None, no splitting of the data is done
+        Dataset class for the mlebe dataset
+
+        Parameters
+        ----------
+        template_dir : str
+            path to the template (used as ground truth)
+        data_dir : str
+            path to the directory containing the data sets
+        data_opts : python object
+            training options
+        split : str
+            either train, validation or test
+        save_dir : str (optional)
+            directory for intermediate data savings
+        transform : dict
+            dictionary of transformations used for that split
+        split_seed : int
+            integer used as seed
+        train_size : float
+            percentage of data used for training.
+            if train_size = None, no splitting of the data is done
+        test_size : float
+            percentage of data used for testing
+        valid_size : float
+            percentage of data used for validation
+        training_shape : tuple
+            shape of data used for training (x,y,z)
         """
         super(mlebe_dataset, self).__init__()
         self.save_dir = save_dir
@@ -204,6 +230,14 @@ class mlebe_dataset(Dataset):
 
 class Experiment_config():
     def __init__(self, config_path, pretrained_model=False):
+        """
+Experiment_config class for logging of parameters. This is useful to keep track of
+old experimentations of parameters.
+        Parameters
+        ----------
+        config_path : str
+            path to the json configuration file
+        """
         self.json_config = json_file_to_pyobj(config_path)
         self.pretrained_model = pretrained_model
         self.config_path = config_path

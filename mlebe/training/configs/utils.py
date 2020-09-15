@@ -31,7 +31,7 @@ def json_to_dict(json_path):
 
 
 def get_dice_score_of_model(model_config_path,
-                            experiment_results_df_path='/home/hendrik/src/MLEBE/mlebe/training/three_D/results.csv'):
+                            experiment_results_df_path='/home/hendrik/src/MLEBE/mlebe/training/results.csv'):
     experiment_results_df = pd.read_csv(experiment_results_df_path)
     model_uid = json_to_dict(model_config_path)['model']['uid']
     dice_score = experiment_results_df.loc[experiment_results_df['uid'] == model_uid, 'Overall_Dice'].item()

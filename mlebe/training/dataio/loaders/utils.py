@@ -79,3 +79,17 @@ def remove_black_images(img, mask, test=False):
             img.shape, new_img.shape)
 
     return new_img, new_mask
+
+
+def data_normalization(data):
+    """
+    :param data: shape: (y, x)
+    :return: normalised input
+    """
+    data = data * 1.
+    data = np.clip(data, 0, np.percentile(data, 99))
+
+    data = data - np.amin(data)
+    if np.amax(data) != 0:
+        data = data / np.amax(data)
+    return data

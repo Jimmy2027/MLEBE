@@ -4,21 +4,33 @@ def predict_mask(
         input_type='anat',
 ):
     """
-    :param in_file: path to the file that is to be masked
-    :param input_type: either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
-    :param visualisation: dictionary with
-        'bool': indicates if the predictions will be saved for visualisation
-        'path': path where the visualisations will be saved
-    :param model_path: path to trained model for the masking (can be downloaded here: https://zenodo.org/record/3759361#.XqBhyVMzZhH)
-    :return:
-    """
+    The image is first resampled into the resolution of the template space, which has a voxel size of 0.2 × 0.2 × 0.2. This is done with the Resample command from the FSL library which is an analysis tool for FMRI, MRI and DTI brain imaging data. Then, the image is preprocessed using the preprocessing methods of the model class. The predictions of the model are reconstructed to a 3D mask via the command Nifit1Image from nibabel. This is done using the same affine space as the input image. The latter is then reshaped into the original shape inverting the preprocessing step, either with the opencv resize method or by cropping. Additionally, the binary mask is resampled into its original affine space, before being multiplied with the brain image to extract the ROI.
 
+    Parameters
+    ----------
+    in_file : str
+        path to the file that is to be masked
+    workflow_config_path : str
+        path to the workflow config. The workflow config is a json file that must contain the path
+        to the model json config file. All other parameters have default values that will be set
+        in the "get_masking_opts" method.
+    input_type : str
+        either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
+
+    Returns
+    -------
+    resampled_mask_path : str
+        path to the mask
+    nii_path_masked : str
+        path to the masked image
+    """
     import os
     from os import path
     import nibabel as nib
     import numpy as np
     from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
         save_visualisation, reconstruct_image, pad_to_shape, get_model_config
+    from mlebe.masking.utils import get_mask
 
     masking_opts = get_masking_opts(workflow_config_path, input_type)
     model_config, model_type = get_model_config(workflow_config_path, masking_opts)
@@ -64,18 +76,8 @@ def predict_mask(
     in_file_data = image.get_data()
 
     if not masking_opts['test'] == True:
-        if model_type == '2D':
-            from mlebe.masking.utils import get_mask_twod
-            in_file_data = np.moveaxis(in_file_data, 2, 0)
-            ori_shape = in_file_data.shape
-            in_file_data, mask_pred = get_mask_twod(model_config, in_file_data, ori_shape)
-        if model_type == '3D':
-            from mlebe.masking.utils import get_mask_threed
-
-            ori_shape = np.moveaxis(in_file_data, 2, 0).shape
-            in_file_data, mask_pred, network_input = get_mask_threed(model_config, in_file_data, ori_shape)
-        else:
-            raise NotImplementedError('Model type [{}] is not implemented'.format(masking_opts['model_type']))
+        ori_shape = np.moveaxis(in_file_data, 2, 0).shape
+        in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape)
     else:
         prediction_shape = (128, 128)
         ori_shape = np.moveaxis(in_file_data, 2, 0).shape
@@ -85,10 +87,7 @@ def predict_mask(
     mask_pred = remove_outliers(mask_pred)
 
     if masking_opts['visualisation_bool'] == True:
-        if model_type == '2D':
-            save_visualisation(masking_opts, in_file, in_file_data, mask_pred)
-        if model_type == '3D':
-            save_visualisation(masking_opts, in_file, network_input, mask_pred)
+        save_visualisation(masking_opts, in_file, network_input, mask_pred)
 
     """
     Reconstruct to original image size

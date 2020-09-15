@@ -47,6 +47,7 @@ def remove_outliers(image):
 
 
 def get_masking_opts(workflow_config_path, input_type):
+    # todo make schema for workflow config: needs to contain model path
     if input_type == 'anat':
         masking_opts = get_masking_anat_opts_defaults(
             json_to_dict(workflow_config_path)['masking_config'])['masking_config_anat']
@@ -57,6 +58,15 @@ def get_masking_opts(workflow_config_path, input_type):
 
 
 def get_masking_anat_opts_defaults(config):
+    """
+    Fills the masking configuration file with defaults
+
+    Parameters
+    ----------
+    config : dict
+            configuration of the func masking
+
+    """
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
     if not 'masking_config_anat' in config.keys():
         schema = {'properties': {
@@ -89,6 +99,14 @@ def get_masking_anat_opts_defaults(config):
 
 
 def get_masking_func_opts_defaults(config):
+    """
+    Fills the masking configuration file with defaults
+
+    Parameters
+    ----------
+    config :  dict
+        configuration of the func masking
+    """
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
 
     if not 'masking_config_func' in config.keys():
@@ -159,8 +177,8 @@ def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
     nib.save(resampled_bids_cropped_nib, resampled_nii_path)
 
 
-def get_mask_threed(json_opts, in_file_data, ori_shape):
-    from mlebe.training.three_D import get_model
+def get_mask(json_opts, in_file_data, ori_shape):
+    from mlebe.training.models import get_model
     # To make sure that the GPU is not used for the predictions: (might be unnecessary)
     if not json_opts.model.use_cuda:
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -187,28 +205,6 @@ def get_mask_threed(json_opts, in_file_data, ori_shape):
     network_input = network_input[int(np.ceil(diff / 2.)):  ori_shape[0] + int(np.ceil(diff / 2.)), :, :]
 
     return in_file_data, mask_pred, network_input
-
-
-def get_mask_twod(model_config, in_file_data, ori_shape):
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    from tensorflow import keras
-    from mlebe.training.two_D.unet import dice_coef, dice_coef_loss
-    from mlebe.training.two_D.utils import general
-
-    model = keras.models.load_model(model_config['model_path'],
-                                    custom_objects={'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef})
-    in_file_data = general.preprocess(in_file_data, (128, 128), 'coronal', switched_axis=True)
-
-    mask_pred = np.empty((ori_shape[0], (128, 128)[0], (128, 128)[1]))
-
-    for slice in range(in_file_data.shape[0]):
-        temp = np.expand_dims(in_file_data[slice], -1)  # expand dims for channel
-        temp = np.expand_dims(temp, 0)  # expand dims for batch
-        prediction = model.predict(temp, verbose=0)
-        prediction = np.squeeze(prediction)
-        mask_pred[slice, ...] = np.where(prediction > 0.9, 1, 0)
-
-    return in_file_data, mask_pred
 
 
 def save_visualisation(workflow_config, in_file, network_input, mask_pred):

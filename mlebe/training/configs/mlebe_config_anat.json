@@ -15,7 +15,7 @@
     "no_html": true,
     "save_epoch_freq": 10,
     "display_winsize": 256,
-    "display_id": 1,
+    "display_id": -1,
     "display_single_pane_ncols": 0
   },
   "data_split": {
@@ -73,7 +73,7 @@
     "feature_scale": 4,
     "gpu_ids": [0],
     "isTrain": true,
-    "checkpoints_dir": "/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints",
+    "checkpoints_dir": "/home/hendrik/src/MLEBE/mlebe/training/checkpoints",
     "experiment_name": "with_augmentations_anat_new",
     "criterion": " "
   }
