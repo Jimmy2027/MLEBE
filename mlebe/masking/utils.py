@@ -154,7 +154,7 @@ def get_masking_opts_defaults(config):
     return config
 
 
-def get_model_config(masking_opts):
+def get_model_config(masking_opts, return_path=False):
     """
     Returns model_config_path and writes model_path to it.
     """
@@ -168,7 +168,10 @@ def get_model_config(masking_opts):
             if file.endswith('.pth'):
                 model_path = os.path.join(model_folder_path, file)
         write_to_jsonfile(model_config_path, [('model.path_pre_trained_model', model_path)])
-        return json_file_to_pyobj(model_config_path)
+        if return_path:
+            return model_config_path
+        else:
+            return json_file_to_pyobj(model_config_path)
 
 
 def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
