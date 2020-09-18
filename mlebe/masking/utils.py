@@ -10,6 +10,7 @@ from scipy import ndimage
 from mlebe.training.configs.utils import json_to_dict
 from mlebe.training.dataio.transformation import get_dataset_transformation
 from mlebe.training.utils.utils import json_file_to_pyobj
+from mlebe.training.configs.utils import write_to_jsonfile
 
 
 def pred_volume_stats(mask_pred, save_path, file_name, model_path):
@@ -90,7 +91,7 @@ def get_masking_anat_opts_defaults(config):
                     "visualisation_bool": {'default': False},
                     "bias_correct_bool": {'default': False},
                     "test": {'default': False},
-                    "model_config_path": {'default': ''},
+                    "model_folder_path": {'default': ''},
                     "crop_values": {'default': [15, 15]}
                 }},
         }}
@@ -131,7 +132,7 @@ def get_masking_func_opts_defaults(config):
                     "visualisation_bool": {'default': False},
                     "bias_correct_bool": {'default': False},
                     "test": {'default': False},
-                    "model_config_path": {'default': ''},
+                    "model_folder_path": {'default': ''},
                     "crop_values": {'default': [15, 15]}
 
                 }},
@@ -145,24 +146,29 @@ def get_masking_opts_defaults(config):
 
     schema = {'properties': {
         'workflow_config': {'default': {
-            "model_type": '3D',
+            "with_FLASH": False,
+            "subjects": [],
+            "keep_work": True
         }}, }}
     DefaultValidatingDraft7Validator(schema).validate(config)
     return config
 
 
-def get_model_config(workflow_config_path, masking_opts):
-    workflow_config = get_masking_opts_defaults(json_to_dict(workflow_config_path))['workflow_config']
+def get_model_config(masking_opts):
+    """
+    Returns model_config_path and writes model_path to it.
+    """
     if masking_opts['test']:
-        return {}, workflow_config['model_type']
-    if workflow_config['model_type'] == '2D':
-        model_type = '2D'
-        return pd.read_csv(masking_opts['model_config_path']).iloc[0].to_dict(), model_type
-    elif workflow_config['model_type'] == '3D':
-        model_type = '3D'
-        return json_file_to_pyobj(masking_opts['model_config_path']), model_type
+        return {}
     else:
-        raise NotImplementedError('Model type [{}] is not implemented'.format(workflow_config.model_type))
+        model_folder_path = masking_opts['model_folder_path']
+        for file in os.listdir(model_folder_path):
+            if file.endswith('.json'):
+                model_config_path = os.path.join(model_folder_path, file)
+            if file.endswith('.pth'):
+                model_path = os.path.join(model_folder_path, file)
+        write_to_jsonfile(model_config_path, [('model.path_pre_trained_model', model_path)])
+        return json_file_to_pyobj(model_config_path)
 
 
 def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):

@@ -33,7 +33,7 @@ def predict_mask(
     from mlebe.masking.utils import get_mask
 
     masking_opts = get_masking_opts(workflow_config_path, input_type)
-    model_config, model_type = get_model_config(workflow_config_path, masking_opts)
+    model_config = get_model_config(masking_opts)
     input = in_file
     if input_type == 'func':
         tMean_path = 'tMean.nii.gz'
@@ -74,6 +74,10 @@ def predict_mask(
 
     image = nib.load(bias_corrected_path)
     in_file_data = image.get_data()
+
+    """
+    Getting the mask
+    """
 
     if not masking_opts['test'] == True:
         ori_shape = np.moveaxis(in_file_data, 2, 0).shape
