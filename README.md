@@ -1,12 +1,5 @@
 # MLEBE
-MLEBE (Machine Learning Enabled Brain Extraction) is a python package for both the training pipeline of a segmentation model  
-
-## training
-Contains the scripts to train a classifier for image segmentation. Pretrained classifieres can be downloaded [here](https://zenodo.org/record/3759361#.XqBhyVMzZhH).
-
-## masking
-Contains the masking function that extends the [SAMRI](https://github.com/IBT-FMI/SAMRI) workflow.
-
+MLEBE (Machine Learning Enabled Brain Extraction) is a python package for both the training of a 3D Unet for segmentation and its integration into the [SAMRI](https://github.com/IBT-FMI/SAMRI) workflow.
 
 ## Installation
 #### Python Package Manager (Users):
