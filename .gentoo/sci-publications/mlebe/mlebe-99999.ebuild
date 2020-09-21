@@ -20,4 +20,5 @@ RDEPEND="
     dev-python/matplotlib
     dev-python/openpyxl
     sci-libs/scikits_image
+    sci-libs/pytorch
 	"
