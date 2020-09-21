@@ -1,6 +1,8 @@
 import json
 import os
+
 import pandas as pd
+import mlebe
 
 
 def write_to_jsonfile(config_path: str, parameters: list):
@@ -31,7 +33,8 @@ def json_to_dict(json_path):
 
 
 def get_dice_score_of_model(model_config_path,
-                            experiment_results_df_path='/home/hendrik/src/MLEBE/mlebe/training/results.csv'):
+                            experiment_results_df_path=os.path.join(os.path.dirname(mlebe.__file__),
+                                                                    'training/results.csv')):
     experiment_results_df = pd.read_csv(experiment_results_df_path)
     model_uid = json_to_dict(model_config_path)['model']['uid']
     dice_score = experiment_results_df.loc[experiment_results_df['uid'] == model_uid, 'Overall_Dice'].item()

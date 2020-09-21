@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>klugh@student.ethz.ch</email>
+		<name>Hendrik Klug</name>
+	</maintainer>
+	<longdescription lang="en">
+		Cross-subject and cross-study comparability of preclinical imaging data, whole-brain imaging data in particular,
+		is contingent on the quality of registration to a standard reference space.
+		Current methods for neuroimaging rely on full image processing, with high varying intensities outside the brain
+		region of interest that interfere with registration. Applying the processing to a masked image improves the
+		quality of the latter. Here we present a deep learning enabled framework for segmentation of brain tissue in
+		functional and structural MR images that when included in a small animal brain imaging workflow significantly
+		improves the quality of the latter.
+	</longdescription>
+	<use>
+		<flag name="scanner-data">Use primary data in proprietary scanner format.</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">Jimmy2027/mlebe_RepSep</remote-id>
+	</upstream>
+</pkgmetadata>
