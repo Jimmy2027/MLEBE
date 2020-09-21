@@ -6,18 +6,13 @@
 		<name>Hendrik Klug</name>
 	</maintainer>
 	<longdescription lang="en">
-		Cross-subject and cross-study comparability of preclinical imaging data, whole-brain imaging data in particular,
-		is contingent on the quality of registration to a standard reference space.
-		Current methods for neuroimaging rely on full image processing, with high varying intensities outside the brain
-		region of interest that interfere with registration. Applying the processing to a masked image improves the
-		quality of the latter. Here we present a deep learning enabled framework for segmentation of brain tissue in
-		functional and structural MR images that when included in a small animal brain imaging workflow significantly
-		improves the quality of the latter.
+		MLEBE (Machine Learning Enabled Brain Extraction) is a python package for both the training of a 3D Unet for
+		segmentation and its integration into the SAMRI workflow.
 	</longdescription>
 	<use>
-		<flag name="scanner-data">Use primary data in proprietary scanner format.</flag>
+		<flag name="training">Use models required for training the classifier.</flag>
 	</use>
 	<upstream>
-		<remote-id type="github">Jimmy2027/mlebe_RepSep</remote-id>
+		<remote-id type="github">Jimmy2027/MLEBE</remote-id>
 	</upstream>
 </pkgmetadata>
