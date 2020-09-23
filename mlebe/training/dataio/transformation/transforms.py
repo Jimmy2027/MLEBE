@@ -1,7 +1,7 @@
 from pprint import pprint
 
 import numpy as np
-import torchsample.transforms as ts
+import mlebe.training.dataio.torchsample_transforms as ts
 # import torchvision.transforms as tv
 from torchio.transforms import Interpolation
 

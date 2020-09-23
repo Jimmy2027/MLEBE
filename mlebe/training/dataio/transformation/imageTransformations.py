@@ -8,14 +8,13 @@ import numpy as np
 import scipy
 import scipy.ndimage
 import torch
-import torchsample.transforms as ts
+import mlebe.training.dataio.torchsample_transforms as ts
 from PIL import Image
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates
 from torch.nn.functional import pad
 from torchio.transforms import Interpolation
-from mlebe.training.dataio.torchio_transforms import RandomAffine, RandomFlip, RandomNoise, RandomElasticDeformation, \
-    RandomBiasField
+from mlebe.training.dataio.torchio_transforms import RandomAffine, RandomFlip, RandomNoise, RandomElasticDeformation, RandomBiasField
 
 def center_crop(x, center_crop_size):
     assert x.ndim == 3
