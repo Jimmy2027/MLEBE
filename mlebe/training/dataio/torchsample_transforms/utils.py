@@ -87,7 +87,7 @@ def th_affine2d(x, matrix, mode='bilinear', center=True):
     Example
     ------- 
     >>> import torch
-    >>> from torchsample.utils import *
+    >>> from mlebe.training.dataio.torchsample_transforms.utils import *
     >>> x = th.zeros(2,1000,1000)
     >>> x[:,100:1500,100:500] = 10
     >>> matrix = th.FloatTensor([[1.,0,-50],

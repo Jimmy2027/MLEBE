@@ -14,4 +14,3 @@ pandas>=1.0.3
 dominate>=2.5.1
 openpyxl
 xlrd>=1.1.0
-git+git://github.com/ozan-oktay/torchsample#egg=torchsample-0.1.3
