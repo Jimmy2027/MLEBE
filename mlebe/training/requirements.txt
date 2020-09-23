@@ -1,8 +1,8 @@
 opencv-python>=4.2.0.34
 sklearn>=0.0
 numpy>=1.18.3
-torch==1.1.0
-torchvision==0.3.0
+torch
+torchvision>=0.3.0
 matplotlib>=3.2.1
 scipy>=1.4.1
 tqdm>=4.45.0
@@ -15,4 +15,3 @@ dominate>=2.5.1
 openpyxl
 xlrd>=1.1.0
 git+git://github.com/ozan-oktay/torchsample#egg=torchsample-0.1.3
-git+git://github.com/Jimmy2027/torchio#egg=torchio

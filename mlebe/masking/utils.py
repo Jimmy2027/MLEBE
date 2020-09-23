@@ -161,7 +161,7 @@ def get_model_config(masking_opts, return_path=False):
     if masking_opts['test']:
         return {}
     else:
-        model_folder_path = masking_opts['model_folder_path']
+        model_folder_path = os.path.expanduser(masking_opts['model_folder_path'])
         for file in os.listdir(model_folder_path):
             if file.endswith('.json'):
                 model_config_path = os.path.join(model_folder_path, file)

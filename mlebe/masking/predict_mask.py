@@ -78,7 +78,6 @@ def predict_mask(
     """
     Getting the mask
     """
-
     if not masking_opts['test'] == True:
         ori_shape = np.moveaxis(in_file_data, 2, 0).shape
         in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape)

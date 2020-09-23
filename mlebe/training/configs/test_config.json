@@ -46,37 +46,20 @@
     },
     "augmentation": {
         "mlebe": {
-            "shift": [
-                0.5,
-                0.5
-            ],
-            "rotate": 25,
-            "scale_val": [
-                0.7,
-                1.3
-            ],
-            "max_deform": [
-                5,
-                5,
-                5
-            ],
-            "intensity": [
-                0.5,
-                1.5
-            ],
-            "random_flip_prob": 0,
-            "random_affine_prob": 0,
-            "random_elastic_prob": 0,
-            "scale_range": [0.7,1.2],
-            "scale_proba": 1,
-            "scale_size": [
-                64,
-                64,
-                96,
-                1
-            ],
-            "bias_magnitude_range": 1.0,
-            "random_noise_prob": 0.7
+      "shift_val": [0, 0],
+      "rotate": 20,
+      "scale_val": [1,1],
+      "max_deform": [0, 0, 0],
+      "random_flip_prob": 0.5,
+      "random_affine_prob": 0.5,
+      "random_elastic_prob": 0,
+      "scale_size": [64,64,96,1],
+      "scale_range": [-10,20],
+      "scale_proba": 0.5,
+      "random_noise_prob": 0.5,
+      "normalization": "mlebe",
+      "bias_field_prob":0.5,
+      "bias_magnitude_range": 0.5
         }
     },
     "model": {

@@ -137,8 +137,9 @@ class mlebe_dataset(Dataset):
                                                      'path'])]).reset_index(drop=True)
         if self.save_dir:
             data_selection.to_csv(os.path.join(self.save_dir, self.split + '_dataset.csv'), index=False)
-        assert len(data_selection.data_set.unique()) == len(studies), 'Only found {} studies, expected {}'.format(
-            data_selection.data_set.unique(), studies)
+        # todo this does not work if data_selection is empty
+        # assert len(data_selection.data_set.unique()) == len(studies), 'Only found {} studies, expected {}'.format(
+        #     data_selection.data_set.unique(), studies)
         self.blacklist_selection = blacklist_selection
         return data_selection
 

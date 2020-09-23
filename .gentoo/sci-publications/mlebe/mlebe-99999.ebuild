@@ -10,7 +10,7 @@ HOMEPAGE="https://github.com/Jimmy2027/MLEBE"
 
 LICENSE="GPL-3"
 SLOT="0"
-IUSE="-scanner-data"
+IUSE="-scanner-data -training"
 KEYWORDS=""
 
 DEPEND=""

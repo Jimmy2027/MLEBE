@@ -89,7 +89,7 @@ def test_train():
                 ],
                 "bias_magnitude_range": 1.0,
                 "random_noise_prob": 0.7,
-                "normalization": 'normalize_medic'
+                "normalization": 'mlebe',
             }
         },
         "model": {
