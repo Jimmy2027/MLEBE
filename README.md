@@ -17,7 +17,12 @@ If you are getting a `Permission denied (publickey)` error upon trying to clone,
 
 * [Add an SSH key](https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/) to your GitHub account.
 * Pull via the HTTPS link `git clone https://github.com/Jimmy2027/MLEBE.git`.
-
+##### Using a conda venv:
+````
+git clone https://github.com/Jimmy2027/MLEBE.git
+cd MLEBE
+path/to/conda/environment/bin/python -m pip install .
+````
 #### Python Package Manager (Developers):
 Python's `setuptools` allows you to install Python packages independently of your distribution (or operating system, even);
 it also allows you to install a "live" version of the package - dynamically linking back to the source code.
@@ -36,3 +41,10 @@ If you are getting a `Permission denied (publickey)` error upon trying to clone,
 
 * [Add an SSH key](https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/) to your GitHub account.
 * Pull via the HTTPS link `git clone https://github.com/Jimmy2027/MLEBE.git`.
+
+##### Using a conda venv:
+````
+git clone https://github.com/Jimmy2027/MLEBE.git
+cd MLEBE
+path/to/conda/environment/bin/python -m pip install -e .
+````
