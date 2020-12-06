@@ -1,10 +1,17 @@
 def predict_mask(
-        in_file,
-        workflow_config_path,
-        input_type='anat',
+        in_file: str,
+        workflow_config_path: str,
+        input_type: str = 'anat',
 ):
     """
-    The image is first resampled into the resolution of the template space, which has a voxel size of 0.2 × 0.2 × 0.2. This is done with the Resample command from the FSL library which is an analysis tool for FMRI, MRI and DTI brain imaging data. Then, the image is preprocessed using the preprocessing methods of the model class. The predictions of the model are reconstructed to a 3D mask via the command Nifit1Image from nibabel. This is done using the same affine space as the input image. The latter is then reshaped into the original shape inverting the preprocessing step, either with the opencv resize method or by cropping. Additionally, the binary mask is resampled into its original affine space, before being multiplied with the brain image to extract the ROI.
+    The image is first resampled into the resolution of the template space, which has a voxel size of 0.2 × 0.2 × 0.2.
+    This is done with the Resample command from the FSL library which is an analysis tool for FMRI, MRI and DTI brain
+    imaging data. Then, the image is preprocessed using the preprocessing methods of the model class.
+    The predictions of the model are reconstructed to a 3D mask via the command Nifit1Image from nibabel.
+    This is done using the same affine space as the input image. The latter is then reshaped into the original shape
+    inverting the preprocessing step, either with the opencv resize method or by cropping.
+    Additionally, the binary mask is resampled into its original affine space, before being multiplied with the brain
+    image to extract the ROI.
 
     Parameters
     ----------
@@ -57,16 +64,12 @@ def predict_mask(
     if masking_opts['bias_correct_bool'] == True:
         bias_correction_config = masking_opts['bias_field_correction']
         bias_corrected_path = path.abspath(path.expanduser('corrected_input.nii.gz'))
-        if input_type == 'anat':
-            command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(
-                bias_correction_config['bspline_fitting'], resampled_nii_path,
-                bias_correction_config['convergence'],
-                bias_corrected_path, bias_correction_config['shrink_factor'])
-        if input_type == 'func':
-            command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(
-                bias_correction_config['bspline_fitting'], resampled_nii_path,
-                bias_correction_config['convergence'],
-                bias_corrected_path, bias_correction_config['shrink_factor'])
+
+        command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(
+            bias_correction_config['bspline_fitting'], resampled_nii_path,
+            bias_correction_config['convergence'],
+            bias_corrected_path, bias_correction_config['shrink_factor'])
+
         os.system(command)
         print(command)
     else:
@@ -78,7 +81,7 @@ def predict_mask(
     """
     Getting the mask
     """
-    if not masking_opts['test'] == True:
+    if masking_opts['test'] != True:
         ori_shape = np.moveaxis(in_file_data, 2, 0).shape
         in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape)
     else:
@@ -117,7 +120,7 @@ def predict_mask(
     resampled_mask = nib.load(resampled_mask_path)
     resampled_mask_data = resampled_mask.get_data()
     input_image_data = input_image.get_data()
-    if not resampled_mask_data.shape == input_image_data.shape:
+    if resampled_mask_data.shape != input_image_data.shape:
         resampled_mask_data = pad_to_shape(resampled_mask_data, input_image_data)
     nib.save(nib.Nifti1Image(resampled_mask_data, input_image.affine, input_image.header), resampled_mask_path)
 

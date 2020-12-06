@@ -35,7 +35,8 @@ def pred_volume_stats(mask_pred, save_path, file_name, model_path):
 
 def remove_outliers(image):
     """
-    Simply counts the number of unconnected objects in the volume and returns the second biggest one (the biggest is the black background)
+    Simply counts the number of unconnected objects in the volume and returns the second biggest one
+    (the biggest is the black background)
     """
     markers = ndimage.label(image)[0]
     if len(np.unique(markers)) > 2:
@@ -240,6 +241,18 @@ def save_visualisation(workflow_config, in_file, network_input, mask_pred):
 
 
 def reconstruct_image(ori_shape, mask_pred):
+    """
+    The classifier was trained on images of different shape than the input image shape.
+    That is why it needs to be resized before and after segmentation.
+    Parameters
+    ----------
+    ori_shape : shape of the image that is to be masked
+    mask_pred : predicted mask from the classifier
+
+    Returns
+    -------
+    resized : predicted mask with the shape of the input image
+    """
     resized = np.empty(ori_shape)
     for i, slice in enumerate(mask_pred):
         if ori_shape[1] < ori_shape[2]:

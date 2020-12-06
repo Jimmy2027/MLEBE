@@ -5,7 +5,6 @@ from mlebe.training.dataio.loaders.mlebe_loader import Experiment_config
 from mlebe.training.train_segmentation import train
 
 # parameters to try: loss, augmentations, blacklist, remove_black_slices, with_elastic_transform
-# todo add dropout?
 params_seach_space_anat = {
     'criterion': ['dice_boundary_loss'],
     'with_blacklist': [True],
