@@ -1,7 +1,0 @@
-git+git://github.com/Jimmy2027/torchio#egg=torchio
-nibabel>=3.1.0
-pandas>=1.0.3
-opencv-python>=4.2.0.34
-matplotlib
-openpyxl
-scikit-image>=0.16.2
