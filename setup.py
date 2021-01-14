@@ -13,7 +13,6 @@ requirements = [
     'tqdm',
     'torchio',
     'sklearn',
-    'dominate',
     'xlrd'
 ]
 
