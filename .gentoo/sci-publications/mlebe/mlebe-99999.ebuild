@@ -21,7 +21,7 @@ DEPEND="
     media-libs/opencv[${PYTHON_USEDEP}]
     dev-python/matplotlib[${PYTHON_USEDEP}]
     dev-python/openpyxl[${PYTHON_USEDEP}]
-    sci-libs/scikits_image[${PYTHON_USEDEP}]
+    sci-libs/scikit-image[${PYTHON_USEDEP}]
     sci-libs/pytorch[${PYTHON_USEDEP}]
     sci-libs/torchio[${PYTHON_USEDEP}]
     dev-python/jsonschema[${PYTHON_USEDEP}]
