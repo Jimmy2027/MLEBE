@@ -4,6 +4,8 @@
 EAPI=7
 
 PYTHON_COMPAT=( python3_{7..8} )
+DISTUTILS_SINGLE_IMPL=1
+DISTUTILS_USE_SETUPTOOLS=rdepend
 
 inherit distutils-r1
 inherit git-r3
@@ -15,7 +17,7 @@ LICENSE="GPL-3"
 SLOT="0"
 #IUSE="-scanner-data -training -pretrained-models"
 KEYWORDS=""
-
+REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 DEPEND="
     sci-libs/nibabel[${PYTHON_USEDEP}]
     media-libs/opencv[${PYTHON_USEDEP}]
@@ -23,7 +25,7 @@ DEPEND="
     dev-python/openpyxl[${PYTHON_USEDEP}]
     sci-libs/scikit-image[${PYTHON_USEDEP}]
     sci-libs/pytorch[${PYTHON_USEDEP}]
-    sci-libs/torchio[${PYTHON_USEDEP}]
+    sci-libs/torchio[${PYTHON_SINGLE_USEDEP}]
     dev-python/jsonschema[${PYTHON_USEDEP}]
     dev-python/pandas[${PYTHON_USEDEP}]
     dev-python/numpy[${PYTHON_USEDEP}]
