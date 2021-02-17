@@ -19,13 +19,13 @@ SLOT="0"
 KEYWORDS=""
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 DEPEND="
+    $(python_gen_cond_dep '
     sci-libs/nibabel[${PYTHON_USEDEP}]
     media-libs/opencv[${PYTHON_USEDEP}]
     dev-python/matplotlib[${PYTHON_USEDEP}]
     dev-python/openpyxl[${PYTHON_USEDEP}]
     sci-libs/scikit-image[${PYTHON_USEDEP}]
     sci-libs/pytorch[${PYTHON_USEDEP}]
-    sci-libs/torchio[${PYTHON_SINGLE_USEDEP}]
     dev-python/jsonschema[${PYTHON_USEDEP}]
     dev-python/pandas[${PYTHON_USEDEP}]
     dev-python/numpy[${PYTHON_USEDEP}]
@@ -34,7 +34,10 @@ DEPEND="
     sci-libs/scikit-learn[${PYTHON_USEDEP}]
     dev-python/dominate[${PYTHON_USEDEP}]
     dev-python/xlrd[${PYTHON_USEDEP}]
+    ')
+    sci-libs/torchio[${PYTHON_SINGLE_USEDEP}]
     "
+
 
 RDEPEND="${DEPEND}"
 
