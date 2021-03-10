@@ -39,13 +39,12 @@ def remove_outliers(image):
     (the biggest is the black background)
     """
     markers = ndimage.label(image)[0]
-    if len(np.unique(markers)) > 2:
-        l, counts = np.unique(markers, return_counts=True)
-        brain_label = l[np.argsort(-counts)[1]]
-        new = np.where(markers == brain_label, 1, 0)
-        return new.astype('float64')
-    else:
+    if len(np.unique(markers)) <= 2:
         return image
+    l, counts = np.unique(markers, return_counts=True)
+    brain_label = l[np.argsort(-counts)[1]]
+    new = np.where(markers == brain_label, 1, 0)
+    return new.astype('float64')
 
 
 def get_masking_opts(workflow_config_path, input_type):
@@ -70,7 +69,7 @@ def get_masking_anat_opts_defaults(config):
 
     """
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
-    if not 'masking_config_anat' in config.keys():
+    if 'masking_config_anat' not in config.keys():
         schema = {'properties': {
             'masking_config_anat': {'default': {
                 "use_cuda": False,
@@ -111,7 +110,7 @@ def get_masking_func_opts_defaults(config):
     """
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
 
-    if not 'masking_config_func' in config.keys():
+    if 'masking_config_func' not in config.keys():
         schema = {'properties': {
             'masking_config_func': {'default': {
                 "use_cuda": False,
@@ -161,18 +160,17 @@ def get_model_config(masking_opts, return_path=False):
     """
     if masking_opts['test']:
         return {}
+    model_folder_path = os.path.expanduser(masking_opts['model_folder_path'])
+    for file in os.listdir(model_folder_path):
+        if file.endswith('.json'):
+            model_config_path = os.path.join(model_folder_path, file)
+        if file.endswith('.pth'):
+            model_path = os.path.join(model_folder_path, file)
+    write_to_jsonfile(model_config_path, [('model.path_pre_trained_model', model_path)])
+    if return_path:
+        return model_config_path
     else:
-        model_folder_path = os.path.expanduser(masking_opts['model_folder_path'])
-        for file in os.listdir(model_folder_path):
-            if file.endswith('.json'):
-                model_config_path = os.path.join(model_folder_path, file)
-            if file.endswith('.pth'):
-                model_path = os.path.join(model_folder_path, file)
-        write_to_jsonfile(model_config_path, [('model.path_pre_trained_model', model_path)])
-        if return_path:
-            return model_config_path
-        else:
-            return json_file_to_pyobj(model_config_path)
+        return json_file_to_pyobj(model_config_path)
 
 
 def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
@@ -260,16 +258,13 @@ def reconstruct_image(ori_shape, mask_pred):
             resized_mask_temp = cv2.resize(slice, (ori_shape[2], ori_shape[2]))
             resized_mask = resized_mask_temp[padd // 2:ori_shape[1] + padd // 2, :]
 
-            resized[i] = resized_mask
         elif ori_shape[1] > ori_shape[2]:
             padd = ori_shape[1] - ori_shape[2]
             resized_mask_temp = cv2.resize(slice, (ori_shape[1], ori_shape[1]))
             resized_mask = resized_mask_temp[:, padd // 2:ori_shape[2] + padd // 2]
-            resized[i] = resized_mask
         else:
             resized_mask = cv2.resize(slice, (ori_shape[2], ori_shape[1]))
-            resized[i] = resized_mask
-
+        resized[i] = resized_mask
     # switching to x,y,z
     resized = np.moveaxis(resized, 0, 2)
 
