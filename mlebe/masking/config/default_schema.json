@@ -1,0 +1,22 @@
+{
+"masking_config_anat": {
+    "properties": {
+        "use_cuda": {"default": false},
+        "with_bids_cropping": {"default": false},
+        "input_type": {"default": "anat"},
+        "visualisation_bool": {"default": false},
+        "bias_correct_bool": {"default": false},
+        "model_folder_path": {"default": ""},
+        "crop_values": {"default": [15, 15]}
+    }},
+"masking_config_func": {
+    "properties": {
+        "use_cuda": {"default": false},
+        "with_bids_cropping": {"default": false},
+        "input_type": {"default": "func"},
+        "visualisation_bool": {"default": false},
+        "bias_correct_bool": {"default": false},
+        "model_folder_path": {"default": ""},
+        "crop_values": {"default": [15, 15]}
+    }}
+}

@@ -1,9 +1,12 @@
+import json
 import os
+import tempfile
+from pathlib import Path
+from typing import Optional
 
 import cv2
 import nibabel as nib
 import numpy as np
-import pandas as pd
 from jsonschema import Draft7Validator, validators
 from scipy import ndimage
 
@@ -12,9 +15,8 @@ from mlebe.training.configs.utils import json_to_dict
 from mlebe.training.configs.utils import write_to_jsonfile
 from mlebe.training.dataio.transformation import get_dataset_transformation
 from mlebe.training.utils.utils import json_file_to_pyobj
-from pathlib import Path
-import tempfile
-from typing import Optional
+
+DEFAULT_CONFIG_PATH = Path(__file__).parent / 'config/default_schema.json'
 
 
 def get_mlebe_models(input_type: str) -> Path:
@@ -47,30 +49,10 @@ def get_mlebe_models(input_type: str) -> Path:
     return model_folder_paths[input_type]
 
 
-def pred_volume_stats(mask_pred, save_path, file_name, model_path):
-    unique, counts = np.unique(mask_pred, return_counts=True)
-    volume = dict(zip(unique, counts))[1]
-    if 'T2' in file_name:
-        contrast = 'T2'
-    elif 'bold' in file_name:
-        contrast = 'BOLD'
-    elif 'cbv' in file_name:
-        contrast = 'CBV'
-    if not os.path.isfile(os.path.join(save_path, 'pred_volume.csv')):
-        pred_volume_df = pd.DataFrame(columns=['file_name', 'Contrast', 'Volume', 'model_path'])
-    else:
-        pred_volume_df = pd.read_csv(os.path.join(save_path, 'pred_volume.csv'))
-    pred_volume_df = pred_volume_df.append(pd.DataFrame([[file_name, contrast, volume, model_path]],
-                                                        columns=['file_name', 'Contrast', 'Volume', 'model_path']),
-                                           sort=False)
-    pred_volume_df.to_csv(os.path.join(save_path, 'pred_volume.csv'), index=False)
-    return
-
-
 def remove_outliers(image):
     """
-    Simply counts the number of unconnected objects in the volume and returns the second biggest one
-    (the biggest is the black background)
+    Count the number of unconnected objects in the volume and return the second biggest one
+    (the biggest being the black background).
     """
     markers = ndimage.label(image)[0]
     if len(np.unique(markers)) <= 2:
@@ -106,31 +88,12 @@ def get_masking_anat_opts_defaults(config):
     """
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
     if 'masking_config_anat' not in config.keys():
-        schema = {'properties': {
-            'masking_config_anat': {'default': {
-                "use_cuda": False,
-                "with_bids_cropping": False,
-                "input_type": "anat",
-                "visualisation_bool": False,
-                "bias_correct_bool": False,
-                "test": False,
-                "model_config_path": "",
-                "crop_values": [15, 15]
-            }}, }}
-    else:
-        schema = {'properties': {
-            'masking_config_anat': {
-                'properties': {
-                    "use_cuda": {'default': False},
-                    "with_bids_cropping": {'default': False},
-                    "input_type": {'default': 'anat'},
-                    "visualisation_bool": {'default': False},
-                    "bias_correct_bool": {'default': False},
-                    "test": {'default': False},
-                    "model_folder_path": {'default': ''},
-                    "crop_values": {'default': [15, 15]}
-                }},
-        }}
+        config['masking_config_anat'] = {}
+
+    with open(DEFAULT_CONFIG_PATH, 'r') as json_file:
+        schema = json.load(json_file)
+
+    schema = {'properties': {'masking_config_anat': schema['masking_config_anat']}}
     DefaultValidatingDraft7Validator(schema).validate(config)
     return config
 
@@ -147,45 +110,12 @@ def get_masking_func_opts_defaults(config):
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
 
     if 'masking_config_func' not in config.keys():
-        schema = {'properties': {
-            'masking_config_func': {'default': {
-                "use_cuda": False,
-                "with_bids_cropping": False,
-                "input_type": "func",
-                "visualisation_bool": False,
-                "bias_correct_bool": False,
-                "test": False,
-                "model_config_path": "",
-                "crop_values": [15, 15]
-            }}, }}
-    else:
-        schema = {'properties': {
-            'masking_config_func': {
-                'properties': {
-                    "use_cuda": {'default': False},
-                    "with_bids_cropping": {'default': False},
-                    "input_type": {'default': 'func'},
-                    "visualisation_bool": {'default': False},
-                    "bias_correct_bool": {'default': False},
-                    "test": {'default': False},
-                    "model_folder_path": {'default': ''},
-                    "crop_values": {'default': [15, 15]}
+        config['masking_config_func'] = {}
 
-                }},
-        }}
-    DefaultValidatingDraft7Validator(schema).validate(config)
-    return config
+    with open(DEFAULT_CONFIG_PATH, 'r') as json_file:
+        schema = json.load(json_file)
 
-
-def get_masking_opts_defaults(config):
-    DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
-
-    schema = {'properties': {
-        'workflow_config': {'default': {
-            "with_FLASH": False,
-            "subjects": [],
-            "keep_work": True
-        }}, }}
+    schema = {'properties': {'masking_config_func': schema['masking_config_func']}}
     DefaultValidatingDraft7Validator(schema).validate(config)
     return config
 
@@ -194,8 +124,6 @@ def get_model_config(masking_opts, return_path=False):
     """
     Returns model_config_path and writes model_path to it.
     """
-    if masking_opts['test']:
-        return {}
     model_folder_path = os.path.expanduser(masking_opts['model_folder_path'])
     for file in os.listdir(model_folder_path):
         if file.endswith('.json'):

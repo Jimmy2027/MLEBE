@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 import tempfile
 from pathlib import Path
 from unittest import TestCase

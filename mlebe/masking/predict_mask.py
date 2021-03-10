@@ -25,9 +25,8 @@ def predict_mask(
     in_file : str
         path to the file that is to be masked
     masking_config_path : str
-        path to the masking config. The masking config is a json file that must contain the path
-        to the model json config file. All other parameters have default values that will be set
-        in the "get_masking_opts" method.
+        path to the masking config. The masking config is a json file. All parameters have default values that will
+        be set in the "get_masking_opts" method.
     input_type : str
         either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
 
@@ -48,7 +47,7 @@ def predict_mask(
     from mlebe import log
 
     masking_opts = get_masking_opts(masking_config_path, input_type)
-    if 'model_folder_path' not in masking_opts:
+    if 'model_folder_path' not in masking_opts or not masking_opts['model_folder_path']:
         masking_opts['model_folder_path'] = get_mlebe_models(input_type)
     model_config = get_model_config(masking_opts)
     input = in_file
@@ -92,14 +91,8 @@ def predict_mask(
     """
     Getting the mask
     """
-    if masking_opts['test'] != True:
-        ori_shape = np.moveaxis(in_file_data, 2, 0).shape
-        in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape)
-    else:
-        prediction_shape = (128, 128)
-        ori_shape = np.moveaxis(in_file_data, 2, 0).shape
-        mask_pred = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
-        network_input = np.empty((ori_shape[0], prediction_shape[0], prediction_shape[1]))
+    ori_shape = np.moveaxis(in_file_data, 2, 0).shape
+    in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape)
 
     mask_pred = remove_outliers(mask_pred)
 
