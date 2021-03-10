@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import pandas as pd
 
@@ -10,6 +11,7 @@ def write_to_jsonfile(config_path: str, parameters: list):
     """
     parameters: list of tuples. Example [('model.use_cuda',VALUE),] where VALUE is the parameter to be set
     """
+    assert Path(config_path).exists(), f'config_path "{config_path}" does not exist.'
     with open(config_path) as file:
         config = json.load(file)
     for parameter, value in parameters:
