@@ -1,6 +1,6 @@
 def predict_mask(
         in_file: str,
-        workflow_config_path: str,
+        masking_config_path: str,
         input_type: str = 'anat',
 ):
     """
@@ -17,8 +17,8 @@ def predict_mask(
     ----------
     in_file : str
         path to the file that is to be masked
-    workflow_config_path : str
-        path to the workflow config. The workflow config is a json file that must contain the path
+    masking_config_path : str
+        path to the masking config. The masking config is a json file that must contain the path
         to the model json config file. All other parameters have default values that will be set
         in the "get_masking_opts" method.
     input_type : str
@@ -40,7 +40,7 @@ def predict_mask(
     from mlebe.masking.utils import get_mask
     from mlebe import log
 
-    masking_opts = get_masking_opts(workflow_config_path, input_type)
+    masking_opts = get_masking_opts(masking_config_path, input_type)
     model_config = get_model_config(masking_opts)
     input = in_file
     if input_type == 'func':
@@ -145,4 +145,4 @@ def predict_mask(
 if __name__ == '__main__':
     predict_mask(in_file=
                  '/home/hendrik/.scratch/mlebe/bids/sub-4012/ses-ofMpF/func/sub-4012_ses-ofMpF_task-JogB_acq-EPIlowcov_run-0_bold.nii.gz',
-                 input_type='func', workflow_config_path='/home/hendrik/.scratch/mlebe/config.json')
+                 input_type='func', masking_config_path='/home/hendrik/.scratch/mlebe/config.json')
