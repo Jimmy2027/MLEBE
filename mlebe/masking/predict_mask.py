@@ -38,6 +38,7 @@ def predict_mask(
     from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
         save_visualisation, reconstruct_image, pad_to_shape, get_model_config
     from mlebe.masking.utils import get_mask
+    from mlebe import log
 
     masking_opts = get_masking_opts(workflow_config_path, input_type)
     model_config = get_model_config(masking_opts)
@@ -45,7 +46,7 @@ def predict_mask(
     if input_type == 'func':
         tMean_path = 'tMean.nii.gz'
         command = 'fslmaths {a} -Tmean {b}'.format(a=input, b=tMean_path)
-        print(command)
+        log.info(f'Executing command "{command}"')
         os.system(command)
         input = tMean_path
 
@@ -53,7 +54,7 @@ def predict_mask(
     resampled_nii_path = path.abspath(path.expanduser(resampled_path))
     resample_cmd = 'ResampleImage 3 {input} '.format(input=input) + resampled_nii_path + ' 0.2x0.2x0.2'
     os.system(resample_cmd)
-    print(resample_cmd)
+    log.info(f'Resample image with "{resample_cmd}"')
 
     if masking_opts['with_bids_cropping']:
         crop_bids_image(resampled_nii_path, masking_opts['crop_values'])
@@ -71,7 +72,8 @@ def predict_mask(
             bias_corrected_path, bias_correction_config['shrink_factor'])
 
         os.system(command)
-        print(command)
+        log.info(f'Apply bias correction with "{command}"')
+
     else:
         bias_corrected_path = resampled_nii_path
 
@@ -114,7 +116,7 @@ def predict_mask(
     resample_cmd = 'ResampleImage 3 {input} '.format(
         input=resized_path) + ' ' + resampled_mask_path + ' {x}x{y}x{z} '.format(x=voxel_sizes[0], y=voxel_sizes[1],
                                                                                  z=voxel_sizes[2]) + ' 0 1'
-    print(resample_cmd)
+    log.info(f'Resample image with "{resample_cmd}"')
     os.system(resample_cmd)
 
     resampled_mask = nib.load(resampled_mask_path)
@@ -134,5 +136,13 @@ def predict_mask(
     masked_image = nib.Nifti1Image(masked_image, input_image.affine, input_image.header)
     nib.save(masked_image, nii_path_masked)
 
+    log.info(f'Masking of input image {in_file} finished successfully.')
+
     return nii_path_masked, [
         resampled_mask_path], resampled_mask_path  # f/s_biascorrect takes a list as input for the mask while biascorrect takes dierectly the path
+
+
+if __name__ == '__main__':
+    predict_mask(in_file=
+                 '/home/hendrik/.scratch/mlebe/bids/sub-4012/ses-ofMpF/func/sub-4012_ses-ofMpF_task-JogB_acq-EPIlowcov_run-0_bold.nii.gz',
+                 input_type='func', workflow_config_path='/home/hendrik/.scratch/mlebe/config.json')
