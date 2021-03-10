@@ -7,10 +7,11 @@ import pandas as pd
 from jsonschema import Draft7Validator, validators
 from scipy import ndimage
 
+from mlebe import log
 from mlebe.training.configs.utils import json_to_dict
+from mlebe.training.configs.utils import write_to_jsonfile
 from mlebe.training.dataio.transformation import get_dataset_transformation
 from mlebe.training.utils.utils import json_file_to_pyobj
-from mlebe.training.configs.utils import write_to_jsonfile
 
 
 def pred_volume_stats(mask_pred, save_path, file_name, model_path):
@@ -168,11 +169,15 @@ def get_model_config(masking_opts, return_path=False):
             model_config_path = os.path.join(model_folder_path, file)
         if file.endswith('.pth'):
             model_path = os.path.join(model_folder_path, file)
+    assert model_config_path, f'Model config path was not found under "{model_folder_path}"'
+    assert model_path, f'Model path was not found under "{model_path}"'
+
+    log.info(f'Writing model_config_path "{model_config_path}" and model_path "{model_path}" to masking_config.')
+
     write_to_jsonfile(model_config_path, [('model.path_pre_trained_model', model_path)])
     if return_path:
         return model_config_path
-    else:
-        return json_file_to_pyobj(model_config_path)
+    return json_file_to_pyobj(model_config_path)
 
 
 def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
