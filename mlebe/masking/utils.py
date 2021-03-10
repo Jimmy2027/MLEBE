@@ -55,12 +55,14 @@ def get_masking_opts(workflow_config_path, input_type):
     elif input_type == 'func':
         masking_opts = get_masking_func_opts_defaults(
             json_to_dict(workflow_config_path)['masking_config'])['masking_config_func']
+    else:
+        raise NotImplementedError(f'input type "{input_type}" is not implemented.')
     return masking_opts
 
 
 def get_masking_anat_opts_defaults(config):
     """
-    Fills the masking configuration file with defaults
+    Fill the masking configuration file with defaults.
 
     Parameters
     ----------
