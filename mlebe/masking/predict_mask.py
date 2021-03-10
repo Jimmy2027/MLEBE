@@ -1,6 +1,13 @@
+# -*- coding: utf-8 -*-
+
+"""Masking function of the mlebe package."""
+
+from typing import Optional
+
+
 def predict_mask(
         in_file: str,
-        masking_config_path: str,
+        masking_config_path: Optional[str] = None,
         input_type: str = 'anat',
 ):
     """
@@ -37,10 +44,12 @@ def predict_mask(
     import numpy as np
     from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
         save_visualisation, reconstruct_image, pad_to_shape, get_model_config
-    from mlebe.masking.utils import get_mask
+    from mlebe.masking.utils import get_mask, get_mlebe_models
     from mlebe import log
 
     masking_opts = get_masking_opts(masking_config_path, input_type)
+    if 'model_folder_path' not in masking_opts:
+        masking_opts['model_folder_path'] = get_mlebe_models(input_type)
     model_config = get_model_config(masking_opts)
     input = in_file
     if input_type == 'func':
@@ -137,12 +146,13 @@ def predict_mask(
     nib.save(masked_image, nii_path_masked)
 
     log.info(f'Masking of input image {in_file} finished successfully.')
-
-    return nii_path_masked, [
-        resampled_mask_path], resampled_mask_path  # f/s_biascorrect takes a list as input for the mask while biascorrect takes dierectly the path
+    # f/s_biascorrect takes a list as input for the mask while biascorrect takes directly the path
+    return nii_path_masked, [resampled_mask_path], resampled_mask_path
 
 
 if __name__ == '__main__':
-    predict_mask(in_file=
-                 '/home/hendrik/.scratch/mlebe/bids/sub-4012/ses-ofMpF/func/sub-4012_ses-ofMpF_task-JogB_acq-EPIlowcov_run-0_bold.nii.gz',
-                 input_type='func', masking_config_path='/home/hendrik/.scratch/mlebe/config.json')
+    nii_path_masked, something, aha = predict_mask(in_file=
+                                                   '/home/hendrik/.scratch/mlebe/bids/sub-4012/ses-ofMpF/func/sub-4012_ses-ofMpF_task-JogB_acq-EPIlowcov_run-0_bold.nii.gz',
+                                                   input_type='func',
+                                                   # masking_config_path='/home/hendrik/.scratch/mlebe/config.json'
+                                                   )

@@ -12,6 +12,39 @@ from mlebe.training.configs.utils import json_to_dict
 from mlebe.training.configs.utils import write_to_jsonfile
 from mlebe.training.dataio.transformation import get_dataset_transformation
 from mlebe.training.utils.utils import json_file_to_pyobj
+from pathlib import Path
+import tempfile
+from typing import Optional
+
+
+def get_mlebe_models(input_type: str) -> Path:
+    """
+    Get the path to the pretrained mlebe classifiers. If they don't exist under data/ they are downloaded there.
+    Parameters
+    ----------
+    input_type : str
+        either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
+
+    Returns
+    -------
+    Path to the model folder.
+    """
+    download_urls = {'anat': 'https://zenodo.org/record/4031286/files/3D_unet_EPI.zip',
+                     'func': 'https://zenodo.org/record/4031286/files/3D_unet_RARE.zip'}
+    data_path = Path(__file__).parent / 'data'
+    if not data_path.exists():
+        data_path.mkdir()
+    model_folder_paths = {'anat': data_path / '3D_unet_EPI', 'func': data_path / '3D_unet_RARE'}
+    if not model_folder_paths[input_type].exists():
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            wget_command = f'wget {download_urls[input_type]} -P {tmpdirname}/'
+            log.info(f'Getting {input_type} model with "{wget_command}"')
+            os.system(wget_command)
+
+            unzip_command = f'unzip {tmpdirname}/{model_folder_paths[input_type].stem + ".zip"} -d {data_path}/'
+            os.system(unzip_command)
+
+    return model_folder_paths[input_type]
 
 
 def pred_volume_stats(mask_pred, save_path, file_name, model_path):
@@ -48,14 +81,14 @@ def remove_outliers(image):
     return new.astype('float64')
 
 
-def get_masking_opts(workflow_config_path, input_type):
-    # todo make schema for workflow config: needs to contain model path
+def get_masking_opts(masking_config_path: Optional[str], input_type: str):
+    """Read the json config from the masking_config_path and fill the defaults with a schema."""
+    config = json_to_dict(masking_config_path)['masking_config'] if masking_config_path else {}
+
     if input_type == 'anat':
-        masking_opts = get_masking_anat_opts_defaults(
-            json_to_dict(workflow_config_path)['masking_config'])['masking_config_anat']
+        masking_opts = get_masking_anat_opts_defaults(config)['masking_config_anat']
     elif input_type == 'func':
-        masking_opts = get_masking_func_opts_defaults(
-            json_to_dict(workflow_config_path)['masking_config'])['masking_config_func']
+        masking_opts = get_masking_func_opts_defaults(config)['masking_config_func']
     else:
         raise NotImplementedError(f'input type "{input_type}" is not implemented.')
     return masking_opts
