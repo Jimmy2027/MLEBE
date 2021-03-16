@@ -5,9 +5,9 @@ from abc import ABC, abstractmethod
 import torch
 import SimpleITK as sitk
 
-from torchio import TypeData
+from torchio.typing import TypeData
 from torchio.data.subject import Subject
-from torchio.utils import nib_to_sitk, sitk_to_nib
+from torchio.data.io import nib_to_sitk, sitk_to_nib
 
 
 class Transform(ABC):
