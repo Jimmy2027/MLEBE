@@ -64,6 +64,7 @@ def predict_mask(
 
     masking_opts = get_masking_opts(masking_config_path, input_type)
     if 'model_folder_path' not in masking_opts or not masking_opts['model_folder_path']:
+        # if no model_folder_path is given in the config, the default models are selected.
         masking_opts['model_folder_path'] = get_mlebe_models(input_type)
     model_config = get_model_config(masking_opts)
     input = in_file
@@ -108,7 +109,8 @@ def predict_mask(
     Getting the mask
     """
     ori_shape = np.moveaxis(in_file_data, 2, 0).shape
-    in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape, use_cuda = masking_opts['use_cuda'])
+    in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape,
+                                                      use_cuda=masking_opts['use_cuda'])
 
     mask_pred = remove_outliers(mask_pred)
 
