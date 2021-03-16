@@ -76,17 +76,6 @@ def get_model(json_opts):
         from .feedforward_seg_model import FeedForwardSegmentation
         model = FeedForwardSegmentation()
 
-    # TODO: unet classifiers by atnet (non usefull for now)
-    # elif model_type == 'classifier':
-    #     # Return the model type
-    #     from atnet.models.feedforward_classifier import FeedForwardClassifier
-    #     model = FeedForwardClassifier()
-    #
-    # elif model_type == 'aggregated_classifier':
-    #     # Return the model type
-    #     from atnet.models.aggregated_classifier import AggregatedClassifier
-    #     model = AggregatedClassifier()
-
     # Initialise the created model
     model.initialize(model_opts)
     print("Model [%s] is created" % (model.name()))
