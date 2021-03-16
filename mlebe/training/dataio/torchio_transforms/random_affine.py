@@ -1,11 +1,15 @@
 from numbers import Number
 from typing import Tuple, Optional, List, Union
-import torch
-import numpy as np
+
 import SimpleITK as sitk
+import numpy as np
+import torch
+from torchio import LABEL, DATA, AFFINE, TYPE
 from torchio.data.subject import Subject
-from torchio import LABEL, DATA, AFFINE, TYPE, TypeRangeFloat
-from torchio.transforms.augmentation import Interpolation, get_sitk_interpolator
+from torchio.transforms.interpolation import Interpolation
+from torchio.transforms.interpolation import get_sitk_interpolator
+from torchio.typing import TypeRangeFloat
+
 from mlebe.training.dataio.torchio_transforms.random_transform import RandomTransform
 
 

@@ -1,8 +1,11 @@
 from typing import Union, Tuple, Optional
+
 import numpy as np
 import torch
-from torchio import DATA, TypeData
+from torchio import DATA
 from torchio.data.subject import Subject
+from torchio.typing import TypeData
+
 from mlebe.training.dataio.torchio_transforms.random_transform import RandomTransform
 
 

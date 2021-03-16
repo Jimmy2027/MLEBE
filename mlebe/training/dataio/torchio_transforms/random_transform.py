@@ -9,8 +9,8 @@ import torch
 import numpy as np
 
 from torchio.data.subject import Subject
-from torchio import TypeNumber, TypeRangeFloat
-from torchio import Interpolation
+from torchio.typing import TypeNumber, TypeRangeFloat
+from torchio.transforms.interpolation import Interpolation
 from .transform import Transform
 
 
