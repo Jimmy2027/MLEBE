@@ -7,7 +7,7 @@ from typing import Optional
 
 def predict_mask(
         in_file: str,
-        masking_config_path: Optional[str] = None,
+        masking_config_path=None,
         input_type: str = 'anat',
 ):
     """
@@ -40,9 +40,6 @@ def predict_mask(
             If set, the input image will be bias corrected before given as input to the model.
             The parameter of the bias correction can be given as a dictionary.
             The default values can be found in the default_schema.json config.
-
-
-
     input_type : str
         either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
 
