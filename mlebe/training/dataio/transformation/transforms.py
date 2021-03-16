@@ -3,7 +3,7 @@ from pprint import pprint
 import numpy as np
 import mlebe.training.dataio.torchsample_transforms as ts
 # import torchvision.transforms as tv
-from torchio.transforms import Interpolation
+from torchio.transforms.interpolation import Interpolation
 
 from .imageTransformations import RandomElasticTransform, RandomAffineTransform, RandomNoiseTransform, \
     RandomFlipTransform, RandomBiasFieldTransform, get_normalization, Scale_mlebe

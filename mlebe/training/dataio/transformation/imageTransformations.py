@@ -13,7 +13,7 @@ from PIL import Image
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates
 from torch.nn.functional import pad
-from torchio.transforms import Interpolation
+from torchio.transforms.interpolation import Interpolation
 from mlebe.training.dataio.torchio_transforms import RandomAffine, RandomFlip, RandomNoise, RandomElasticDeformation, RandomBiasField
 
 def center_crop(x, center_crop_size):
