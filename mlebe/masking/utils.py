@@ -66,7 +66,7 @@ def get_masking_opts(masking_config_path: Optional[str], input_type: str):
     """Read the json config from the masking_config_path and fill the defaults with a schema."""
     config = json_to_dict(masking_config_path)['masking_config'] if masking_config_path else {}
 
-    return get_masking_func_opts_defaults(config)[f'masking_config_{input_type}']
+    return get_masking_opts_defaults(config, input_type)[f'masking_config_{input_type}']
 
 
 def get_biascorrect_opts_defaults(config: dict):
@@ -95,46 +95,25 @@ def get_biascorrect_opts_defaults(config: dict):
     return config['bias_field_correction']
 
 
-def get_masking_anat_opts_defaults(config: dict):
+def get_masking_opts_defaults(config: dict, input_type: str):
     """
     Fill the masking configuration file with defaults.
 
     Parameters
     ----------
     config : dict
-            configuration of the anat masking
-
+            masking configuration dict
+    input_type : str
+        either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
     """
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
-    if 'masking_config_anat' not in config.keys():
-        config['masking_config_anat'] = {}
+    if f'masking_config_{input_type}' not in config.keys():
+        config[f'masking_config_{input_type}'] = {}
 
     with open(DEFAULT_CONFIG_PATH, 'r') as json_file:
         schema = json.load(json_file)
 
-    schema = {'properties': {'masking_config_anat': schema['masking_config_anat']}}
-    DefaultValidatingDraft7Validator(schema).validate(config)
-    return config
-
-
-def get_masking_func_opts_defaults(config):
-    """
-    Fills the masking configuration file with defaults
-
-    Parameters
-    ----------
-    config :  dict
-        configuration of the func masking
-    """
-    DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
-
-    if 'masking_config_func' not in config.keys():
-        config['masking_config_func'] = {}
-
-    with open(DEFAULT_CONFIG_PATH, 'r') as json_file:
-        schema = json.load(json_file)
-
-    schema = {'properties': {'masking_config_func': schema['masking_config_func']}}
+    schema = {'properties': {f'masking_config_{input_type}': schema[f'masking_config_{input_type}']}}
     DefaultValidatingDraft7Validator(schema).validate(config)
     return config
 
