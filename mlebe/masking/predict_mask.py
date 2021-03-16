@@ -27,6 +27,22 @@ def predict_mask(
     masking_config_path : str
         path to the masking config. The masking config is a json file. All parameters have default values that will
         be set in the "get_masking_opts" method.
+        The masking config may contain following parameters (if any of them is not given in the config,
+        the default value will be taken from mlebe/masking/config/default_schema.json):
+        model_folder_path: str The path to the pretrained model. If not set the default mlebe model will be selected.
+        use_cuda: bool
+            boolean indicating if cuda will be used for the masking
+        visualisation_path: str
+            if set, the masking predictions will be saved to this destination.
+        crop_values:
+            if set, the input bids images will be cropped with given values in the x-y dimensions.
+        bias_field_correction: dict
+            If set, the input image will be bias corrected before given as input to the model.
+            The parameter of the bias correction can be given as a dictionary.
+            The default values can be found in the default_schema.json config.
+
+
+
     input_type : str
         either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
 
@@ -43,7 +59,7 @@ def predict_mask(
     import numpy as np
     from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
         save_visualisation, reconstruct_image, pad_to_shape, get_model_config
-    from mlebe.masking.utils import get_mask, get_mlebe_models
+    from mlebe.masking.utils import get_mask, get_mlebe_models, get_biascorrect_opts_defaults
     from mlebe import log
 
     masking_opts = get_masking_opts(masking_config_path, input_type)
@@ -64,14 +80,14 @@ def predict_mask(
     os.system(resample_cmd)
     log.info(f'Resample image with "{resample_cmd}"')
 
-    if masking_opts['with_bids_cropping']:
+    if 'crop_values' in masking_opts and masking_opts['crop_values']:
         crop_bids_image(resampled_nii_path, masking_opts['crop_values'])
 
     """
     Bias correction
     """
-    if masking_opts['bias_correct_bool'] == True:
-        bias_correction_config = masking_opts['bias_field_correction']
+    if 'bias_field_correction' in masking_opts and masking_opts['bias_field_correction']:
+        bias_correction_config = get_biascorrect_opts_defaults(masking_opts)
         bias_corrected_path = path.abspath(path.expanduser('corrected_input.nii.gz'))
 
         command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(
@@ -92,11 +108,11 @@ def predict_mask(
     Getting the mask
     """
     ori_shape = np.moveaxis(in_file_data, 2, 0).shape
-    in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape)
+    in_file_data, mask_pred, network_input = get_mask(model_config, in_file_data, ori_shape, use_cuda = masking_opts['use_cuda'])
 
     mask_pred = remove_outliers(mask_pred)
 
-    if masking_opts['visualisation_bool'] == True:
+    if 'visualisation_path' in masking_opts and masking_opts['visualisation_path']:
         save_visualisation(masking_opts, in_file, network_input, mask_pred)
 
     """
