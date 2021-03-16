@@ -11,8 +11,7 @@ from jsonschema import Draft7Validator, validators
 from scipy import ndimage
 
 from mlebe import log
-from mlebe.training.configs.utils import json_to_dict
-from mlebe.training.configs.utils import write_to_jsonfile
+from mlebe.training.configs.utils import json_to_dict, write_to_jsonfile
 from mlebe.training.dataio.transformation import get_dataset_transformation
 from mlebe.training.utils.utils import json_file_to_pyobj
 
@@ -67,16 +66,10 @@ def get_masking_opts(masking_config_path: Optional[str], input_type: str):
     """Read the json config from the masking_config_path and fill the defaults with a schema."""
     config = json_to_dict(masking_config_path)['masking_config'] if masking_config_path else {}
 
-    if input_type == 'anat':
-        masking_opts = get_masking_anat_opts_defaults(config)['masking_config_anat']
-    elif input_type == 'func':
-        masking_opts = get_masking_func_opts_defaults(config)['masking_config_func']
-    else:
-        raise NotImplementedError(f'input type "{input_type}" is not implemented.')
-    return masking_opts
+    return get_masking_func_opts_defaults(config)[f'masking_config_{input_type}']
 
 
-def get_masking_anat_opts_defaults(config):
+def get_biascorrect_opts_defaults(config: dict):
     """
     Fill the masking configuration file with defaults.
 
@@ -84,6 +77,32 @@ def get_masking_anat_opts_defaults(config):
     ----------
     config : dict
             configuration of the func masking
+
+    >>> get_biascorrect_opts_defaults({})
+    {'bias_field_correction': {'bspline_fitting': '[10, 4]', 'convergence': '[ 150x100x50x30, 1e-16 ]', 'shrink_factor': 2}}
+    >>> get_biascorrect_opts_defaults({'bias_field_correction': {'bspline_fitting': '[2, 400]'}})
+    {'bias_field_correction': {'bspline_fitting': '[2, 400]', 'convergence': '[ 150x100x50x30, 1e-16 ]', 'shrink_factor': 2}}
+    """
+    DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
+    if 'bias_field_correction' not in config.keys():
+        config['bias_field_correction'] = {}
+
+    with open(DEFAULT_CONFIG_PATH, 'r') as json_file:
+        schema = json.load(json_file)
+
+    schema = {'properties': {'bias_field_correction': schema['bias_field_correction']}}
+    DefaultValidatingDraft7Validator(schema).validate(config)
+    return config['bias_field_correction']
+
+
+def get_masking_anat_opts_defaults(config: dict):
+    """
+    Fill the masking configuration file with defaults.
+
+    Parameters
+    ----------
+    config : dict
+            configuration of the anat masking
 
     """
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
@@ -141,9 +160,14 @@ def get_model_config(masking_opts, return_path=False):
     return json_file_to_pyobj(model_config_path)
 
 
-def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
+def crop_bids_image(resampled_nii_path, crop_values):
     """
-    Cropping the bids image
+    Crop the bids image and save it to resampled_nii_path.
+
+    Parameters
+    ----------
+    resampled_nii_path :
+    crop_values :  values indicating how much the image will be cropped in the x and y direction. Recommended values are [15, 15] and [20, 20].
     """
     resampled_bids_nib = nib.load(resampled_nii_path)
     resampled_bids = resampled_bids_nib.get_data()
@@ -153,10 +177,11 @@ def crop_bids_image(resampled_nii_path, crop_values=[20, 20]):
     nib.save(resampled_bids_cropped_nib, resampled_nii_path)
 
 
-def get_mask(json_opts, in_file_data, ori_shape):
+def get_mask(json_opts, in_file_data, ori_shape, use_cuda: bool):
+    """Predict segmentation mask on in_file_data with mlebe model."""
     from mlebe.training.models import get_model
     # To make sure that the GPU is not used for the predictions: (might be unnecessary)
-    if not json_opts.model.use_cuda:
+    if not use_cuda:
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     model = get_model(json_opts.model)
     ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
@@ -271,3 +296,7 @@ def extend_with_default(validator_class):
     return validators.extend(
         validator_class, {"properties": set_defaults},
     )
+
+
+if __name__ == '__main__':
+    print(get_biascorrect_opts_defaults({'bias_field_correction': {'bspline_fitting': '[10, 400]'}}))

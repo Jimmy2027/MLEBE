@@ -2,21 +2,25 @@
 "masking_config_anat": {
     "properties": {
         "use_cuda": {"default": false},
-        "with_bids_cropping": {"default": false},
         "input_type": {"default": "anat"},
-        "visualisation_bool": {"default": false},
-        "bias_correct_bool": {"default": false},
+        "visualisation_path": {"default": ""},
+        "bias_field_correction": {"default": {}},
         "model_folder_path": {"default": ""},
-        "crop_values": {"default": [15, 15]}
+        "crop_values": {"default": {}}
     }},
 "masking_config_func": {
     "properties": {
         "use_cuda": {"default": false},
-        "with_bids_cropping": {"default": false},
         "input_type": {"default": "func"},
-        "visualisation_bool": {"default": false},
-        "bias_correct_bool": {"default": false},
+        "visualisation_path": {"default": ""},
+        "bias_field_correction": {"default": {}},
         "model_folder_path": {"default": ""},
-        "crop_values": {"default": [15, 15]}
-    }}
+        "crop_values": {"default": {}}
+    }},
+"bias_field_correction":{
+    "properties": {
+        "bspline_fitting": {"default": "[10, 4]"},
+        "convergence": {"default": "[ 150x100x50x30, 1e-16 ]"},
+        "shrink_factor": {"default": 2}
+      }}
 }
