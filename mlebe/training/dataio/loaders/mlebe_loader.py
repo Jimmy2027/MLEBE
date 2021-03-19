@@ -3,13 +3,17 @@ import json
 import os
 import random
 import uuid
+from pathlib import Path
 from timeit import default_timer as timer
+
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
-from mlebe.training.dataio.loaders.utils import validate_images, load_mask, arrange_mask, write_blacklist
+
+from mlebe.training.dataio.loaders.utils import validate_images, load_mask, arrange_mask, write_blacklist, \
+    make_dataselection_anat, make_dataselection_func
 from mlebe.training.utils.utils import json_file_to_pyobj, make_unique_experiment_name
 
 
@@ -62,9 +66,12 @@ class mlebe_dataset(Dataset):
         if self.with_blacklist:
             self.blacklist = write_blacklist(os.path.expanduser(data_opts.blacklist_dir))
         if data_opts.data_type == 'anat':
-            self.data_selection = self.make_dataselection_anat(data_dir, data_opts.studies)
+            self.data_selection, blacklist_selection = make_dataselection_anat(Path(data_dir), data_opts.studies, blacklist=self.blacklist,
+                                                          save_dir=self.save_dir, split=self.split)
         elif data_opts.data_type == 'func':
-            self.data_selection = self.make_dataselection_func(data_dir, data_opts.studies)
+            self.data_selection = make_dataselection_func(data_dir, data_opts.studies,
+                                                          save_dir=self.save_dir, func_training_dir=os.path.abspath(
+                    os.path.expanduser(self.data_opts.func_training_dir)), split=self.split)
         else:
             assert False, 'Wrong data_type defined for {} dataset: {}, choose between anat and func'.format(split,
                                                                                                             data_opts.data_type)
@@ -85,9 +92,17 @@ class mlebe_dataset(Dataset):
             if split == 'test':
                 self.selection = test_selection
                 if data_opts.data_type == 'anat':
-                    excluded_dataselection = self.make_dataselection_anat(data_dir, data_opts.excluded_from_training)
+                    excluded_dataselection, blacklist_selection = make_dataselection_anat(Path(data_dir),
+                                                                     studies=data_opts.excluded_from_training,
+                                                                     blacklist=self.blacklist,
+                                                                     save_dir=self.save_dir, split=self.split)
                 elif data_opts.data_type == 'func':
-                    excluded_dataselection = self.make_dataselection_func(data_dir, data_opts.excluded_from_training)
+                    excluded_dataselection = make_dataselection_func(Path(data_dir), data_opts.excluded_from_training,
+                                                                     save_dir=self.save_dir,
+                                                                     func_training_dir=os.path.abspath(
+                                                                         os.path.expanduser(
+                                                                             self.data_opts.func_training_dir)),
+                                                                     split=self.split)
 
                 self.selection = pd.concat([self.selection, excluded_dataselection])
             if split == 'validation':
@@ -97,94 +112,6 @@ class mlebe_dataset(Dataset):
             self.selection = self.data_selection
 
         self.ids = self.selection['uid'].to_list()
-
-    def make_dataselection_anat(self, data_dir, studies):
-        data_selection = pd.DataFrame()
-        blacklist_selection = pd.DataFrame()
-        for o in os.listdir(data_dir):
-            if (not studies or o in studies) and not o.startswith('.') and not o.endswith(
-                    '.xz'):  # i.e. if o in studies or if studies empty
-                print(o)
-                data_set = o
-                for x in os.listdir(os.path.join(data_dir, o)):
-                    if (x.endswith('preprocessed') or x.startswith('preprocess') or x.endswith(
-                            'preprocessing')) and not x.endswith('work'):
-                        for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
-                            for file in files:
-                                if not file.startswith('.') and (
-                                        file.endswith("_T2w.nii.gz") or file.endswith("_T1w.nii.gz")):
-                                    split = file.split('_')
-                                    subject = split[0].split('-')[1]
-                                    session = split[1].split('-')[1]
-                                    acquisition = split[2].split('-')[1]
-                                    type = split[3].split('.')[0]
-                                    uid = file.split('.')[0]
-                                    path = os.path.join(root, file)
-                                    blacklisted = False
-                                    if self.with_blacklist:
-                                        for i in self.blacklist:
-                                            if subject == i.subj and session == i.sess:
-                                                blacklisted = True
-                                                blacklist_selection = pd.concat([blacklist_selection, pd.DataFrame(
-                                                    [[data_set, subject, session, acquisition, type, uid, path]],
-                                                    columns=['data_set', 'subject', 'session', 'acquisition', 'type',
-                                                             'uid',
-                                                             'path'])]).reset_index(drop=True)
-                                    if blacklisted == False:
-                                        data_selection = pd.concat([data_selection, pd.DataFrame(
-                                            [[data_set, subject, session, acquisition, type, uid, path]],
-                                            columns=['data_set', 'subject', 'session', 'acquisition', 'type', 'uid',
-                                                     'path'])]).reset_index(drop=True)
-        if self.save_dir:
-            data_selection.to_csv(os.path.join(self.save_dir, self.split + '_dataset.csv'), index=False)
-        # todo this does not work if data_selection is empty
-        # assert len(data_selection.data_set.unique()) == len(studies), 'Only found {} studies, expected {}'.format(
-        #     data_selection.data_set.unique(), studies)
-        self.blacklist_selection = blacklist_selection
-        return data_selection
-
-    def make_dataselection_func(self, data_dir, studies):
-        data_selection = pd.DataFrame()
-
-        func_training_dir = os.path.abspath(os.path.expanduser(self.data_opts.func_training_dir))
-
-        if not os.path.exists(func_training_dir):
-            print('creating dir: ', func_training_dir)
-            os.makedirs(func_training_dir)
-        for o in os.listdir(data_dir):
-            if o in studies and not o.startswith('.') and not o.startswith('.') and not o.endswith('.xz'):
-                data_set = o
-                for x in os.listdir(os.path.join(data_dir, o)):
-                    if (x.endswith('preprocessed') or x.startswith('preprocess') or x.endswith(
-                            'preprocessing')) and not x.endswith('work'):
-                        for root, dirs, files in os.walk(os.path.join(data_dir, o, x)):
-                            if root.endswith('func'):
-                                for file in files:
-                                    if file.endswith(".nii.gz"):
-                                        tMean_path = os.path.join(func_training_dir, 'tMean_' + file)
-                                        # collapse volumes over time
-                                        if not os.path.isfile(tMean_path):
-                                            command = 'fslmaths {a} -Tmean {b}'.format(a=os.path.join(root, file),
-                                                                                       b=tMean_path)
-                                            print(command)
-                                            os.system(command)
-
-                                        split = file.split('_')
-                                        subject = split[0].split('-')[1]
-                                        session = split[1].split('-')[1]
-                                        acquisition = split[2].split('-')[1]
-                                        type = split[3].split('.')[0]
-                                        uid = file.split('.')[0]
-                                        path = tMean_path
-                                        data_selection = pd.concat([data_selection, pd.DataFrame(
-                                            [[data_set, subject, session, acquisition, type, uid, path]],
-                                            columns=['data_set', 'subject', 'session', 'acquisition', 'type', 'uid',
-                                                     'path'])])
-        if self.save_dir:
-            data_selection.to_csv(os.path.join(self.save_dir, self.split + '_dataset.csv'), index=False)
-        assert len(data_selection.data_set.unique()) == len(studies), 'Only found {} studies, expected {}'.format(
-            data_selection.data_set.unique(), studies)
-        return data_selection
 
     def get_ids(self, indices):
         return [self.ids[index] for index in indices]
@@ -257,12 +184,8 @@ old experimentations of parameters.
         experiment_config['uid'] = self.uid
         data_config = self.json_config.data._asdict()
         for key, value in zip(data_config.keys(), data_config.values()):
-            if not (key == 'data_dir' or key == 'template_dir'):
-                if key == "studies":
-                    experiment_config[key] = str(value)
-                else:
-                    experiment_config[key] = value
-
+            if key not in ['data_dir', 'template_dir']:
+                experiment_config[key] = str(value) if key == "studies" else value
         self.experiment_config = experiment_config
 
     def save(self, experiment_config_name='results'):
@@ -294,13 +217,21 @@ old experimentations of parameters.
         config['augmentation']['mlebe']["scale_range"] = params['scale_range']
         config['augmentation']['mlebe']["bias_field_prob"] = params['bias_field_prob']
         config['augmentation']['mlebe']['scale_size'] = params['scale_size']
-        if 'with_FLASH' in params.keys() and params['with_FLASH']:
-            if not 'irsabi_dargcc' in config['data']['studies']:
-                config['data']['studies'].append('irsabi_dargcc')
+        if (
+            'with_FLASH' in params.keys()
+            and params['with_FLASH']
+            and 'irsabi_dargcc' not in config['data']['studies']
+        ):
+            config['data']['studies'].append('irsabi_dargcc')
         if 'with_FLASH' in params.keys() and not params['with_FLASH']:
-            config['data']['studies'] = [elem for elem in config['data']['studies'] if not elem == 'irsabi_dargcc']
+            config['data']['studies'] = [
+                elem
+                for elem in config['data']['studies']
+                if elem != 'irsabi_dargcc'
+            ]
 
-        if not config['model']['experiment_name'] == 'test':
+
+        if config['model']['experiment_name'] != 'test':
             config['model']['experiment_name'] = self.create_experiment_name()
         with open(self.config_path, 'w') as outfile:
             json.dump(config, outfile, indent=4)
@@ -308,23 +239,18 @@ old experimentations of parameters.
         self.json_config = json_file_to_pyobj(self.config_path)
 
     def create_uid(self, params):
-        uid = ''
-        for elem in params.values():
-            uid += str(elem)
-        return uid
+        return ''.join(str(elem) for elem in params.values())
 
     def create_experiment_name(self, mode='time'):
         if mode == 'hex':
             return uuid.uuid4().hex
         elif mode == 'readable':
             experiment_name = ''
-            idx = 0
-            for key, value in zip(self.params.keys(), self.params.values()):
+            for idx, (key, value) in enumerate(zip(self.params.keys(), self.params.values())):
                 if idx == 0:
                     experiment_name += key + '-' + str(value)
                 else:
                     experiment_name += '_' + key + '-' + str(value)
-                idx += 1
             return make_unique_experiment_name(self.json_config.model.checkpoints_dir, experiment_name)
         elif mode == 'time':
             time_struct = datetime.datetime.now().timetuple()
