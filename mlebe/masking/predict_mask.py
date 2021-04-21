@@ -2,8 +2,6 @@
 
 """Masking function of the mlebe package."""
 
-from typing import Optional
-
 
 def predict_mask(
         in_file: str,
@@ -59,6 +57,7 @@ def predict_mask(
     from mlebe.masking.utils import get_mask, get_mlebe_models, get_biascorrect_opts_defaults
     from mlebe import log
 
+    log.info(f'Starting masking of {in_file} with config {masking_config_path}.')
     masking_opts = get_masking_opts(masking_config_path, input_type)
     if 'model_folder_path' not in masking_opts or not masking_opts['model_folder_path']:
         # if no model_folder_path is given in the config, the default models are selected.
@@ -110,7 +109,7 @@ def predict_mask(
                                                       use_cuda=masking_opts['use_cuda'])
 
     mask_pred = remove_outliers(mask_pred)
-
+    log.info(f'visualisation_path is {masking_opts["visualisation_path"]}')
     if 'visualisation_path' in masking_opts and masking_opts['visualisation_path']:
         save_visualisation(masking_opts, in_file, network_input, mask_pred)
 
