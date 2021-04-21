@@ -11,7 +11,7 @@ params_seach_space_anat = {
     'model_type': ['unet_pct_multi_att_dsv'],
     'normalization': ['normalize_medic', 'mlebe'],
     'with_arranged_mask': [False, True],
-    "scale_size": [[64, 64, 96, 1]],
+    "scale_size": [[128, 128, 96, 1]],
     "bias_field_prob": [0.5],
     "scale_range": [[0.8, 1.1]],
     "optimizer": ['adam'],
@@ -32,8 +32,8 @@ params_seach_space_func = {
     "with_FLASH": [False]
 }
 
-config_paths = ['configs/mlebe_config_anat.json', 'configs/mlebe_config_func.json']
-# config_paths = ['configs/test_config.json']
+# config_paths = ['configs/mlebe_config_anat.json', 'configs/mlebe_config_func.json']
+config_paths = ['configs/mlebe_config_anat.json']
 for config_path in config_paths:
     if config_path == 'configs/mlebe_config_func.json':
         params_seach_space = params_seach_space_func

@@ -28,7 +28,6 @@ def write_to_jsonfile(config_path: str, parameters: list):
 def json_to_dict(json_path):
     with open(json_path) as json_file:
         dict = json.load(json_file)
-
     return dict
 
 

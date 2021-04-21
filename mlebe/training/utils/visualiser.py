@@ -5,8 +5,9 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
-from mlebe.training.utils import utils, html
+
 from mlebe.training.utils import plot_logs
+from mlebe.training.utils import utils
 
 
 # Use the following comment to launch a visdom server
@@ -20,15 +21,15 @@ class Visualiser():
         self.win_size = opt.display_winsize
         self.save_epoch_freq = opt.save_epoch_freq
         # if save epoch frequency option is negative, volumes will not be saved
-        self.save_to_disk = True if opt.save_epoch_freq >= 0 else False
+        self.save_to_disk = opt.save_epoch_freq >= 0
         self.save_dir = save_dir
         self.name = os.path.basename(self.save_dir)
         self.saved = False
         self.display_single_pane_ncols = opt.display_single_pane_ncols
 
         # Error plots
-        self.error_plots = dict()
-        self.error_wins = dict()
+        self.error_plots = {}
+        self.error_wins = {}
 
         if self.display_id > 0:
             import visdom
@@ -121,6 +122,7 @@ class Visualiser():
                     idx += 1
 
         if self.use_html and (save_result or not self.saved):  # save images to a html file
+            from mlebe.training.utils import html
             self.saved = True
             for label, image_numpy in visuals.items():
                 img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))

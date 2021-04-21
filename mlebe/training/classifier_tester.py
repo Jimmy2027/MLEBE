@@ -31,7 +31,7 @@ def evaluate(config_path):
     # shape of the images on which the classifier was trained:
     training_shape = json_opts.augmentation.mlebe.scale_size[:3]
     ds_class = get_dataset('mlebe_dataset')
-    # define preprocessing transfromer for model
+    # define preprocessing transformations for model
     ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
                                               max_output_channels=json_opts.model.output_nc)
 
@@ -41,11 +41,8 @@ def evaluate(config_path):
     data_selection = test_dataset.data_selection
     transformer = ds_transform['valid']()
 
-    mask_data = []
     temp = load_mask(template_dir)
-    for i in range(len(data_selection)):
-        mask_data.append(copy.deepcopy(temp))
-
+    mask_data = [copy.deepcopy(temp) for _ in range(len(data_selection))]
     dice_scores_df = pd.DataFrame(columns=['volume_name', 'slice', 'dice_score', 'idx'])
     predictions = []
     for volume in tqdm(range(len(data_selection))):  # volume is an index
@@ -83,10 +80,7 @@ def evaluate(config_path):
         for slice in range(img.shape[0]):
             dice_score = dice(target[slice], mask_pred[slice])
             # see if this is a black slice (want to skip those for visualisation)
-            if np.max(img[slice]) <= 0:
-                black_slice = True
-            else:
-                black_slice = False
+            black_slice = np.max(img[slice]) <= 0
             dice_scores_df = dice_scores_df.append(
                 {'volume_name': volume_name, 'slice': slice, 'dice_score': dice_score, 'idx': volume,
                  'black_slice': black_slice},
@@ -98,9 +92,9 @@ def evaluate(config_path):
                         dice_scores_df.loc[dice_scores_df['black_slice'] == False].sort_values(by=['dice_score']).tail(
                             sum(IMG_NBRs) - sum(IMG_NBRs) // 2)],
                        ignore_index=True)
-    df_idx = 0
-
     with PdfPages(os.path.join(save_path, 'irsabi_test_{}.pdf'.format(data_type))) as pdf:
+        df_idx = 0
+
         for IMG_NBR in IMG_NBRs:
             plt.figure(figsize=(40, IMG_NBR * 10))
             plt.figtext(.5, .9, 'Mean dice score of {}'.format(np.round(dice_scores_df['dice_score'].mean(), 4)),
@@ -133,4 +127,4 @@ def evaluate(config_path):
 
 if __name__ == '__main__':
     evaluate(
-        '/home/hendrik/src/MLEBE/mlebe/three_D/training/checkpoints/2020-06-15_func_dice_loss_normalize_medic_blacklist False1/trained_mlebe_config_func.json')
+        '/home/hendrik/src/MLEBE/mlebe/training/three_D/checkpoints/2020_7_14_1_35_43/trained_mlebe_config_anat.json')

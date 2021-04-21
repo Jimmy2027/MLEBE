@@ -8,7 +8,7 @@ from mlebe.training.utils import json_file_to_pyobj, rm_and_mkdir
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from mlebe.training.two_D.utils.general import remove_black_images
+from mlebe.training.utils.general import remove_black_images
 
 
 def tester(json_opts, test_dataset, save_directory):

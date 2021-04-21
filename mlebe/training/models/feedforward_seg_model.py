@@ -140,8 +140,7 @@ class FeedForwardSegmentation(BaseModel):
         return OrderedDict(seg_stats)
 
     def get_current_errors(self):
-        return OrderedDict([('Seg_Loss', self.loss_S.data.item())
-                            ])
+        return OrderedDict([('Seg_Loss', self.loss_S.data.item())])
 
     def update_validation_state(self, epoch, current_loss):
         '''
