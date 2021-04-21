@@ -105,16 +105,25 @@ def get_masking_opts_defaults(config: dict, input_type: str):
             masking configuration dict
     input_type : str
         either 'func' for CDV or BOLD contrast or 'anat' for T2 contrast
+    >>> get_masking_opts_defaults(config={}, input_type='anat')
+    {'masking_config_anat': {'use_cuda': False, 'input_type': 'anat', 'visualisation_path': '',
+    'bias_field_correction': {}, 'model_folder_path': '', 'crop_values': {}}}
+    >>> get_masking_opts_defaults({'masking_config_anat': {"visualisation_path": "my_path"}}, input_type='anat')
+    {'masking_config_anat': {'visualisation_path': 'my_path', 'use_cuda': False, 'input_type': 'anat',
+    'bias_field_correction': {}, 'model_folder_path': '', 'crop_values': {}}}
     """
+
     DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
     if f'masking_config_{input_type}' not in config.keys():
         config[f'masking_config_{input_type}'] = {}
+    log.info(f'Getting defaults for {config}.')
 
     with open(DEFAULT_CONFIG_PATH, 'r') as json_file:
         schema = json.load(json_file)
 
     schema = {'properties': {f'masking_config_{input_type}': schema[f'masking_config_{input_type}']}}
     DefaultValidatingDraft7Validator(schema).validate(config)
+    log.info(f'Filled defaults to {config}.')
     return config
 
 
@@ -189,9 +198,10 @@ def get_mask(json_opts, in_file_data, ori_shape, use_cuda: bool):
 
 def save_visualisation(workflow_config, in_file, network_input, mask_pred):
     from matplotlib import pyplot as plt
-    save_dir = os.path.join(workflow_config['visualisation_path'], os.path.basename(in_file))
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    save_dir = Path(workflow_config['visualisation_path']).expanduser() / os.path.basename(in_file)
+    if not save_dir.exists():
+        save_dir.mkdir(parents=True)
+    log.info(f'Saving masking visualisations to {workflow_config["visualisation_path"]}.')
     # pred_volume_stats(mask_pred, os.path.dirname(os.path.dirname(visualisation_path)), os.path.basename(in_file), model_path)
     for slice in range(network_input.shape[0]):
         plt.figure()
@@ -205,8 +215,7 @@ def save_visualisation(workflow_config, in_file, network_input, mask_pred):
         plt.subplot(1, 3, 3)
         plt.imshow(mask_pred[slice])
         plt.axis('off')
-        plt.savefig(save_dir + '/{}.{}'.format(slice, workflow_config['visualisation_format']),
-                    format=workflow_config['visualisation_format'])
+        plt.savefig(save_dir / f'{slice}.png')
         plt.close()
 
 
@@ -278,4 +287,5 @@ def extend_with_default(validator_class):
 
 
 if __name__ == '__main__':
-    print(get_biascorrect_opts_defaults({'bias_field_correction': {'bspline_fitting': '[10, 400]'}}))
+    # print(get_biascorrect_opts_defaults({'bias_field_correction': {'bspline_fitting': '[10, 400]'}}))
+    print(get_masking_opts_defaults(config={}, input_type='anat'))
