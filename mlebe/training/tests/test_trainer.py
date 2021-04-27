@@ -1,10 +1,8 @@
 import json
 import os
-import shutil
 import tempfile
-import mlebe
+
 from mlebe.training.train_segmentation import train
-from mlebe.training.utils.utils import mkdir
 
 
 def test_train():
@@ -36,7 +34,7 @@ def test_train():
             },
             "data": {
                 "studies": [
-                "mgtdbs"
+                    "mgtdbs"
                 ],
                 "excluded_from_training": [
                     "irsabi"
@@ -78,7 +76,7 @@ def test_train():
                     "random_flip_prob": 0,
                     "random_affine_prob": 0,
                     "random_elastic_prob": 0,
-                    "scale_range": [0.7,1.2],
+                    "scale_range": [0.7, 1.2],
                     "scale_proba": 1,
                     "scale_size": [
                         64,
@@ -115,6 +113,7 @@ def test_train():
         with open(os.path.join(test_dir, 'test_config.json'), 'w') as jsonfile:
             json.dump(test_config, jsonfile, indent=4)
         _ = train(os.path.join(test_dir, 'test_config.json'))
+
 
 if __name__ == '__main__':
     test_train()

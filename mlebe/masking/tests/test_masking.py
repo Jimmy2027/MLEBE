@@ -6,10 +6,12 @@ from pathlib import Path
 
 import nibabel as nib
 import numpy as np
+import pytest
 
 from mlebe.masking.predict_mask import predict_mask
 
 
+@pytest.mark.tox
 def test_masking_default():
     """Test the masking function."""
     with tempfile.TemporaryDirectory() as test_dir:

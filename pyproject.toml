@@ -1,0 +1,14 @@
+# taken from https://packaging.python.org/tutorials/packaging-projects/
+
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+markers = [
+    "tox: tests that should be run by tox",
+]
+
