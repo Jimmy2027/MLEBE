@@ -17,7 +17,7 @@ def test_masking_default():
         test_in_file = nib.Nifti1Image(test_in_file, np.eye(4))
         test_in_file_path = Path(test_dir) / 'test_in_file.nii.gz'
         nib.save(test_in_file, test_in_file_path)
-        for input_type in ['anat', 'func']:
+        for input_type in ['func', 'anat']:
             config = {"masking_config": {f"masking_config_{input_type}": {"testing": True}}}
             # config = {"masking_config": {f"masking_config_{input_type}": {"testing": False}}}
             config_path = Path(test_dir) / 'test_config.json'

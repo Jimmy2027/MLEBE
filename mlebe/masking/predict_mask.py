@@ -69,8 +69,9 @@ def predict_mask(
     model_config = get_model_config(masking_opts)
     input = in_file
     if input_type == 'func':
-        tMean_path = 'tMean.nii.gz'
-        input = MeanImage(in_file=input, dimension='T', out_file=tMean_path)
+        tMean_path = 'tMean_.nii.gz'
+        mean_image = MeanImage(in_file=input, dimension='T', out_file=tMean_path)
+        mean_image.run()
         # command = 'fslmaths {a} -Tmean {b}'.format(a=input, b=tMean_path)
         # log.info(f'Executing command "{command}"')
         # os.system(command)
