@@ -45,6 +45,8 @@ def get_mlebe_models(input_type: str) -> Path:
             unzip_command = f'unzip {tmpdirname}/{model_folder_paths[input_type].stem + ".zip"} -d {data_path}/'
             os.system(unzip_command)
 
+    assert model_folder_paths[input_type].exists()
+
     return model_folder_paths[input_type]
 
 

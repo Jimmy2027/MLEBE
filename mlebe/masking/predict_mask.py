@@ -56,6 +56,8 @@ def predict_mask(
         save_visualisation, reconstruct_image, pad_to_shape, get_model_config
     from mlebe.masking.utils import get_mask, get_mlebe_models, get_biascorrect_opts_defaults
     from mlebe import log
+    import ants
+    from ants.registration import resample_image
 
     log.info(f'Starting masking of {in_file} with config {masking_config_path}.')
     masking_opts = get_masking_opts(masking_config_path, input_type)
@@ -73,9 +75,13 @@ def predict_mask(
 
     resampled_path = 'resampled_input.nii.gz'
     resampled_nii_path = path.abspath(path.expanduser(resampled_path))
-    resample_cmd = 'ResampleImage 3 {input} '.format(input=input) + resampled_nii_path + ' 0.2x0.2x0.2'
-    os.system(resample_cmd)
-    log.info(f'Resample image with "{resample_cmd}"')
+    if masking_opts['testing']:
+        resampled_nii = resample_image(ants.image_read(str(input)), (0.2, 0.2, 0.2), False)
+        nib.save(resampled_nii, resampled_nii_path)
+    else:
+        resample_cmd = 'ResampleImage 3 {input} '.format(input=input) + resampled_nii_path + ' 0.2x0.2x0.2'
+        os.system(resample_cmd)
+        log.info(f'Resample image with "{resample_cmd}"')
 
     if 'crop_values' in masking_opts and masking_opts['crop_values']:
         crop_bids_image(resampled_nii_path, masking_opts['crop_values'])
@@ -84,16 +90,26 @@ def predict_mask(
     Bias correction
     """
     if 'bias_field_correction' in masking_opts and masking_opts['bias_field_correction']:
+
         bias_correction_config = get_biascorrect_opts_defaults(masking_opts)
         bias_corrected_path = path.abspath(path.expanduser('corrected_input.nii.gz'))
 
-        command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} --shrink-factor {}'.format(
-            bias_correction_config['bspline_fitting'], resampled_nii_path,
-            bias_correction_config['convergence'],
-            bias_corrected_path, bias_correction_config['shrink_factor'])
+        if masking_opts['testing']:
+            ants.n4_bias_field_correction()
+            bias_corrected = resample_image(ants.image_read(resampled_nii_path),
+                                            bias_correction_config['bspline_fitting'],
+                                            convergence=bias_correction_config['convergence'],
+                                            shrink_factor=bias_correction_config['shrink_factor'])
+            nib.save(bias_corrected, bias_corrected_path)
+        else:
+            command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} ' \
+                      '--shrink-factor {}'.format(
+                bias_correction_config['bspline_fitting'], resampled_nii_path,
+                bias_correction_config['convergence'],
+                bias_corrected_path, bias_correction_config['shrink_factor'])
 
-        os.system(command)
-        log.info(f'Apply bias correction with "{command}"')
+            os.system(command)
+            log.info(f'Apply bias correction with "{command}"')
 
     else:
         bias_corrected_path = resampled_nii_path
@@ -109,8 +125,8 @@ def predict_mask(
                                                       use_cuda=masking_opts['use_cuda'])
 
     mask_pred = remove_outliers(mask_pred)
-    log.info(f'visualisation_path is {masking_opts["visualisation_path"]}')
     if 'visualisation_path' in masking_opts and masking_opts['visualisation_path']:
+        log.info(f'visualisation_path is {masking_opts["visualisation_path"]}')
         save_visualisation(masking_opts, in_file, network_input, mask_pred)
 
     """
@@ -123,28 +139,40 @@ def predict_mask(
     resized_mask = nib.Nifti1Image(resized, image.affine, image.header)
     nib.save(resized_mask, resized_path)
 
+    # get voxel sizes from input
     input_image = nib.load(input)
     input_img_affine = input_image.affine
     voxel_sizes = nib.affines.voxel_sizes(input_img_affine)
 
     resampled_mask_path = 'resampled_mask.nii.gz'
     resampled_mask_path = path.abspath(path.expanduser(resampled_mask_path))
-    resample_cmd = 'ResampleImage 3 {input} '.format(
-        input=resized_path) + ' ' + resampled_mask_path + ' {x}x{y}x{z} '.format(x=voxel_sizes[0], y=voxel_sizes[1],
-                                                                                 z=voxel_sizes[2]) + ' 0 1'
-    log.info(f'Resample image with "{resample_cmd}"')
-    os.system(resample_cmd)
 
-    resampled_mask = nib.load(resampled_mask_path)
-    resampled_mask_data = resampled_mask.get_data()
+    if masking_opts['testing']:
+        resized_mask = ants.image_read(resized_path)
+        resampled_mask_data = resample_image(resized_mask, (voxel_sizes[0], voxel_sizes[1], voxel_sizes[2]), False, 1)
+    else:
+        resample_cmd = 'ResampleImage 3 {input} '.format(
+            input=resized_path) + ' ' + resampled_mask_path + ' {x}x{y}x{z} '.format(x=voxel_sizes[0], y=voxel_sizes[1],
+                                                                                     z=voxel_sizes[2]) + ' 0 1'
+        log.info(f'Resample image with "{resample_cmd}"')
+        os.system(resample_cmd)
+
+        resampled_mask = nib.load(resampled_mask_path)
+        resampled_mask_data = resampled_mask.get_data()
     input_image_data = input_image.get_data()
     if resampled_mask_data.shape != input_image_data.shape:
         resampled_mask_data = pad_to_shape(resampled_mask_data, input_image_data)
-    nib.save(nib.Nifti1Image(resampled_mask_data, input_image.affine, input_image.header), resampled_mask_path)
+
+    if masking_opts['testing']:
+        nib.save(resampled_mask_data, resampled_mask_path)
+        resampled_mask_data = resampled_mask_data.numpy()
+    else:
+        nib.save(nib.Nifti1Image(resampled_mask_data, input_image.affine, input_image.header), resampled_mask_path)
 
     """
     Masking of the input image
     """
+    log.info('Masking the input image with the generated mask.')
     masked_image = np.multiply(resampled_mask_data, input_image_data).astype(
         'float32')  # nibabel gives a non-helpful error if trying to save data that has dtype float64
     nii_path_masked = 'masked_output.nii.gz'
@@ -159,7 +187,7 @@ def predict_mask(
 
 if __name__ == '__main__':
     nii_path_masked, something, aha = predict_mask(in_file=
-                                                   '/home/hendrik/.scratch/mlebe/bids/sub-4012/ses-ofMpF/func/sub-4012_ses-ofMpF_task-JogB_acq-EPIlowcov_run-0_bold.nii.gz',
+                                                   '/home/hendrik/.scratch/mlebe/bids/sub-4007/ses-ofMcF1/func/sub-4007_ses-ofMcF1_task-JogB_acq-EPIlowcov_run-0_bold.nii.gz',
                                                    input_type='func',
-                                                   # masking_config_path='/home/hendrik/.scratch/mlebe/config.json'
+                                                   masking_config_path='/home/hendrik/.scratch/mlebe/config.json'
                                                    )

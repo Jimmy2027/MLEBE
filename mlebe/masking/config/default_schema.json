@@ -1,6 +1,7 @@
 {
 "masking_config_anat": {
     "properties": {
+        "testing": {"default": false},
         "use_cuda": {"default": false},
         "input_type": {"default": "anat"},
         "visualisation_path": {"default": ""},
@@ -10,6 +11,7 @@
     }},
 "masking_config_func": {
     "properties": {
+        "testing": {"default": false},
         "use_cuda": {"default": false},
         "input_type": {"default": "func"},
         "visualisation_path": {"default": ""},
