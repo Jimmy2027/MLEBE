@@ -38,16 +38,17 @@ def test_masking_default():
 def test_masking_biascorrection():
     """Test the masking function using bias correction."""
     with tempfile.TemporaryDirectory() as test_dir:
-        config = {"masking_config": {"masking_config_anat": {"bias_field_correction": {"shrink_factor": 2}}}}
-        config_path = Path(test_dir) / 'test_config.json'
-        with open(config_path, 'w') as jsonfile:
-            json.dump(config, jsonfile, indent=4)
-
         test_in_file = np.ones((63, 96, 48))
         test_in_file = nib.Nifti1Image(test_in_file, np.eye(4))
         test_in_file_path = Path(test_dir) / 'test_in_file.nii.gz'
         nib.save(test_in_file, test_in_file_path)
         for input_type in ['anat', 'func']:
+            config = {"masking_config": {
+                F"masking_config_{input_type}": {"bias_field_correction": {"shrink_factor": 2}, "testing": True}}}
+            config_path = Path(test_dir) / 'test_config.json'
+
+            with open(config_path, 'w') as jsonfile:
+                json.dump(config, jsonfile, indent=4)
             nii_path_masked, [resampled_mask_path], resampled_mask_path = predict_mask(in_file=test_in_file_path,
                                                                                        input_type=input_type,
                                                                                        masking_config_path=config_path)
@@ -61,4 +62,4 @@ def test_masking_biascorrection():
 
 if __name__ == '__main__':
     test_masking_default()
-    # test_masking_biascorrection()
+    test_masking_biascorrection()
