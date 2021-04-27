@@ -58,6 +58,7 @@ def predict_mask(
     from mlebe import log
     import ants
     from ants.registration import resample_image
+    from nipype.interfaces.fsl.maths import MeanImage
 
     log.info(f'Starting masking of {in_file} with config {masking_config_path}.')
     masking_opts = get_masking_opts(masking_config_path, input_type)
@@ -68,9 +69,10 @@ def predict_mask(
     input = in_file
     if input_type == 'func':
         tMean_path = 'tMean.nii.gz'
-        command = 'fslmaths {a} -Tmean {b}'.format(a=input, b=tMean_path)
-        log.info(f'Executing command "{command}"')
-        os.system(command)
+        input = MeanImage(in_file=input, dimension='T', out_file=tMean_path)
+        # command = 'fslmaths {a} -Tmean {b}'.format(a=input, b=tMean_path)
+        # log.info(f'Executing command "{command}"')
+        # os.system(command)
         input = tMean_path
 
     resampled_path = 'resampled_input.nii.gz'
