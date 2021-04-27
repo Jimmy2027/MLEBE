@@ -1,0 +1,7 @@
+include LICENSE
+include README.md
+
+recursive-include mlebe/masking/config * *.json
+recursive-include mlebe/training/configs * *.json
+
+recursive-exclude * __pycache__
