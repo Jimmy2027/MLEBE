@@ -133,9 +133,9 @@ def get_model_config(masking_opts, return_path=False):
     """
     model_folder_path = os.path.expanduser(masking_opts['model_folder_path'])
     for file in os.listdir(model_folder_path):
-        if file.endswith('.json'):
+        if file.endswith('.json') and not file.startswith('._'):
             model_config_path = os.path.join(model_folder_path, file)
-        if file.endswith('.pth'):
+        if file.endswith('.pth') and not file.startswith('._'):
             model_path = os.path.join(model_folder_path, file)
     assert model_config_path, f'Model config path was not found under "{model_folder_path}"'
     assert model_path, f'Model path was not found under "{model_path}"'
