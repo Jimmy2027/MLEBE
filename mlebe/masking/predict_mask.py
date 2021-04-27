@@ -59,6 +59,7 @@ def predict_mask(
     import ants
     from ants.registration import resample_image
     from nipype.interfaces.fsl.maths import MeanImage
+    from pathlib import Path
 
     log.info(f'Starting masking of {in_file} with config {masking_config_path}.')
     masking_opts = get_masking_opts(masking_config_path, input_type)
@@ -73,6 +74,7 @@ def predict_mask(
         # command = 'fslmaths {a} -Tmean {b}'.format(a=input, b=tMean_path)
         # log.info(f'Executing command "{command}"')
         # os.system(command)
+        assert Path(tMean_path).exists()
         input = tMean_path
 
     resampled_path = 'resampled_input.nii.gz'
@@ -97,11 +99,13 @@ def predict_mask(
         bias_corrected_path = path.abspath(path.expanduser('corrected_input.nii.gz'))
 
         if masking_opts['testing']:
-            ants.n4_bias_field_correction()
-            bias_corrected = resample_image(ants.image_read(resampled_nii_path),
-                                            bias_correction_config['bspline_fitting'],
-                                            convergence=bias_correction_config['convergence'],
-                                            shrink_factor=bias_correction_config['shrink_factor'])
+            convergence_args = bias_correction_config['convergence'].strip('][').split(', ')
+            iters = [int(elem) for elem in convergence_args[0].split('x')]
+            tol = float(convergence_args[1])
+            bias_corrected = ants.n4_bias_field_correction(ants.image_read(resampled_nii_path),
+                                                           bias_correction_config['bspline_fitting'],
+                                                           convergence={'iters': iters, 'tol': tol},
+                                                           shrink_factor=bias_correction_config['shrink_factor'])
             nib.save(bias_corrected, bias_corrected_path)
         else:
             command = 'N4BiasFieldCorrection --bspline-fitting {} -d 3 --input-image {} --convergence {} --output {} ' \
