@@ -5,12 +5,14 @@ from pathlib import Path
 import pandas as pd
 
 import mlebe
+from mlebe import log
 
 
 def write_to_jsonfile(config_path: str, parameters: list):
     """
     parameters: list of tuples. Example [('model.use_cuda',VALUE),] where VALUE is the parameter to be set
     """
+    log.info(f'Writing to config {config_path}: {parameters}')
     assert Path(config_path).exists(), f'config_path "{config_path}" does not exist.'
     with open(config_path) as file:
         config = json.load(file)
