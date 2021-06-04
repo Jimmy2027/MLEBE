@@ -167,35 +167,36 @@ def crop_bids_image(resampled_nii_path, crop_values):
     nib.save(resampled_bids_cropped_nib, resampled_nii_path)
 
 
-def get_mask(json_opts, in_file_data, ori_shape, use_cuda: bool):
+def get_mask(json_opts, in_file_data, ori_shape, use_cuda: bool, model=None):
     """Predict segmentation mask on in_file_data with mlebe model."""
-    from mlebe.training.models import get_model
-    # To make sure that the GPU is not used for the predictions: (might be unnecessary)
-    if not use_cuda:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    model = get_model(json_opts.model)
+    if not model:
+        from mlebe.training.models import get_model
+        # To make sure that the GPU is not used for the predictions: (might be unnecessary)
+        if not use_cuda:
+            os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+        model = get_model(json_opts.model)
     ds_transform = get_dataset_transformation('mlebe', opts=json_opts.augmentation,
                                               max_output_channels=json_opts.model.output_nc)
     transformer = ds_transform['bids']()
     # preprocess data for compatibility with model
-    network_input = transformer(np.expand_dims(in_file_data, -1))
+    model_input = transformer(np.expand_dims(in_file_data, -1))
     # add dimension for batches
-    network_input = network_input.unsqueeze(0)
-    model.set_input(network_input)
+    model_input = model_input.unsqueeze(0)
+    model.set_input(model_input)
     model.test()
     # predict
     mask_pred = np.squeeze(model.pred_seg.cpu().byte().numpy()).astype(np.int16)
     # switching to z,x,y
     mask_pred = np.moveaxis(mask_pred, 2, 0)
     in_file_data = np.moveaxis(in_file_data, 2, 0)
-    network_input = np.moveaxis(np.squeeze(network_input.cpu().numpy()), 2, 0)
+    model_input = np.moveaxis(np.squeeze(model_input.cpu().numpy()), 2, 0)
 
     # need to un-pad on the z-axis to the original shape:
     diff = int(np.ceil(mask_pred.shape[0] - ori_shape[0]))
     mask_pred = mask_pred[int(np.ceil(diff / 2.)):  ori_shape[0] + int(np.ceil(diff / 2.)), :, :]
-    network_input = network_input[int(np.ceil(diff / 2.)):  ori_shape[0] + int(np.ceil(diff / 2.)), :, :]
+    model_input = model_input[int(np.ceil(diff / 2.)):  ori_shape[0] + int(np.ceil(diff / 2.)), :, :]
 
-    return in_file_data, mask_pred, network_input
+    return in_file_data, mask_pred, model_input
 
 
 def save_visualisation(workflow_config, in_file, network_input, mask_pred):
