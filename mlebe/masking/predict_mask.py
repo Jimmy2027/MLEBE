@@ -62,7 +62,7 @@ def predict_mask(
     from mlebe import log
     from mlebe.masking.utils import get_mask, get_mlebe_models, get_biascorrect_opts_defaults
     from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
-        save_visualisation, reconstruct_image, pad_to_shape, get_model_config
+        reconstruct_image, pad_to_shape, get_model_config
 
     log.info(f'Starting masking of {in_file} with config {masking_config_path}.')
     masking_opts = get_masking_opts(masking_config_path, input_type)
