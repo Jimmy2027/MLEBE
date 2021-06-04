@@ -199,27 +199,29 @@ def get_mask(json_opts, in_file_data, ori_shape, use_cuda: bool, model=None):
     return in_file_data, mask_pred, model_input
 
 
-def save_visualisation(workflow_config, in_file, network_input, mask_pred):
+def save_masking_visualisation(workflow_config: dict, file_name: str, model_input, predicted_mask, input_data,
+                               resampled_mask) -> None:
     from matplotlib import pyplot as plt
-    save_dir = Path(workflow_config['visualisation_path']).expanduser() / os.path.basename(in_file)
-    if not save_dir.exists():
-        save_dir.mkdir(parents=True)
+    base_save_dir = Path(workflow_config['visualisation_path']).expanduser() / file_name
+
     log.info(f'Saving masking visualisations to {workflow_config["visualisation_path"]}.')
-    # pred_volume_stats(mask_pred, os.path.dirname(os.path.dirname(visualisation_path)), os.path.basename(in_file), model_path)
-    for slice in range(network_input.shape[0]):
-        plt.figure()
-        plt.subplot(1, 3, 1)
-        plt.imshow(network_input[slice], cmap='gray')
-        plt.axis('off')
-        plt.subplot(1, 3, 2)
-        plt.imshow(network_input[slice], cmap='gray')
-        plt.imshow(mask_pred[slice], cmap='Blues', alpha=0.6)
-        plt.axis('off')
-        plt.subplot(1, 3, 3)
-        plt.imshow(mask_pred[slice])
-        plt.axis('off')
-        plt.savefig(save_dir / f'{slice}.png')
-        plt.close()
+
+    for save_dir, (bids_image, mask) in zip([base_save_dir / 'predicted_mask', base_save_dir / 'resampled_mask'],
+                                            [(model_input, predicted_mask), (input_data, resampled_mask)]):
+        if not save_dir.exists():
+            save_dir.mkdir(parents=True)
+
+        for slice_idx in range(bids_image.shape[0]):
+            fig, axs = plt.subplots(1, 3, sharey=True)
+            axs[0].imshow(bids_image[slice_idx])
+            axs[0].axis('off')
+            axs[1].imshow(bids_image[slice_idx])
+            axs[1].imshow(mask[slice_idx], cmap='Blues', alpha=0.6)
+            axs[1].axis('off')
+            axs[2].imshow(mask[slice_idx])
+            axs[2].axis('off')
+            plt.savefig(save_dir / f'{slice_idx}.png')
+            plt.close()
 
 
 def reconstruct_image(ori_shape, mask_pred):
