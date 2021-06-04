@@ -6,7 +6,7 @@
 def predict_mask(
         in_file: str,
         masking_config_path=None,
-        input_type: str = 'anat',
+        input_type: str = 'anat'
 ):
     """
     The image is first resampled into the resolution of the template space, which has a voxel size of 0.2 × 0.2 × 0.2.
@@ -50,19 +50,39 @@ def predict_mask(
     """
     import os
     from os import path
+    from pathlib import Path
+
+    import ants
     import nibabel as nib
     import numpy as np
-    from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
-        save_visualisation, reconstruct_image, pad_to_shape, get_model_config
-    from mlebe.masking.utils import get_mask, get_mlebe_models, get_biascorrect_opts_defaults
-    from mlebe import log
-    import ants
+    import pandas as pd
     from ants.registration import resample_image
     from nipype.interfaces.fsl.maths import MeanImage
-    from pathlib import Path
+
+    from mlebe import log
+    from mlebe.masking.utils import get_mask, get_mlebe_models, get_biascorrect_opts_defaults
+    from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
+        save_visualisation, reconstruct_image, pad_to_shape, get_model_config
 
     log.info(f'Starting masking of {in_file} with config {masking_config_path}.')
     masking_opts = get_masking_opts(masking_config_path, input_type)
+
+    if masking_opts['masked_dir']:
+        masked_dir = masking_opts['masked_dir']
+        df_selection = pd.read_csv(f'{masked_dir}/data_selection.csv')
+        df_selection = df_selection.loc[df_selection.path.str.endswith(in_file)]
+
+        nii_path_masked = df_selection.masked_path.item()
+        resampled_mask_path = df_selection.mask_path.item()
+
+        assert nii_path_masked, f'nii_path_masked not found for {in_file}'
+        assert resampled_mask_path, f'nii_path_masked not found for {resampled_mask_path}'
+
+        assert Path(nii_path_masked).exists(), f'nii_path_masked {nii_path_masked} does not exist.'
+        assert Path(resampled_mask_path).exists(), f'resampled_mask_path {resampled_mask_path} does not exist.'
+
+        return nii_path_masked, [resampled_mask_path], resampled_mask_path
+
     if 'model_folder_path' not in masking_opts or not masking_opts['model_folder_path']:
         # if no model_folder_path is given in the config, the default models are selected.
         masking_opts['model_folder_path'] = get_mlebe_models(input_type)
