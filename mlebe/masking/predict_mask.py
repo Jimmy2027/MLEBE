@@ -48,21 +48,10 @@ def predict_mask(
     nii_path_masked : str
         path to the masked image
     """
-    import os
-    from os import path
-    from pathlib import Path
-
-    import ants
-    import nibabel as nib
-    import numpy as np
     import pandas as pd
-    from ants.registration import resample_image
-    from nipype.interfaces.fsl.maths import MeanImage
-
+    from pathlib import Path
     from mlebe import log
-    from mlebe.masking.utils import get_mask, get_mlebe_models, get_biascorrect_opts_defaults
-    from mlebe.masking.utils import remove_outliers, get_masking_opts, crop_bids_image, \
-        reconstruct_image, pad_to_shape, get_model_config
+    from mlebe.masking.utils import get_masking_opts
 
     log.info(f'Starting masking of {in_file} with config {masking_config_path}.')
     masking_opts = get_masking_opts(masking_config_path, input_type)
@@ -84,6 +73,21 @@ def predict_mask(
         return nii_path_masked, [resampled_mask_path], resampled_mask_path
 
     if 'model_folder_path' not in masking_opts or not masking_opts['model_folder_path']:
+        # imports
+        import os
+        from os import path
+
+        import ants
+        import nibabel as nib
+        import numpy as np
+
+        from ants.registration import resample_image
+        from nipype.interfaces.fsl.maths import MeanImage
+
+        from mlebe.masking.utils import get_mask, get_mlebe_models, get_biascorrect_opts_defaults
+        from mlebe.masking.utils import remove_outliers, crop_bids_image, reconstruct_image, pad_to_shape, \
+            get_model_config
+
         # if no model_folder_path is given in the config, the default models are selected.
         masking_opts['model_folder_path'] = get_mlebe_models(input_type)
     model_config = get_model_config(masking_opts)

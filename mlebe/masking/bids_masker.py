@@ -2,6 +2,7 @@
 
 import shutil
 from pathlib import Path
+from typing import Mapping, Optional, List
 from typing import Tuple
 
 import ants
@@ -23,12 +24,16 @@ from mlebe.training.models import get_model
 class BidsMasker:
     """Mask the brain region of scans in a bids format."""
 
-    def __init__(self, work_dir: Path, masking_config_path: str):
+    def __init__(self, work_dir: Path, masking_config_path: str, structural_match: Optional[Mapping[str, list]] = False,
+                 functional_match: Optional[Mapping[str, list]] = False, subjects: List[str] = False,
+                 sessions: List[str] = False):
         self.masking_config_path = masking_config_path
         self.work_dir = work_dir
         self.bids_path = work_dir / 'bids'
         self.preprocessing_dir = work_dir / 'preprocessing'
-        self.data_selection = bids_data_selection(str(self.bids_path), False, False, False, False)
+        self.data_selection = bids_data_selection(base=str(self.bids_path), structural_match=structural_match,
+                                                  functional_match=functional_match, subjects=subjects,
+                                                  sessions=sessions)
 
         self.tmean_dir = self.preprocessing_dir / 'bids_tmean'
         self.tmean_dir.mkdir(exist_ok=True, parents=True)
@@ -119,13 +124,13 @@ class BidsMasker:
             resampled_mask_data = pad_to_shape(resampled_mask_data, bids_data)
 
         # Masking of the input image
-        masked_image_data = np.multiply(resampled_mask_data, bids_file.numpy()) \
+        masked_image_data = np.multiply(resampled_mask_data, bids_data) \
             .astype('float32')  # nibabel gives a non-helpful error if trying to save data that has dtype float64
         masked_image = nib.Nifti1Image(masked_image_data, bids_file_nib.affine, bids_file_nib.header)
 
         if 'visualisation_path' in masking_opts and masking_opts['visualisation_path']:
             save_masking_visualisation(masking_opts, Path(bids_path).name, model_input=model_input,
-                                       predicted_mask=mask_pred, input_data=np.moveaxis(bids_file.numpy(), 2, 0),
+                                       predicted_mask=mask_pred, input_data=np.moveaxis(bids_data, 2, 0),
                                        resampled_mask=np.moveaxis(masked_image_data, 2, 0))
 
         # saving results
@@ -159,6 +164,7 @@ class BidsMasker:
 if __name__ == '__main__':
     with norby(whichbot='mlebe'):
         work_dir = Path('~/.scratch/mlebe').expanduser()
+        # work_dir = Path('/home/hendrik/temp').expanduser()
         bids_masker = BidsMasker(work_dir, str(work_dir / 'config.json'))
 
         bids_masker.run()
