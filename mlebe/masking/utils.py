@@ -12,7 +12,6 @@ from scipy import ndimage
 
 from mlebe import log
 from mlebe.training.configs.utils import json_to_dict, write_to_jsonfile
-from mlebe.training.dataio.transformation import get_dataset_transformation
 from mlebe.training.utils.utils import json_file_to_pyobj
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent / 'config/default_schema.json'
@@ -169,6 +168,7 @@ def crop_bids_image(resampled_nii_path, crop_values):
 
 def get_mask(json_opts, in_file_data, ori_shape, use_cuda: bool, model=None):
     """Predict segmentation mask on in_file_data with mlebe model."""
+    from mlebe.training.dataio.transformation import get_dataset_transformation
     if not model:
         from mlebe.training.models import get_model
         # To make sure that the GPU is not used for the predictions: (might be unnecessary)
